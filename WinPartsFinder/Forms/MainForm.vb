@@ -5,6 +5,7 @@ Imports System.Text
 ' The .exe's "Product version" (Explorer > Properties > Details) comes from AppVersion below too.
 <Assembly: AssemblyInformationalVersion(MainForm.AppVersion)>
 
+
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
@@ -53,6 +54,7 @@ Public Class MainForm
         MinimumSize = New Size(Math.Min(_defaultSize.Width, area.Width), Math.Min(_defaultSize.Height, area.Height))
         RestoreWindowPlacement()
 
+        Theme.SetCueBanner(txtFilter, "narrow results…")
         cboMode.Items.AddRange({"Keyword", "Manufacturer part no."})
         cboMode.SelectedIndex = 0
         nudMax.Value = Math.Max(nudMax.Minimum, Math.Min(nudMax.Maximum, _settings.MaxResults))

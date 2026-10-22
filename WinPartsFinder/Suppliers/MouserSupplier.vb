@@ -50,19 +50,18 @@ Public Class MouserSupplier
         End If
 
         Dim url = $"{BaseUrl}{endpoint}?apiKey={Uri.EscapeDataString(_apiKey)}"
-        Dim json = JsonSerializer.Serialize(payload, payload.GetType())
+        Dim json = JsonConvert.SerializeObject(payload)
         Using req As New HttpRequestMessage(HttpMethod.Post, url) With {
             .Content = New StringContent(json, Encoding.UTF8, "application/json")
         }
-            Using doc = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
-                Dim parts = Parse(doc.RootElement, maxResults)
-                Dim total = ToNullableInt(doc.RootElement.GetNum("SearchResults", "NumberOfResult"))
-                Return New SearchPage(parts, total)
-            End Using
+            Dim root = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
+            Dim parts = Parse(root, maxResults)
+            Dim total = ToNullableInt(root.GetNum("SearchResults", "NumberOfResult"))
+            Return New SearchPage(parts, total)
         End Using
     End Function
 
-    Private Function Parse(root As JsonElement, maxResults As Integer) As List(Of PartResult)
+    Private Function Parse(root As JToken, maxResults As Integer) As List(Of PartResult)
         Dim errors = root.GetArr("Errors")
         If errors.Count > 0 Then
             Throw New SupplierException(String.Join("; ", errors.Select(Function(er) er.GetStr("Message"))))
@@ -74,7 +73,7 @@ Public Class MouserSupplier
             Dim stock = ParseLongLoose(p.GetStr("AvailabilityInStock"))
             If Not stock.HasValue Then
                 ' "1,234 In Stock" or "None" / "On Order"
-                stock = If(availability.Contains("In Stock", StringComparison.OrdinalIgnoreCase),
+                stock = If(availability.IndexOf("In Stock", StringComparison.OrdinalIgnoreCase) >= 0,
                            ParseLongLoose(availability), 0L)
             End If
 

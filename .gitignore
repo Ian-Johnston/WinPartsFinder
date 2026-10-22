@@ -1,8 +1,21 @@
 .vs/
-bin/
 obj/
 *.user
 *.suo
+*.pdb
+
+# Build output: ignore everything in bin EXCEPT the current Debug build (net48),
+# so WinPartsFinder.exe, .exe.config and Newtonsoft.Json.dll are on GitHub.
+# (Git can only re-include a folder if its parent isn't excluded, hence the steps.)
+WinPartsFinder/bin/*
+!WinPartsFinder/bin/Debug/
+WinPartsFinder/bin/Debug/*
+!WinPartsFinder/bin/Debug/net48/
+
+# Advanced Installer: the .aip project and the built .msi ARE committed;
+# its cache and backup files are not.
+*-cache/
+*.back.aip
 
 # Personal API keys - never publish these
 MyKeys.txt

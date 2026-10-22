@@ -4,7 +4,7 @@
 
 Built for repairing test equipment and other electronics: type a part number or a few keywords, press Enter, and see who has it, how many, and at what price — without opening six browser tabs.
 
-Windows 10 / 11 desktop app, written in VB.NET (Visual Studio 2022, .NET 8).
+Windows 10 / 11 desktop app, written in VB.NET (Visual Studio 2022, .NET Framework 4.8).
 
 <!-- Add a screenshot: save it as docs/screenshot.png in the repo and this line will show it -->
 ![WinPartsFinder](docs/screenshot.png)
@@ -40,11 +40,13 @@ A *website link* row opens that supplier's own search results in your browser wi
 
 ## Download and run
 
-1. Download the latest release from the **Releases** page and unzip it anywhere.
-2. Run `WinPartsFinder.exe`.
-   - It needs the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (x64) unless the release says it's self-contained.
-   - The app isn't code-signed yet, so Windows SmartScreen may say *"Windows protected your PC"* — click **More info → Run anyway**.
-3. Click **Settings…**, paste in your API keys (see below) and search.
+1. Download `WinPartsFinder.msi` from the latest release on the **Releases** page.
+2. Run it. It installs to `C:\Program Files (x86)\IanJ\WinPartsFinder\` with a Start menu and desktop shortcut.
+   - Nothing else to install: it uses .NET Framework 4.8, which is built into Windows 10 and 11.
+   - The installer isn't code-signed yet, so Windows SmartScreen may say *"Windows protected your PC"* — click **More info → Run anyway**.
+3. Start **WinPartsFinder**, click **Settings…**, paste in your API keys (see below) and search.
+
+To upgrade, just run the newer `.msi` — it replaces the old version and keeps your settings and keys. Uninstall from **Settings → Apps**.
 
 ## Getting your free API keys
 

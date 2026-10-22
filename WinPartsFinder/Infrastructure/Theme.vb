@@ -294,6 +294,21 @@ Public Module Theme
 
     Private Const DWMWA_USE_IMMERSIVE_DARK_MODE As Integer = 20
 
+    <DllImport("user32.dll", CharSet:=CharSet.Unicode)>
+    Private Function SendMessage(hwnd As IntPtr, msg As Integer, wParam As IntPtr, lParam As String) As IntPtr
+    End Function
+
+    Private Const EM_SETCUEBANNER As Integer = &H1501
+
+    ''' <summary>Grey hint text shown in an empty text box (TextBox.PlaceholderText doesn't exist on .NET Framework).</summary>
+    Public Sub SetCueBanner(tb As TextBox, hint As String)
+        If tb.IsHandleCreated Then
+            SendMessage(tb.Handle, EM_SETCUEBANNER, IntPtr.Zero, hint)
+        Else
+            AddHandler tb.HandleCreated, Sub() SendMessage(tb.Handle, EM_SETCUEBANNER, IntPtr.Zero, hint)
+        End If
+    End Sub
+
     Private Sub SetDarkTitleBar(form As Form, dark As Boolean)
         If Not form.IsHandleCreated Then Return
         Dim value = If(dark, 1, 0)

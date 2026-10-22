@@ -51,9 +51,7 @@ Public Class Element14Supplier
             If wait > TimeSpan.Zero Then Await Task.Delay(wait, ct).ConfigureAwait(False)
             Try
                 Using req As New HttpRequestMessage(HttpMethod.Get, url)
-                    Using doc = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
-                        Return Parse(doc.RootElement)
-                    End Using
+                    Return Parse(Await SendForJsonAsync(req, ct).ConfigureAwait(False))
                 End Using
             Finally
                 _lastCallUtc = DateTime.UtcNow
@@ -63,17 +61,18 @@ Public Class Element14Supplier
         End Try
     End Function
 
-    Private Function Parse(root As JsonElement) As SearchPage
-        Dim fault = root.GetPath("Fault")
-        If fault.ValueKind = JsonValueKind.Object Then
-            Throw New SupplierException(Truncate(fault.GetRawText(), 300))
+    Private Function Parse(root As JToken) As SearchPage
+        Dim fault = TryCast(root.GetPath("Fault"), JObject)
+        If fault IsNot Nothing Then
+            Throw New SupplierException(Truncate(fault.ToString(Formatting.None), 300))
         End If
 
         ' The wrapper name depends on the search type, e.g. "keywordSearchReturn",
         ' "manufacturerPartNumberSearchReturn" - so take whichever "...Return" object is there.
-        Dim wrapper As JsonElement = Nothing
-        If root.ValueKind = JsonValueKind.Object Then
-            For Each prop In root.EnumerateObject()
+        Dim wrapper As JToken = Nothing
+        Dim rootObj = TryCast(root, JObject)
+        If rootObj IsNot Nothing Then
+            For Each prop In rootObj.Properties()
                 If prop.Name.EndsWith("Return", StringComparison.OrdinalIgnoreCase) Then
                     wrapper = prop.Value
                     Exit For

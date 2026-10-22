@@ -2,17 +2,21 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- .NET Framework 4.8, like WinGPIB: built into Windows 10/11, so users install nothing extra -->
+    <TargetFramework>net48</TargetFramework>
     <RootNamespace>WinPartsFinder</RootNamespace>
     <AssemblyName>WinPartsFinder</AssemblyName>
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>WindowsFormsWithCustomSubMain</MyType>
     <StartupObject>WinPartsFinder.Program</StartupObject>
     <ApplicationIcon>WinPartsFinder.ico</ApplicationIcon>
+    <!-- Sharp text on high-DPI screens (see app.manifest) -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <OptionExplicit>On</OptionExplicit>
     <OptionStrict>On</OptionStrict>
     <OptionInfer>On</OptionInfer>
     <OptionCompare>Binary</OptionCompare>
+    <LangVersion>latest</LangVersion>
     <!-- The version lives in ONE place: AppVersion at the top of Forms\MainForm.vb.
          It also becomes the .exe's "Product version" (see the Assembly attribute there). -->
     <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
@@ -24,18 +28,26 @@
     <Import Include="System.Data" />
     <Import Include="System.Drawing" />
     <Import Include="System.Windows.Forms" />
-    <Import Include="System.Text.Json" />
     <Import Include="System.Threading" />
+    <Import Include="Newtonsoft.Json" />
+    <Import Include="Newtonsoft.Json.Linq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Parts of .NET Framework that aren't referenced by default -->
+    <Reference Include="System.Net.Http" />
+    <!-- DPAPI (ProtectedData): API keys are encrypted for the current Windows user in settings.json -->
+    <Reference Include="System.Security" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- JSON for the supplier APIs and settings.json - the same library WinGPIB uses -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Cartoon on the About window -->
     <EmbeddedResource Include="Resources\AboutCartoon.png" LogicalName="WinPartsFinder.AboutCartoon.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- DPAPI: API keys are encrypted for the current Windows user in settings.json -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

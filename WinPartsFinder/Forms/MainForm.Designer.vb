@@ -232,7 +232,6 @@ Partial Class MainForm
         '
         txtFilter.Margin = New Padding(3, 5, 3, 3)
         txtFilter.Name = "txtFilter"
-        txtFilter.PlaceholderText = "narrow results…"
         txtFilter.Size = New Size(150, 23)
         txtFilter.TabIndex = 9
         '

@@ -2,7 +2,7 @@ Friend Module Program
 
     <STAThread>
     Friend Sub Main()
-        Application.SetHighDpiMode(HighDpiMode.SystemAware)
+        ' (High-DPI awareness is set in app.manifest.)
         Application.EnableVisualStyles()
         Application.SetCompatibleTextRenderingDefault(False)
         Application.Run(New MainForm())

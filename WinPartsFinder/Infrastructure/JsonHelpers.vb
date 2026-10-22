@@ -1,64 +1,76 @@
+Imports System.Globalization
+Imports System.IO
 Imports System.Runtime.CompilerServices
 
 ''' <summary>
-''' Forgiving, case-insensitive accessors for JsonElement so supplier parsers
-''' don't blow up when a field is missing or null.
+''' Forgiving, case-insensitive accessors for JSON (Newtonsoft JToken) so supplier parsers
+''' don't blow up when a field is missing or null. All of them accept Nothing.
 ''' </summary>
 Public Module JsonHelpers
 
+    ''' <summary>
+    ''' Parses JSON text. Dates are left as plain text and numbers read as Decimal,
+    ''' so prices like 0.083 come through exactly.
+    ''' </summary>
+    Public Function ParseJson(text As String) As JToken
+        Using reader As New JsonTextReader(New StringReader(text)) With {
+            .DateParseHandling = DateParseHandling.None,
+            .FloatParseHandling = FloatParseHandling.Decimal
+        }
+            Return JToken.ReadFrom(reader)
+        End Using
+    End Function
+
     <Extension>
-    Public Function GetPath(e As JsonElement, ParamArray path() As String) As JsonElement
+    Public Function GetPath(e As JToken, ParamArray path() As String) As JToken
         Dim cur = e
         For Each name In path
-            If cur.ValueKind <> JsonValueKind.Object Then Return Nothing
-            Dim found As JsonElement = Nothing
-            Dim ok = False
-            For Each p In cur.EnumerateObject()
-                If String.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase) Then
-                    found = p.Value
-                    ok = True
-                    Exit For
-                End If
-            Next
-            If Not ok Then Return Nothing
-            cur = found
+            Dim obj = TryCast(cur, JObject)
+            If obj Is Nothing Then Return Nothing
+            Dim prop = obj.Property(name, StringComparison.OrdinalIgnoreCase)
+            If prop Is Nothing Then Return Nothing
+            cur = prop.Value
         Next
         Return cur
     End Function
 
     <Extension>
-    Public Function GetStr(e As JsonElement, ParamArray path() As String) As String
+    Public Function GetStr(e As JToken, ParamArray path() As String) As String
         Dim v = e.GetPath(path)
-        Select Case v.ValueKind
-            Case JsonValueKind.String
-                Return If(v.GetString(), "").Trim()
-            Case JsonValueKind.Number, JsonValueKind.True, JsonValueKind.False
-                Return v.GetRawText()
+        If v Is Nothing Then Return ""
+        Select Case v.Type
+            Case JTokenType.String
+                Return If(CStr(DirectCast(v, JValue).Value), "").Trim()
+            Case JTokenType.Integer, JTokenType.Float, JTokenType.Boolean
+                Return v.ToString(Formatting.None) ' as written in the JSON, e.g. 123, 0.5, true
             Case Else
                 Return ""
         End Select
     End Function
 
     <Extension>
-    Public Function GetNum(e As JsonElement, ParamArray path() As String) As Decimal?
+    Public Function GetNum(e As JToken, ParamArray path() As String) As Decimal?
         Dim v = e.GetPath(path)
-        Select Case v.ValueKind
-            Case JsonValueKind.Number
-                Dim d As Decimal
-                If v.TryGetDecimal(d) Then Return d
-                Return CDec(v.GetDouble())
-            Case JsonValueKind.String
-                Return ParseHelpers.ParseDecimalLoose(v.GetString())
+        If v Is Nothing Then Return Nothing
+        Select Case v.Type
+            Case JTokenType.Integer, JTokenType.Float
+                Try
+                    Return Convert.ToDecimal(DirectCast(v, JValue).Value, CultureInfo.InvariantCulture)
+                Catch ex As OverflowException
+                    Return Nothing
+                End Try
+            Case JTokenType.String
+                Return ParseHelpers.ParseDecimalLoose(CStr(DirectCast(v, JValue).Value))
             Case Else
                 Return Nothing
         End Select
     End Function
 
     <Extension>
-    Public Function GetArr(e As JsonElement, ParamArray path() As String) As List(Of JsonElement)
-        Dim v = e.GetPath(path)
-        If v.ValueKind = JsonValueKind.Array Then Return v.EnumerateArray().ToList()
-        Return New List(Of JsonElement)
+    Public Function GetArr(e As JToken, ParamArray path() As String) As List(Of JToken)
+        Dim arr = TryCast(e.GetPath(path), JArray)
+        If arr Is Nothing Then Return New List(Of JToken)
+        Return arr.ToList()
     End Function
 
 End Module

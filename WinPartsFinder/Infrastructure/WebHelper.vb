@@ -15,8 +15,9 @@ Public Module WebHelper
     Public ReadOnly Client As HttpClient = CreateClient()
 
     Private Function CreateClient() As HttpClient
+        ' (On .NET Framework 4.8 the secure-connection (TLS) version comes from Windows, which is what we want.)
         Dim handler As New HttpClientHandler With {
-            .AutomaticDecompression = DecompressionMethods.All
+            .AutomaticDecompression = DecompressionMethods.GZip Or DecompressionMethods.Deflate
         }
         Dim c As New HttpClient(handler) With {.Timeout = TimeSpan.FromSeconds(30)}
         c.DefaultRequestHeaders.UserAgent.ParseAdd("WinPartsFinder/1.0")
@@ -25,14 +26,14 @@ Public Module WebHelper
     End Function
 
     ''' <summary>Sends the request and parses the JSON body; throws SupplierException on HTTP errors.</summary>
-    Public Async Function SendForJsonAsync(request As HttpRequestMessage, ct As CancellationToken) As Task(Of JsonDocument)
+    Public Async Function SendForJsonAsync(request As HttpRequestMessage, ct As CancellationToken) As Task(Of JToken)
         Using response = Await Client.SendAsync(request, ct).ConfigureAwait(False)
-            Dim body = Await response.Content.ReadAsStringAsync(ct).ConfigureAwait(False)
+            Dim body = Await response.Content.ReadAsStringAsync().ConfigureAwait(False)
             If Not response.IsSuccessStatusCode Then
                 Throw New SupplierException($"HTTP {CInt(response.StatusCode)} {response.ReasonPhrase}: {Truncate(body, 300)}")
             End If
             Try
-                Return JsonDocument.Parse(body)
+                Return ParseJson(body)
             Catch ex As JsonException
                 Throw New SupplierException("Unexpected (non-JSON) response: " & Truncate(body, 200))
             End Try

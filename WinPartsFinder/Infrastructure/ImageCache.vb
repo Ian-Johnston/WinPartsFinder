@@ -63,7 +63,7 @@ Public Class ImageCache
                     If Not mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) Then
                         Throw New InvalidDataException($"Not an image ({mediaType}).")
                     End If
-                    Dim bytes = Await resp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(False)
+                    Dim bytes = Await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(False)
                     Using ms As New MemoryStream(bytes), decoded = Image.FromStream(ms)
                         Return New Bitmap(decoded) ' copy, so the stream can be closed
                     End Using

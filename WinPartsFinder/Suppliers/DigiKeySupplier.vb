@@ -51,13 +51,12 @@ Public Class DigiKeySupplier
             Using req As New HttpRequestMessage(HttpMethod.Post, TokenUrl) With {
                 .Content = New FormUrlEncodedContent(form)
             }
-                Using doc = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
-                    _token = doc.RootElement.GetStr("access_token")
-                    If _token.Length = 0 Then Throw New SupplierException("DigiKey did not return an access token.")
-                    Dim expires = doc.RootElement.GetNum("expires_in").GetValueOrDefault(600D)
-                    _tokenExpiresUtc = DateTime.UtcNow.AddSeconds(CDbl(expires) - 60)
-                    Return _token
-                End Using
+                Dim root = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
+                _token = root.GetStr("access_token")
+                If _token.Length = 0 Then Throw New SupplierException("DigiKey did not return an access token.")
+                Dim expires = root.GetNum("expires_in").GetValueOrDefault(600D)
+                _tokenExpiresUtc = DateTime.UtcNow.AddSeconds(CDbl(expires) - 60)
+                Return _token
             End Using
         Finally
             _tokenLock.Release()
@@ -70,7 +69,7 @@ Public Class DigiKeySupplier
         Dim payload = New With {.Keywords = query, .Limit = Math.Min(maxResults, 50), .Offset = offset}
 
         Using req As New HttpRequestMessage(HttpMethod.Post, SearchUrl) With {
-            .Content = New StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+            .Content = New StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json")
         }
             req.Headers.Authorization = New AuthenticationHeaderValue("Bearer", token)
             req.Headers.Add("X-DIGIKEY-Client-Id", _clientId)
@@ -79,10 +78,9 @@ Public Class DigiKeySupplier
             req.Headers.Add("X-DIGIKEY-Locale-Currency", _currency)
 
             Try
-                Using doc = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
-                    Dim parts = Parse(doc.RootElement, mode, query, includeExact:=offset = 0)
-                    Return New SearchPage(parts, ToNullableInt(doc.RootElement.GetNum("ProductsCount")))
-                End Using
+                Dim root = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
+                Dim parts = Parse(root, mode, query, includeExact:=offset = 0)
+                Return New SearchPage(parts, ToNullableInt(root.GetNum("ProductsCount")))
             Catch ex As SupplierException When ex.Message.StartsWith("HTTP 401")
                 _token = Nothing ' force a fresh token next time
                 Throw
@@ -90,12 +88,12 @@ Public Class DigiKeySupplier
         End Using
     End Function
 
-    Private Function Parse(root As JsonElement, mode As SearchMode, query As String, includeExact As Boolean) As List(Of PartResult)
+    Private Function Parse(root As JToken, mode As SearchMode, query As String, includeExact As Boolean) As List(Of PartResult)
         Dim results As New List(Of PartResult)
         Dim seen As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
 
         ' Exact matches first (they come back on every page, so only use them on the first), then the page of results.
-        Dim exact = If(includeExact, root.GetArr("ExactMatches"), New List(Of JsonElement))
+        Dim exact = If(includeExact, root.GetArr("ExactMatches"), New List(Of JToken))
         For Each p In exact.Concat(root.GetArr("Products"))
             Dim mpn = p.GetStr("ManufacturerProductNumber")
             If mode = SearchMode.PartNumber AndAlso

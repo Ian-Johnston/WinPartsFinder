@@ -1,7 +1,6 @@
 Imports System.IO
 Imports System.Security.Cryptography
 Imports System.Text
-Imports System.Text.Json.Serialization
 
 ''' <summary>
 ''' User settings, stored as JSON in %AppData%\WinPartsFinder\settings.json.
@@ -111,7 +110,9 @@ Public Class AppSettings
         Dim s As AppSettings = Nothing
         Try
             If File.Exists(FilePath) Then
-                s = JsonSerializer.Deserialize(Of AppSettings)(File.ReadAllText(FilePath))
+                ' Replace (not add to) the default empty lists/dictionaries when reading.
+                s = JsonConvert.DeserializeObject(Of AppSettings)(File.ReadAllText(FilePath),
+                        New JsonSerializerSettings With {.ObjectCreationHandling = ObjectCreationHandling.Replace})
             End If
         Catch ex As Exception
             MessageBox.Show("Could not read settings, defaults will be used." & vbCrLf & ex.Message,
@@ -131,7 +132,7 @@ Public Class AppSettings
         DigiKeyClientSecretEnc = Protect(DigiKeyClientSecret)
         Element14ApiKeyEnc = Protect(Element14ApiKey)
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath))
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(Me, New JsonSerializerOptions With {.WriteIndented = True}))
+        File.WriteAllText(FilePath, JsonConvert.SerializeObject(Me, Formatting.Indented))
     End Sub
 
     Private Shared Function Protect(plain As String) As String
