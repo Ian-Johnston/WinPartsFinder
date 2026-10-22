@@ -1,0 +1,8 @@
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Personal API keys - never publish these
+MyKeys.txt

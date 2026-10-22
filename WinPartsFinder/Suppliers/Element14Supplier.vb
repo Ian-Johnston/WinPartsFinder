@@ -1,0 +1,129 @@
+Imports System.Net.Http
+
+''' <summary>
+''' element14 Product Search API - covers Farnell (uk.farnell.com) and Newark (www.newark.com)
+''' with the same key. Register at https://partner.element14.com/
+''' </summary>
+Public Class Element14Supplier
+    Inherits ApiSupplier
+
+    Private Const BaseUrl As String = "https://api.element14.com/catalog/products"
+
+    ' Farnell and Newark share one key, and the Basic tier allows 2 calls/second.
+    ' These are Shared so both instances queue through the same gate.
+    Private Shared ReadOnly _rateGate As New SemaphoreSlim(1, 1)
+    Private Shared _lastCallUtc As DateTime = DateTime.MinValue
+    Private Shared ReadOnly MinCallSpacing As TimeSpan = TimeSpan.FromMilliseconds(600)
+
+    Private ReadOnly _storeId As String
+    Private ReadOnly _currency As String
+    Private ReadOnly _apiKey As String
+
+    Public Sub New(name As String, storeId As String, currency As String, apiKey As String, searchUrlTemplate As String)
+        MyBase.New(name, searchUrlTemplate)
+        _storeId = storeId
+        _currency = currency
+        _apiKey = If(apiKey, "").Trim()
+    End Sub
+
+    Public Overrides ReadOnly Property IsConfigured As Boolean
+        Get
+            Return _apiKey.Length > 0
+        End Get
+    End Property
+
+    Public Overrides Async Function SearchAsync(query As String, mode As SearchMode, maxResults As Integer, offset As Integer,
+                                                ct As CancellationToken) As Task(Of SearchPage)
+        Dim term = If(mode = SearchMode.PartNumber, "manuPartNum:", "any:") & query
+        ' (The API accepts at least 100 per request - tested - but 50 keeps it in step with the others.)
+        Dim url = BaseUrl &
+            "?term=" & Uri.EscapeDataString(term) &
+            "&storeInfo.id=" & _storeId &
+            "&resultsSettings.offset=" & offset.ToString() &
+            "&resultsSettings.numberOfResults=" & Math.Min(maxResults, 50).ToString() &
+            "&resultsSettings.responseGroup=large" &
+            "&callInfo.responseDataFormat=json" &
+            "&callInfo.apiKey=" & Uri.EscapeDataString(_apiKey)
+
+        Await _rateGate.WaitAsync(ct).ConfigureAwait(False)
+        Try
+            Dim wait = _lastCallUtc + MinCallSpacing - DateTime.UtcNow
+            If wait > TimeSpan.Zero Then Await Task.Delay(wait, ct).ConfigureAwait(False)
+            Try
+                Using req As New HttpRequestMessage(HttpMethod.Get, url)
+                    Using doc = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
+                        Return Parse(doc.RootElement)
+                    End Using
+                End Using
+            Finally
+                _lastCallUtc = DateTime.UtcNow
+            End Try
+        Finally
+            _rateGate.Release()
+        End Try
+    End Function
+
+    Private Function Parse(root As JsonElement) As SearchPage
+        Dim fault = root.GetPath("Fault")
+        If fault.ValueKind = JsonValueKind.Object Then
+            Throw New SupplierException(Truncate(fault.GetRawText(), 300))
+        End If
+
+        ' The wrapper name depends on the search type, e.g. "keywordSearchReturn",
+        ' "manufacturerPartNumberSearchReturn" - so take whichever "...Return" object is there.
+        Dim wrapper As JsonElement = Nothing
+        If root.ValueKind = JsonValueKind.Object Then
+            For Each prop In root.EnumerateObject()
+                If prop.Name.EndsWith("Return", StringComparison.OrdinalIgnoreCase) Then
+                    wrapper = prop.Value
+                    Exit For
+                End If
+            Next
+        End If
+
+        Dim results As New List(Of PartResult)
+        For Each p In wrapper.GetArr("products")
+            Dim sku = p.GetStr("sku")
+            Dim stock = ToNullableLong(p.GetNum("stock", "level"))
+            If Not stock.HasValue Then stock = ToNullableLong(p.GetNum("inv"))
+
+            Dim moq = p.GetNum("translatedMinimumOrderQuality")   ' (sic - that's the API's spelling)
+            If Not moq.HasValue Then moq = p.GetNum("translatedMinimumOrderQuantity")
+
+            Dim lead = p.GetStr("stock", "leastLeadTime")
+            Dim r As New PartResult With {
+                .Supplier = Name,
+                .SupplierPartNumber = sku,
+                .ManufacturerPartNumber = p.GetStr("translatedManufacturerPartNumber"),
+                .Manufacturer = If(p.GetStr("brandName").Length > 0, p.GetStr("brandName"), p.GetStr("vendorName")),
+                .Description = p.GetStr("displayName"),
+                .Stock = stock,
+                .StockInfo = If(lead.Length > 0 AndAlso lead <> "0", $"Lead {lead} days", ""),
+                .Currency = _currency,
+                .MinOrderQty = ToNullableInt(moq),
+                .Status = p.GetStr("productStatus"),
+                .ProductUrl = GetSearchUrl(sku)
+            }
+            For Each pb In p.GetArr("prices")
+                Dim qty = ToNullableInt(pb.GetNum("from"))
+                Dim cost = pb.GetNum("cost")
+                If qty.HasValue AndAlso cost.HasValue Then r.PriceBreaks.Add(New PriceBreak(qty.Value, cost.Value))
+            Next
+            If r.PriceBreaks.Count > 0 Then r.UnitPrice = r.PriceBreaks.OrderBy(Function(b) b.Quantity).First().Price
+
+            Dim ds = p.GetArr("datasheets").FirstOrDefault()
+            r.DatasheetUrl = ds.GetStr("url")
+
+            ' Only the file name comes back, e.g. "/GE8SOIC-40.jpg". Both stores serve
+            ' it from the en_GB path (en_US 404s, even on Newark).
+            Dim imageFile = p.GetStr("image", "baseName")
+            If imageFile.Length > 0 Then
+                r.ImageUrl = $"https://{_storeId}/productimages/standard/en_GB{imageFile}"
+                r.LargeImageUrl = $"https://{_storeId}/productimages/large/en_GB{imageFile}"
+            End If
+            results.Add(r)
+        Next
+        Return New SearchPage(results, ToNullableInt(wrapper.GetNum("numberOfResults")))
+    End Function
+
+End Class

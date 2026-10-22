@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>WinPartsFinder</RootNamespace>
+    <AssemblyName>WinPartsFinder</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>WindowsFormsWithCustomSubMain</MyType>
+    <StartupObject>WinPartsFinder.Program</StartupObject>
+    <ApplicationIcon>WinPartsFinder.ico</ApplicationIcon>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <OptionCompare>Binary</OptionCompare>
+    <!-- The version lives in ONE place: AppVersion at the top of Forms\MainForm.vb.
+         It also becomes the .exe's "Product version" (see the Assembly attribute there). -->
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <Product>WinPartsFinder</Product>
+    <Description>Search electronic component suppliers in one go.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Import Include="System.Data" />
+    <Import Include="System.Drawing" />
+    <Import Include="System.Windows.Forms" />
+    <Import Include="System.Text.Json" />
+    <Import Include="System.Threading" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Cartoon on the About window -->
+    <EmbeddedResource Include="Resources\AboutCartoon.png" LogicalName="WinPartsFinder.AboutCartoon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DPAPI: API keys are encrypted for the current Windows user in settings.json -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
