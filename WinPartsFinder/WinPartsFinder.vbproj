@@ -1,53 +1,144 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Classic project format (like WinGPIB) so the Windows Forms designer works with .NET Framework 4.8. -->
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6D7550C4-44DE-447D-90DD-7B2270D296D4}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <!-- .NET Framework 4.8, like WinGPIB: built into Windows 10/11, so users install nothing extra -->
-    <TargetFramework>net48</TargetFramework>
+    <StartupObject>WinPartsFinder.Program</StartupObject>
     <RootNamespace>WinPartsFinder</RootNamespace>
     <AssemblyName>WinPartsFinder</AssemblyName>
-    <UseWindowsForms>true</UseWindowsForms>
+    <FileAlignment>512</FileAlignment>
     <MyType>WindowsFormsWithCustomSubMain</MyType>
-    <StartupObject>WinPartsFinder.Program</StartupObject>
-    <ApplicationIcon>WinPartsFinder.ico</ApplicationIcon>
-    <!-- Sharp text on high-DPI screens (see app.manifest) -->
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- .NET Framework 4.8, like WinGPIB: built into Windows 10/11, so users install nothing extra -->
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <OptionExplicit>On</OptionExplicit>
+    <OptionCompare>Binary</OptionCompare>
     <OptionStrict>On</OptionStrict>
     <OptionInfer>On</OptionInfer>
-    <OptionCompare>Binary</OptionCompare>
     <LangVersion>latest</LangVersion>
-    <!-- The version lives in ONE place: AppVersion at the top of Forms\MainForm.vb.
-         It also becomes the .exe's "Product version" (see the Assembly attribute there). -->
-    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
-    <Product>WinPartsFinder</Product>
-    <Description>Search electronic component suppliers in one go.</Description>
+    <ApplicationIcon>WinPartsFinder.ico</ApplicationIcon>
+    <!-- Sharp text on high-DPI screens -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
-
+  <!-- Output goes to bin\Debug\net48 - WinPartsFinder.aip (the installer) and .gitignore expect it there -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\net48\</OutputPath>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\net48\</OutputPath>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
-    <Import Include="System.Data" />
-    <Import Include="System.Drawing" />
-    <Import Include="System.Windows.Forms" />
-    <Import Include="System.Threading" />
-    <Import Include="Newtonsoft.Json" />
-    <Import Include="Newtonsoft.Json.Linq" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Parts of .NET Framework that aren't referenced by default -->
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <!-- HttpClient for the supplier APIs -->
     <Reference Include="System.Net.Http" />
     <!-- DPAPI (ProtectedData): API keys are encrypted for the current Windows user in settings.json -->
     <Reference Include="System.Security" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Collections.Generic" />
+    <Import Include="System.Data" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Drawing" />
+    <Import Include="System.Linq" />
+    <Import Include="System.Threading" />
+    <Import Include="System.Threading.Tasks" />
+    <Import Include="System.Windows.Forms" />
+    <Import Include="System.Xml.Linq" />
+    <Import Include="Newtonsoft.Json" />
+    <Import Include="Newtonsoft.Json.Linq" />
+  </ItemGroup>
   <ItemGroup>
     <!-- JSON for the supplier APIs and settings.json - the same library WinGPIB uses -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.3</Version>
+    </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
-    <!-- Cartoon on the About window -->
-    <EmbeddedResource Include="Resources\AboutCartoon.png" LogicalName="WinPartsFinder.AboutCartoon.png" />
+    <Compile Include="Program.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="Forms\MainForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\MainForm.Designer.vb">
+      <DependentUpon>MainForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\SettingsForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SettingsForm.Designer.vb">
+      <DependentUpon>SettingsForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\AboutForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AboutForm.Designer.vb">
+      <DependentUpon>AboutForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\HelpForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\HelpForm.Designer.vb">
+      <DependentUpon>HelpForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ImagePopupForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ImagePopupForm.Designer.vb">
+      <DependentUpon>ImagePopupForm.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Infrastructure\AppSettings.vb" />
+    <Compile Include="Infrastructure\ImageCache.vb" />
+    <Compile Include="Infrastructure\JsonHelpers.vb" />
+    <Compile Include="Infrastructure\ParseHelpers.vb" />
+    <Compile Include="Infrastructure\Theme.vb" />
+    <Compile Include="Infrastructure\WebHelper.vb" />
+    <Compile Include="Models\PartResult.vb" />
+    <Compile Include="Suppliers\Supplier.vb" />
+    <Compile Include="Suppliers\MouserSupplier.vb" />
+    <Compile Include="Suppliers\DigiKeySupplier.vb" />
+    <Compile Include="Suppliers\Element14Supplier.vb" />
   </ItemGroup>
-
+  <ItemGroup>
+    <EmbeddedResource Include="Forms\MainForm.resx">
+      <DependentUpon>MainForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\SettingsForm.resx">
+      <DependentUpon>SettingsForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <!-- Cartoon on the About window -->
+    <EmbeddedResource Include="Resources\AboutCartoon.png">
+      <LogicalName>WinPartsFinder.AboutCartoon.png</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.manifest" />
+    <Content Include="WinPartsFinder.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

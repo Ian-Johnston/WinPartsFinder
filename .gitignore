@@ -17,5 +17,5 @@ WinPartsFinder/bin/Debug/*
 *-cache/
 *.back.aip
 
-# Personal API keys - never publish these
-MyKeys.txt
+# Personal API keys - never publish these (any file with MyKeys in its name, anywhere in the project)
+*MyKeys*
