@@ -5,7 +5,6 @@ Imports System.Text
 ' The .exe's "Product version" (Explorer > Properties > Details) comes from AppVersion below too.
 <Assembly: AssemblyInformationalVersion(MainForm.AppVersion)>
 
-
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
