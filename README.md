@@ -6,7 +6,7 @@ Built for repairing test equipment and other electronics: type a part number or 
 
 Windows 10 / 11 desktop app, written in VB.NET (Visual Studio 2022, .NET Framework 4.8).
 
-<!-- Add a screenshot: save it as docs/screenshot.png in the repo and this line will show it -->
+<!-- Add a screenshot: save it as docs/WinPartsFinder_Main.png in the repo and this line will show it -->
 ![WinPartsFinder](docs/screenshot.png)
 
 ---
