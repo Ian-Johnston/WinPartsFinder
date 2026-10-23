@@ -112,6 +112,12 @@
     <Compile Include="Forms\AdvancedSearchForm.Designer.vb">
       <DependentUpon>AdvancedSearchForm.vb</DependentUpon>
     </Compile>
+    <Compile Include="Forms\TypesForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\TypesForm.Designer.vb">
+      <DependentUpon>TypesForm.vb</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ImagePopupForm.vb">
       <SubType>Form</SubType>
     </Compile>

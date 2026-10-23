@@ -33,7 +33,8 @@ Public Class AdvancedSearchForm
     End Sub
 
     Private Overloads Sub Show(o As AdvancedSearchOptions)
-        txtQuery.Text = o.Query
+        ' Search for was left blank last time (the description words were the search): leave it blank again.
+        txtQuery.Text = If(o.ContainsIsQuery, "", o.Query)
         cboMode.SelectedIndex = CInt(o.Mode)
         chkInStock.Checked = o.InStockOnly
         chkRohs.Checked = o.RohsOnly
@@ -50,8 +51,19 @@ Public Class AdvancedSearchForm
 
     Private Sub btnSearch_Click(sender As Object, e As EventArgs) Handles btnSearch.Click
         Dim query = txtQuery.Text.Trim()
+        Dim mode = CType(Math.Max(0, cboMode.SelectedIndex), SearchMode)
+        Dim mustContain = txtContains.Text.Trim()
+        Dim containsIsQuery = False
+        If query.Length = 0 Then
+            ' Nothing in Search for: the suppliers still need search text, so search for the description words.
+            ' The suppliers then match them their own way (DigiKey finds "20-Bit" as "20BIT"), so they aren't
+            ' also checked letter-for-letter - that would throw most of those parts away.
+            query = mustContain
+            containsIsQuery = True
+            mode = SearchMode.Keyword
+        End If
         If query.Length < 2 Then
-            MessageBox.Show(Me, "Type at least 2 characters to search for.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            MessageBox.Show(Me, "Type at least 2 characters in Search for (or in Description also contains).", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             txtQuery.Select()
             Return
         End If
@@ -76,13 +88,14 @@ Public Class AdvancedSearchForm
 
         Options = New AdvancedSearchOptions With {
             .Query = query,
-            .Mode = CType(Math.Max(0, cboMode.SelectedIndex), SearchMode),
+            .Mode = mode,
             .MaxResults = CInt(nudMax.Value),
             .InStockOnly = chkInStock.Checked,
             .RohsOnly = chkRohs.Checked,
             .ActiveOnly = chkActive.Checked,
             .ManufacturerContains = txtMaker.Text.Trim(),
-            .MustContain = txtContains.Text.Trim(),
+            .MustContain = mustContain,
+            .ContainsIsQuery = containsIsQuery,
             .Quantity = CInt(nudQty.Value),
             .MaxUnitPrice = maxPrice,
             .Suppliers = chosen

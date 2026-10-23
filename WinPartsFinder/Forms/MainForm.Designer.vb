@@ -35,6 +35,7 @@ Partial Class MainForm
         btnCancel = New Button()
         btnLoadMore = New Button()
         chkInStock = New CheckBox()
+        btnTypes = New Button()
         flpFilter = New FlowLayoutPanel()
         lblFilter = New Label()
         txtFilter = New TextBox()
@@ -116,6 +117,7 @@ Partial Class MainForm
         flpTop.Controls.Add(btnCancel)
         flpTop.Controls.Add(btnLoadMore)
         flpTop.Controls.Add(chkInStock)
+        flpTop.Controls.Add(btnTypes)
         flpTop.Controls.Add(flpFilter)
         flpTop.Controls.Add(btnExport)
         flpTop.Controls.Add(btnSettings)
@@ -143,7 +145,7 @@ Partial Class MainForm
         txtSearch.Font = New Font("Segoe UI", 10.0F)
         txtSearch.Margin = New Padding(3, 4, 3, 3)
         txtSearch.Name = "txtSearch"
-        txtSearch.Size = New Size(300, 25)
+        txtSearch.Size = New Size(240, 25)
         txtSearch.TabIndex = 1
         '
         'cboMode
@@ -217,6 +219,17 @@ Partial Class MainForm
         chkInStock.TabIndex = 7
         chkInStock.Text = "In stock only"
         chkInStock.UseVisualStyleBackColor = True
+        '
+        'btnTypes
+        '
+        btnTypes.AutoSize = True
+        btnTypes.Enabled = False
+        btnTypes.MinimumSize = New Size(85, 28)
+        btnTypes.Name = "btnTypes"
+        btnTypes.Size = New Size(85, 28)
+        btnTypes.TabIndex = 7
+        btnTypes.Text = "&Types…"
+        btnTypes.UseVisualStyleBackColor = True
         '
         'flpFilter - keeps "Filter:" and its box together when the toolbar wraps
         '
@@ -493,6 +506,7 @@ Partial Class MainForm
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")
         tipMain.SetToolTip(btnAdvanced, "Advanced search (Ctrl+F): exact part number, supplier order code," & vbCrLf & "RoHS, active parts, maker, quantity pricing, max price…")
+        tipMain.SetToolTip(btnTypes, "After a search: tick or untick part types (categories) to show or hide them," & vbCrLf & "e.g. hide Evaluation Kit and Flip-Flops. A new search shows every type again.")
         tipMain.SetToolTip(btnCancel, "Stop any searches still running.")
         tipMain.SetToolTip(btnLoadMore, "Fetch the next batch (Max/supp.) from every ticked supplier that has more - see Hits, e.g. 50 / 312." & vbCrLf & "Uses one API call per supplier. New rows are added at the end and selected - click the Supplier header to group them." & vbCrLf & "Right-click a supplier to load more from just that one.")
         tipMain.SetToolTip(chkInStock, "Hide parts with no stock. Website-link rows always stay.")
@@ -546,6 +560,7 @@ Partial Class MainForm
     Friend WithEvents btnCancel As Button
     Friend WithEvents btnLoadMore As Button
     Friend WithEvents chkInStock As CheckBox
+    Friend WithEvents btnTypes As Button
     Friend WithEvents flpFilter As FlowLayoutPanel
     Friend WithEvents lblFilter As Label
     Friend WithEvents txtFilter As TextBox

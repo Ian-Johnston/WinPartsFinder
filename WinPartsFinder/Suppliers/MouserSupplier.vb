@@ -106,6 +106,7 @@ Public Class MouserSupplier
                 .ManufacturerPartNumber = p.GetStr("ManufacturerPartNumber"),
                 .Manufacturer = p.GetStr("Manufacturer"),
                 .Description = p.GetStr("Description"),
+                .Category = p.GetStr("Category"),
                 .Stock = stock,
                 .StockInfo = JoinNonEmpty(If(notStocked, "Not stocked by Mouser", availability),
                                           If(leadTime.Length > 0, "Lead " & leadTime, "")),

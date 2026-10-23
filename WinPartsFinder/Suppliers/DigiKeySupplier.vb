@@ -138,6 +138,7 @@ Public Class DigiKeySupplier
                 .ManufacturerPartNumber = mpn,
                 .Manufacturer = p.GetStr("Manufacturer", "Name"),
                 .Description = p.GetStr("Description", "ProductDescription"),
+                .Category = DeepestCategory(p.GetPath("Category")),
                 .Stock = ToNullableLong(p.GetNum("QuantityAvailable")),
                 .Currency = _currency,
                 .MinOrderQty = ToNullableInt(variation.GetNum("MinimumOrderQuantity")),
@@ -163,6 +164,21 @@ Public Class DigiKeySupplier
             results.Add(r)
         Next
         Return results
+    End Function
+
+    ''' <summary>
+    ''' DigiKey categories nest, e.g. Integrated Circuits (ICs) > Data Acquisition > Analog to Digital Converters (ADC).
+    ''' The last level is the most useful as a part type.
+    ''' </summary>
+    Private Shared Function DeepestCategory(c As JToken) As String
+        Dim name = ""
+        Do While c IsNot Nothing
+            Dim n = c.GetStr("Name")
+            If n.Length > 0 Then name = n
+            Dim children = c.GetArr("ChildCategories")
+            c = If(children.Count > 0, children(0), Nothing)
+        Loop
+        Return name
     End Function
 
 End Class

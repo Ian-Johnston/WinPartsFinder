@@ -112,6 +112,7 @@ Public Class Element14Supplier
                 .ManufacturerPartNumber = p.GetStr("translatedManufacturerPartNumber"),
                 .Manufacturer = If(p.GetStr("brandName").Length > 0, p.GetStr("brandName"), p.GetStr("vendorName")),
                 .Description = p.GetStr("displayName"),
+                .Category = TypeFromName(p.GetStr("displayName")),
                 .Stock = stock,
                 .StockInfo = If(lead.Length > 0 AndAlso lead <> "0", $"Lead {lead} days", ""),
                 .Currency = _currency,
@@ -139,6 +140,16 @@ Public Class Element14Supplier
             results.Add(r)
         Next
         Return New SearchPage(results, ToNullableInt(wrapper.GetNum("numberOfResults")))
+    End Function
+
+    ''' <summary>
+    ''' element14 sends no category, but every product name reads "MAKER - PART NO - Type, details…",
+    ''' e.g. "ANALOG DEVICES - AD7781BRUZ - Analogue to Digital Converter, Delta-Sigma, 20 bit". Returns the type.
+    ''' </summary>
+    Private Shared Function TypeFromName(displayName As String) As String
+        Dim parts = displayName.Split({" - "}, 3, StringSplitOptions.None)
+        If parts.Length < 3 Then Return ""
+        Return parts(2).Split(","c)(0).Trim()
     End Function
 
 End Class

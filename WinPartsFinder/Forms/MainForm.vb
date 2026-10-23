@@ -8,7 +8,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.003"
+    Public Const AppVersion As String = "V1.004"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -206,6 +206,7 @@ Public Class MainForm
         t.Columns.Add("MfrPartNo", GetType(String))
         t.Columns.Add("Manufacturer", GetType(String))
         t.Columns.Add("Description", GetType(String))
+        t.Columns.Add("Type", GetType(String))
         t.Columns.Add("Stock", GetType(Long))
         t.Columns.Add("UnitPrice", GetType(Decimal))
         t.Columns.Add("Currency", GetType(String))
@@ -262,7 +263,7 @@ Public Class MainForm
             .Name = "SupplierPartNo",
             .DataPropertyName = "SupplierPartNo",
             .HeaderText = "Supplier part no.",
-            .Width = 130,
+            .Width = 104,
             .SortMode = DataGridViewColumnSortMode.Automatic,
             .TrackVisitedState = False,
             .LinkBehavior = LinkBehavior.HoverUnderline,
@@ -272,17 +273,18 @@ Public Class MainForm
 
         AddTextColumn("MfrPartNo", "Mfr part no.", 140)
         AddTextColumn("Manufacturer", "Manufacturer", 110)
+        AddTextColumn("Type", "Type", 160)
         AddTextColumn("Description", "Description", 280)
-        Dim stock = AddTextColumn("Stock", "Stock", 70)
+        Dim stock = AddTextColumn("Stock", "Stock", 42)
         stock.DefaultCellStyle.Format = "#,##0"
         stock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
-        Dim price = AddTextColumn("UnitPrice", "Price (1)", 70)
+        Dim price = AddTextColumn("UnitPrice", "Price (1)", 56)
         price.DefaultCellStyle.Format = "#,##0.00##"
         price.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
         AddTextColumn("Currency", "Cur", 40)
         AddTextColumn("PriceBreaks", "Price breaks", 220)
-        AddTextColumn("MOQ", "MOQ", 50).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
-        AddTextColumn("Availability", "Availability / lead", 150)
+        AddTextColumn("MOQ", "MOQ", 45).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
+        AddTextColumn("Availability", "Availability / lead", 90)
         ' Shows "Datasheet" (click to open) when the supplier gave a datasheet link, otherwise blank.
         colDatasheetLink = New DataGridViewLinkColumn With {
             .Name = "Datasheet",
@@ -294,7 +296,7 @@ Public Class MainForm
             .LinkBehavior = LinkBehavior.HoverUnderline
         }
         dgvResults.Columns.Add(colDatasheetLink)
-        AddTextColumn("Status", "Status", 90)
+        AddTextColumn("Status", "Status", 54)
 
         ' Header tooltips (click a header to sort; drag to reorder; drag the edge to resize).
         Dim tips As New Dictionary(Of String, String) From {
@@ -302,6 +304,7 @@ Public Class MainForm
             {"Supplier", "Who sells it. Blue italic rows are website links for suppliers without an API."},
             {"MfrPartNo", "Manufacturer part number."},
             {"Manufacturer", "Who makes the part."},
+            {"Type", "Kind of part, in the supplier's own words (its category). Use Types… to hide whole types." & vbCrLf & "Blank for website links, and for the odd part a supplier hasn't categorised."},
             {"Description", "Supplier's description of the part."},
             {"Stock", "Quantity in stock now. Green = in stock, grey row = none."},
             {"UnitPrice", "Price each at the lowest price break (usually qty 1)."},
@@ -399,6 +402,7 @@ Public Class MainForm
             p.ManufacturerPartNumber,
             p.Manufacturer,
             p.Description,
+            p.Category,
             If(p.Stock.HasValue, CObj(p.Stock.Value), DBNull.Value),
             If(p.UnitPrice.HasValue, CObj(p.UnitPrice.Value), DBNull.Value),
             p.Currency,
@@ -454,10 +458,15 @@ Public Class MainForm
             Select(Function(i) "'" & DirectCast(i.Tag, Supplier).Name.Replace("'", "''") & "'").ToList()
         If hidden.Count > 0 Then parts.Add($"Supplier NOT IN ({String.Join(", ", hidden)})")
         If chkInStock.Checked Then parts.Add("(LinkOnly = true OR Stock > 0)")
+        ' Types unticked in the Types… window (blank type = "(no type)"). Website-link rows always stay.
+        If _hiddenTypes.Count > 0 Then
+            parts.Add("(LinkOnly = true OR ISNULL(Type, '') NOT IN (" &
+                      String.Join(", ", _hiddenTypes.Select(Function(t) "'" & t.Replace("'", "''") & "'")) & "))")
+        End If
         Dim f = txtFilter.Text.Trim()
         If f.Length > 0 Then
             Dim pat = EscapeLike(f)
-            parts.Add($"(LinkOnly = true OR MfrPartNo LIKE '%{pat}%' OR Description LIKE '%{pat}%' " &
+            parts.Add($"(LinkOnly = true OR MfrPartNo LIKE '%{pat}%' OR Description LIKE '%{pat}%' OR Type LIKE '%{pat}%' " &
                       $"OR Manufacturer LIKE '%{pat}%' OR Supplier LIKE '%{pat}%' OR SupplierPartNo LIKE '%{pat}%')")
         End If
         _table.DefaultView.RowFilter = String.Join(" AND ", parts)
@@ -476,7 +485,39 @@ Public Class MainForm
         Return sb.ToString()
     End Function
 
+    ''' <summary>Types… needs some parts to list, and shows how many types are hidden.</summary>
+    Private Sub UpdateTypesButton()
+        btnTypes.Enabled = Not _busy AndAlso _table.Rows.Cast(Of DataRow)().Any(Function(r) Not CBool(r("LinkOnly")))
+        btnTypes.Text = If(_hiddenTypes.Count > 0, $"Types ({_hiddenTypes.Count} hidden)…", "Types…")
+    End Sub
+
+    ''' <summary>
+    ''' Lists every part type in the current results with tick boxes; unticked types are hidden from the grid
+    ''' (not deleted) until the next search. Modal, so nothing else can happen until OK or Cancel.
+    ''' </summary>
+    Private Sub btnTypes_Click(sender As Object, e As EventArgs) Handles btnTypes.Click
+        If _busy Then Return
+        Dim types = _table.Rows.Cast(Of DataRow)().
+            Where(Function(r) Not CBool(r("LinkOnly")) AndAlso Not CBool(r("Removed"))).
+            GroupBy(Function(r) Convert.ToString(r("Type")).Trim(), StringComparer.OrdinalIgnoreCase).
+            Select(Function(g) New TypesForm.TypeEntry With {
+                .Name = g.Key,
+                .Count = g.Count(),
+                .Suppliers = g.Select(Function(r) Convert.ToString(r("Supplier"))).Distinct().ToList()}).
+            OrderBy(Function(t) t.Name.Length = 0).ThenBy(Function(t) t.Name, StringComparer.OrdinalIgnoreCase).
+            ToList()
+        If types.Count = 0 Then Return
+
+        Using f As New TypesForm(types, _hiddenTypes)
+            If f.ShowDialog(Me) <> DialogResult.OK Then Return
+            _hiddenTypes.Clear()
+            _hiddenTypes.UnionWith(f.HiddenTypes)
+        End Using
+        ApplyFilter()
+    End Sub
+
     Private Sub UpdateCountStatus()
+        UpdateTypesButton()
         UpdateTotalParts()
         Dim shown = _table.DefaultView.Count
         Dim total = _table.Rows.Count
@@ -543,7 +584,12 @@ Public Class MainForm
         If _busy Then Return
         ' Open with last time's choices, but today's search text, batch size and ticked suppliers.
         Dim start = _settings.LastAdvanced
-        If txtSearch.Text.Trim().Length > 0 Then start.Query = txtSearch.Text.Trim()
+        ' (Unless Search for was left blank last time and the search box still shows those words.)
+        Dim typed = txtSearch.Text.Trim()
+        If typed.Length > 0 AndAlso Not (start.ContainsIsQuery AndAlso String.Equals(typed, start.Query, StringComparison.OrdinalIgnoreCase)) Then
+            start.Query = typed
+            start.ContainsIsQuery = False
+        End If
         start.MaxResults = CInt(nudMax.Value)
         start.Suppliers = lvSuppliers.Items.Cast(Of ListViewItem)().Where(Function(i) i.Checked).Select(Function(i) i.Text).ToList()
 
@@ -607,6 +653,7 @@ Public Class MainForm
         _active = opts
         _advancedHidden = 0
         _codeMpn = ""
+        _hiddenTypes.Clear()
         ApplyFilter()       ' supplier ticks may have just changed
         UpdatePriceHeader() ' "Price (25)" when a quantity is set
 
@@ -711,6 +758,8 @@ Public Class MainForm
     Private _active As AdvancedSearchOptions
     Private _advancedHidden As Integer   ' parts left out by Advanced filters in this search
     Private _codeMpn As String = ""      ' order-code search: the part number the code turned out to be
+    ' Part types unticked in the Types… window ("" = parts with no type). Cleared by every new search.
+    Private ReadOnly _hiddenTypes As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
     ' Names of suppliers already searched (or given a link row) in the current search.
     Private ReadOnly _searched As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
 
@@ -898,6 +947,7 @@ Public Class MainForm
         btnSettings.Enabled = Not busy
         UseWaitCursor = busy
         UpdateLoadMoreButton()
+        UpdateTypesButton()
     End Sub
 
     Private Sub SetStatus(text As String)

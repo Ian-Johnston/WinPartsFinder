@@ -121,6 +121,7 @@ Public Class TmeSupplier
                 .ManufacturerPartNumber = If(mpn.Length > 0, mpn, symbol),
                 .Manufacturer = p.GetStr("manufacturer", "name"),
                 .Description = p.GetStr("description"),
+                .Category = CategoryOf(p),
                 .Currency = _currency,
                 .MinOrderQty = ToNullableInt(p.GetNum("minimal_amount")),
                 .Status = FirstText(p.GetPath("product_status")),
@@ -180,6 +181,18 @@ Public Class TmeSupplier
     End Sub
 
     ''' <summary>First text in a value that may be a string, an array of strings, or an array of objects.</summary>
+    ''' <summary>
+    ''' TME's category for a product (a name, or an object with a name). If it isn't there, the start of the
+    ''' description, which TME writes as "IC: operational amplifier; 1MHz; …".
+    ''' </summary>
+    Private Shared Function CategoryOf(p As JToken) As String
+        Dim c = p.GetStr("category", "name")
+        If c.Length = 0 Then c = p.GetStr("category")
+        If c.Length = 0 Then c = p.GetStr("category_name")
+        If c.Length = 0 Then c = p.GetStr("description").Split(";"c)(0).Trim()
+        Return c
+    End Function
+
     Private Shared Function FirstText(t As JToken) As String
         If t Is Nothing Then Return ""
         Select Case t.Type

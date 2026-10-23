@@ -35,7 +35,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. The window remembers 
 - **In stock only** and **RoHS only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box.
 - **Active parts only** hides parts marked obsolete, discontinued, end of life or not recommended for new designs. Parts with no status shown are kept.
 - **Manufacturer contains**, e.g. Texas, keeps only that maker's parts.
-- **Description also contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example.
+- **Description also contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example. Leave **Search for** blank to search for these words on their own (as a Keyword search), e.g. 20-Bit ADC. The suppliers then match the words their own way (DigiKey finds 20-Bit as 20BIT), so they aren't also checked letter-for-letter in the description.
 - **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
 - **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency.
 - **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
@@ -57,6 +57,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. The window remembers 
 - **Stock** is green when in stock. Rows with no stock are greyed out.
 - **Price (1)** is the price each at the lowest price break, usually quantity 1 (after an Advanced search with a quantity, the price at that quantity). **Price breaks** lists every break as quantity+ price.
 - **Datasheet** opens the part's datasheet in your browser (hover to see the link). It's blank when the supplier didn't send one - TME and the website-link suppliers never do.
+- **Type** is the kind of part, in the supplier's own words: Mouser, DigiKey and TME send a category; for Farnell, CPC and Newark it's taken from the product name. Website-link rows have none.
 - **MOQ** is the minimum order quantity. **Availability / lead** shows packaging and lead time. **Status** shows lifecycle, e.g. Obsolete.
 - Blue italic rows are **website links** for suppliers without an API (RS, Rapid, LCSC, AliExpress and any you add). Click them to see results on that website.
 - Click a **Supplier part no.** to open the product page. Double-clicking anywhere else on a row does the same.
@@ -83,8 +84,9 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 
 # FILTERING AND EXPORT
 - **In stock only** hides parts with no stock.
-- **Filter** narrows the current results as you type. It matches the supplier, both part numbers, manufacturer and description. It is not case sensitive.
-- **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, In stock only, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
+- **Types…** lists every type of part in the results (e.g. Analogue to Digital Converter, Evaluation Kit, Flip-Flops) with how many parts and which suppliers. Untick the ones you don't want and click **OK** to hide them; tick them again to bring them back. The button shows how many types are hidden, and a new search shows every type again. Each supplier words types its own way (Farnell: Analogue to Digital Converter, Mouser: Analog to Digital Converters - ADC), so similar ones appear separately - click **Type** in the window to sort them together.
+- **Filter** narrows the current results as you type. It matches the supplier, both part numbers, manufacturer, type and description. It is not case sensitive.
+- **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, In stock only, Types…, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
 - **Export CSV…** saves the rows currently shown, including their **#**, product and datasheet links, to a file that opens in Excel.
 
 # SETTINGS
