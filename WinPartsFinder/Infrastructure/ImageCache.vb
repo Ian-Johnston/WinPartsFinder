@@ -3,12 +3,13 @@ Imports System.IO
 Imports System.Net.Http
 
 ''' <summary>
-''' Downloads product photos and keeps 48x48 thumbnails in memory for the session.
+''' Downloads product photos and keeps small (ThumbSize x ThumbSize) thumbnails in memory for the session.
 ''' GetThumbnail must be called on the UI thread; ThumbnailReady is raised there too.
 ''' </summary>
 Public Class ImageCache
 
-    Public Const ThumbSize As Integer = 48
+    ' Thumbnail size in pixels. The photo column width and the results row height follow it.
+    Public Const ThumbSize As Integer = 35
 
     Public Shared ReadOnly NoImage As Image = MakePlaceholder(drawCross:=True)
     Public Shared ReadOnly LoadingImage As Image = MakePlaceholder(drawCross:=False)
@@ -98,8 +99,9 @@ Public Class ImageCache
             If drawCross Then
                 g.SmoothingMode = SmoothingMode.AntiAlias
                 Using p As New Pen(Color.LightGray, 1.5F)
-                    g.DrawLine(p, 12, 12, ThumbSize - 13, ThumbSize - 13)
-                    g.DrawLine(p, ThumbSize - 13, 12, 12, ThumbSize - 13)
+                    Dim m = ThumbSize \ 4 ' margin, so the cross keeps its proportions at any size
+                    g.DrawLine(p, m, m, ThumbSize - 1 - m, ThumbSize - 1 - m)
+                    g.DrawLine(p, ThumbSize - 1 - m, m, m, ThumbSize - 1 - m)
                 End Using
             End If
         End Using
