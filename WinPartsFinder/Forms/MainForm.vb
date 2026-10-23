@@ -1,3 +1,7 @@
+' WinPartsFinder by Ian Johnston
+' VS 2022 VB app for Win10/11
+
+
 Imports System.IO
 Imports System.Reflection
 Imports System.Text
