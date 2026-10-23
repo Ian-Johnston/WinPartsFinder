@@ -18,7 +18,9 @@ Windows 10 / 11 desktop app, written in VB.NET (Visual Studio 2022, .NET Framewo
 | **Mouser** | Live API — stock, prices, lifecycle | Free Mouser **Search API** key |
 | **DigiKey** | Live API — stock, prices, lifecycle | Free DigiKey **Client ID + Client Secret** |
 | **Farnell** (UK) | Live API — stock, prices | Free **element14** API key |
+| **CPC** (UK) | Live API — stock, prices | Same element14 key as Farnell |
 | **Newark** (US) | Live API — stock, prices | Same element14 key as Farnell |
+| **TME** (EU, ships to UK) | Live API — stock, prices | Free TME **Token + Application secret** |
 | **RS Components** | Website link | Nothing — no public search API |
 | **Rapid** | Website link | Nothing — no public search API |
 | **LCSC** | Website link | Nothing — no official public search API |
@@ -30,6 +32,7 @@ A *website link* row opens that supplier's own search results in your browser wi
 ## Features
 
 - **One search, every supplier** — results arrive as each supplier answers.
+- **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS / active only, maker, quantity pricing and max price.
 - **Load more** — fetch the next batch from suppliers that have more (e.g. *50 / 312*).
 - **Part photos** — thumbnails, click for a bigger view.
 - **Click the supplier part number** to open the product page; right-click for the datasheet or to copy part numbers.
@@ -62,10 +65,16 @@ Each user needs their own keys — they're free. The **Get a key** links in Sett
 3. Open the app and copy its **Client ID** and **Client Secret** into Settings.
 4. Choose your DigiKey **site** and **currency** (e.g. UK / GBP).
 
-**element14 (Farnell + Newark)**
+**element14 (Farnell, CPC + Newark)**
 1. Register an application at [partner.element14.com](https://partner.element14.com/).
 2. Tick *Issue a new key for Product Search API*. The **Basic** tier is plenty for one person.
-3. Paste the key into *element14 API key* — it works for both Farnell and Newark.
+3. Paste the key into *element14 API key* — it works for Farnell, CPC and Newark.
+
+**TME** (two websites are involved)
+1. At [developers.tme.eu](https://developers.tme.eu/en) sign up, enter an application name (e.g. *WinPartsFinder*) and click **Create application**. This gives you the **Application secret**.
+2. In another tab, log in to your **shop** account at [www.tme.eu](https://www.tme.eu) (not the developers site) — create a free customer account if you don't have one. Click **User panel → Applications → Register new app** and copy the **temporary token** it shows.
+3. Back on developers.tme.eu, paste it into **Temporary token**, choose Key purpose **To compare distributors offer**, click **Generate new private key**, then **Show private keys**.
+4. Paste that **Token** and the **Application secret** into Settings.
 
 Free tiers allow roughly 1,000 calls a day per supplier; each search, and each *Load more*, is one call.
 

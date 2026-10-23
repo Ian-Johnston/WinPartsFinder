@@ -11,22 +11,26 @@ Public Class AppSettings
     ' Supplier names - also used as dictionary keys in this file.
     Public Const RS As String = "RS Components"
     Public Const Farnell As String = "Farnell"
+    Public Const CPC As String = "CPC"
     Public Const DigiKey As String = "DigiKey"
     Public Const Mouser As String = "Mouser"
     Public Const Newark As String = "Newark"
+    Public Const TME As String = "TME"
     Public Const Rapid As String = "Rapid"
     Public Const LCSC As String = "LCSC"
     Public Const AliExpress As String = "AliExpress"
 
-    Public Shared ReadOnly SupplierOrder As String() = {RS, Farnell, DigiKey, Mouser, Newark, Rapid, LCSC, AliExpress}
+    Public Shared ReadOnly SupplierOrder As String() = {Farnell, CPC, DigiKey, Mouser, Newark, TME, RS, Rapid, LCSC, AliExpress}
 
     ''' <summary>Website search URLs. {0} is replaced by the URL-encoded search text.</summary>
     Public Shared ReadOnly DefaultSearchUrls As New Dictionary(Of String, String) From {
         {RS, "https://uk.rs-online.com/web/c/?searchTerm={0}"},
         {Farnell, "https://uk.farnell.com/search?st={0}"},
+        {CPC, "https://cpc.farnell.com/search?st={0}"},
         {DigiKey, "https://www.digikey.co.uk/en/products/result?keywords={0}"},
         {Mouser, "https://www.mouser.co.uk/c/?q={0}"},
         {Newark, "https://www.newark.com/search?st={0}"},
+        {TME, "https://www.tme.eu/gb/en/katalog/?search={0}"},
         {Rapid, "https://www.rapidonline.com/search?query={0}"},
         {LCSC, "https://www.lcsc.com/search?q={0}"},
         {AliExpress, "https://www.aliexpress.com/wholesale?SearchText={0}"}
@@ -37,17 +41,25 @@ Public Class AppSettings
     <JsonIgnore> Public Property DigiKeyClientId As String = ""
     <JsonIgnore> Public Property DigiKeyClientSecret As String = ""
     <JsonIgnore> Public Property Element14ApiKey As String = ""
+    <JsonIgnore> Public Property TmeToken As String = ""
+    <JsonIgnore> Public Property TmeSecret As String = ""
 
     ' ---- Encrypted copies that are written to disk ----
     Public Property MouserApiKeyEnc As String = ""
     Public Property DigiKeyClientIdEnc As String = ""
     Public Property DigiKeyClientSecretEnc As String = ""
     Public Property Element14ApiKeyEnc As String = ""
+    Public Property TmeTokenEnc As String = ""
+    Public Property TmeSecretEnc As String = ""
 
     ' ---- DigiKey locale ----
     Public Property DigiKeySite As String = "UK"
     Public Property DigiKeyLanguage As String = "en"
     Public Property DigiKeyCurrency As String = "GBP"
+
+    ' ---- TME locale (country decides stock/prices offered; currency of the prices) ----
+    Public Property TmeCountry As String = "GB"
+    Public Property TmeCurrency As String = "GBP"
 
     ' ---- General ----
     Public Property MaxResults As Integer = 25
@@ -63,6 +75,8 @@ Public Class AppSettings
     Public Property EnabledSuppliers As New Dictionary(Of String, Boolean)
     Public Property SearchUrls As New Dictionary(Of String, String)
     Public Property RecentSearches As New List(Of String)
+    ''' <summary>The Advanced search window reopens with these.</summary>
+    Public Property LastAdvanced As New AdvancedSearchOptions
 
     Public Shared ReadOnly Property FilePath As String =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinPartsFinder", "settings.json")
@@ -123,6 +137,8 @@ Public Class AppSettings
         s.DigiKeyClientId = Unprotect(s.DigiKeyClientIdEnc)
         s.DigiKeyClientSecret = Unprotect(s.DigiKeyClientSecretEnc)
         s.Element14ApiKey = Unprotect(s.Element14ApiKeyEnc)
+        s.TmeToken = Unprotect(s.TmeTokenEnc)
+        s.TmeSecret = Unprotect(s.TmeSecretEnc)
         Return s
     End Function
 
@@ -131,6 +147,8 @@ Public Class AppSettings
         DigiKeyClientIdEnc = Protect(DigiKeyClientId)
         DigiKeyClientSecretEnc = Protect(DigiKeyClientSecret)
         Element14ApiKeyEnc = Protect(Element14ApiKey)
+        TmeTokenEnc = Protect(TmeToken)
+        TmeSecretEnc = Protect(TmeSecret)
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath))
         File.WriteAllText(FilePath, JsonConvert.SerializeObject(Me, Formatting.Indented))
     End Sub

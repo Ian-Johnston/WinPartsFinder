@@ -9,7 +9,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.001"
+    Public Const AppVersion As String = "V1.002"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -514,11 +514,58 @@ Public Class MainForm
 #Region "Searching"
 
     Private Async Sub btnSearch_Click(sender As Object, e As EventArgs) Handles btnSearch.Click
-        Dim query = txtSearch.Text.Trim()
+        ' A normal search: just the toolbar settings, no Advanced filters.
+        Await RunSearchAsync(New AdvancedSearchOptions With {
+            .Query = txtSearch.Text.Trim(),
+            .Mode = If(cboMode.SelectedIndex = 1, SearchMode.PartNumber, SearchMode.Keyword),
+            .MaxResults = CInt(nudMax.Value)})
+    End Sub
+
+    Private Async Sub btnAdvanced_Click(sender As Object, e As EventArgs) Handles btnAdvanced.Click
+        If _busy Then Return
+        ' Open with last time's choices, but today's search text, batch size and ticked suppliers.
+        Dim start = _settings.LastAdvanced
+        If txtSearch.Text.Trim().Length > 0 Then start.Query = txtSearch.Text.Trim()
+        start.MaxResults = CInt(nudMax.Value)
+        start.Suppliers = lvSuppliers.Items.Cast(Of ListViewItem)().Where(Function(i) i.Checked).Select(Function(i) i.Text).ToList()
+
+        Dim o As AdvancedSearchOptions
+        Using f As New AdvancedSearchForm(start, _suppliers.Select(Function(s) s.Name).ToList())
+            If f.ShowDialog(Me) <> DialogResult.OK Then Return
+            o = f.Options
+        End Using
+        _settings.LastAdvanced = o
+        txtSearch.Text = o.Query
+        nudMax.Value = Math.Max(nudMax.Minimum, Math.Min(nudMax.Maximum, o.MaxResults))
+
+        ' Make the supplier list match the window (without the "ticked after a search" auto-search).
+        _loading = True
+        For Each item As ListViewItem In lvSuppliers.Items
+            item.Checked = o.Suppliers.Contains(item.Text)
+            _settings.EnabledSuppliers(item.Text) = item.Checked
+        Next
+        _loading = False
+
+        Await RunSearchAsync(o)
+    End Sub
+
+    ' Ctrl+F opens Advanced search.
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = (Keys.Control Or Keys.F) Then
+            btnAdvanced.PerformClick()
+            Return True
+        End If
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
+
+    ''' <summary>Runs a search (normal or Advanced) across the ticked suppliers.</summary>
+    Private Async Function RunSearchAsync(opts As AdvancedSearchOptions) As Task
+        Dim query = opts.Query
         If query.Length = 0 Then
             txtSearch.Select()
             Return
         End If
+        If _busy Then Return
         Dim selected = lvSuppliers.Items.Cast(Of ListViewItem)().Where(Function(i) i.Checked).ToList()
         If selected.Count = 0 Then
             MessageBox.Show(Me, "Tick at least one supplier on the left.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -539,18 +586,29 @@ Public Class MainForm
             item.SubItems(SubTime).Text = ""
         Next
 
+        _active = opts
+        _advancedHidden = 0
+        _codeMpn = ""
+        ApplyFilter()       ' supplier ticks may have just changed
+        UpdatePriceHeader() ' "Price (25)" when a quantity is set
+
         _cts?.Dispose()
         _cts = New CancellationTokenSource()
         Dim ct = _cts.Token
-        Dim mode = If(cboMode.SelectedIndex = 1, SearchMode.PartNumber, SearchMode.Keyword)
-        Dim max = CInt(nudMax.Value)
+        Dim max = opts.MaxResults
+        Dim filters = opts.SupplierFilters()
         Dim sw = Stopwatch.StartNew()
-        _lastSearch = (query, mode, max)
+        Dim advanced = opts.Describe()
 
         SetBusy(True)
-        SetStatus($"Searching {selected.Count} supplier(s) for ""{query}""…")
+        SetStatus($"Searching {selected.Count} supplier(s) for ""{query}""" & If(advanced.Length > 0, $" ({advanced})", "") & "…")
+        Dim codeNote = ""
         Try
-            Await Task.WhenAll(selected.Select(Function(i) SearchOneAsync(i, query, mode, max, ct)))
+            If opts.Mode = SearchMode.SupplierCode Then
+                codeNote = Await SearchByOrderCodeAsync(selected, query, max, filters, ct)
+            Else
+                Await Task.WhenAll(selected.Select(Function(i) SearchOneAsync(i, query, opts.Mode, max, filters, ct)))
+            End If
         Finally
             SetBusy(False)
         End Try
@@ -558,15 +616,61 @@ Public Class MainForm
 
         Dim apiHits = _table.Rows.Cast(Of DataRow)().Count(Function(r) Not CBool(r("LinkOnly")))
         Dim more = LoadMoreCandidates().Select(Function(i) i.Text).ToList()
-        SetStatus($"""{query}"": {apiHits} part(s) found in {sw.Elapsed.TotalSeconds:0.0}s. " &
+        SetStatus(If(codeNote.Length > 0, codeNote & " ", "") &
+                  $"""{query}"": {apiHits} part(s) found in {sw.Elapsed.TotalSeconds:0.0}s. " &
+                  If(advanced.Length > 0, $"Advanced: {advanced}" & If(_advancedHidden > 0, $" ({_advancedHidden} left out)", "") & ". ", "") &
                   If(more.Count > 0, $"More available from {String.Join(", ", more)} - click Load more. ", "") &
                   "Double-click a row to open it in your browser.")
+    End Function
+
+    ''' <summary>
+    ''' Order-code search: look the code up at every API supplier (it belongs to one of them), take the
+    ''' manufacturer part number from the match, then search the other suppliers for that exact part.
+    ''' Returns a note for the status bar.
+    ''' </summary>
+    Private Async Function SearchByOrderCodeAsync(selected As List(Of ListViewItem), code As String, max As Integer,
+                                                  filters As SupplierFilters, ct As CancellationToken) As Task(Of String)
+        Dim apiItems = selected.Where(Function(i) DirectCast(i.Tag, Supplier).IsConfigured).ToList()
+        Await Task.WhenAll(apiItems.Select(Function(i) SearchOneAsync(i, code, SearchMode.SupplierCode, max, filters, ct)))
+
+        Dim hit = _table.Rows.Cast(Of DataRow)().FirstOrDefault(
+            Function(r) Not CBool(r("LinkOnly")) AndAlso Convert.ToString(r("MfrPartNo")).Length > 0)
+        If hit Is Nothing Then
+            ' Nobody recognised it: give the website-link suppliers the code as it is.
+            For Each i In selected.Except(apiItems)
+                Await SearchOneAsync(i, code, SearchMode.SupplierCode, max, filters, ct)
+            Next
+            Return $"No supplier recognised order code ""{code}""."
+        End If
+
+        Dim mpn = Convert.ToString(hit("MfrPartNo"))
+        Dim foundAt = Convert.ToString(hit("Supplier"))
+        _codeMpn = mpn
+        ' Everyone who didn't recognise the code (including website-link suppliers) gets the part number instead.
+        Dim others = selected.Where(Function(i)
+                                        Dim st As PagingState = Nothing
+                                        Return Not _paging.TryGetValue(DirectCast(i.Tag, Supplier), st) OrElse st.RowCount = 0
+                                    End Function).ToList()
+        SetStatus($"Order code {code} is {mpn} at {foundAt} - now searching the other suppliers for {mpn}…")
+        Await Task.WhenAll(others.Select(Function(i) SearchOneAsync(i, mpn, SearchMode.ExactPartNumber, max, filters, ct)))
+        Return $"Order code {code} is {mpn} ({foundAt}); the other suppliers were searched for {mpn}."
+    End Function
+
+    ''' <summary>The Price column shows the price at the Advanced search quantity, when one is set.</summary>
+    Private Sub UpdatePriceHeader()
+        Dim col = dgvResults.Columns("UnitPrice")
+        Dim qty = If(_active Is Nothing, 0, _active.Quantity)
+        col.HeaderText = If(qty > 0, $"Price ({qty:#,##0})", "Price (1)")
+        col.ToolTipText = If(qty > 0, $"Price each when buying {qty:#,##0} (from the price breaks).",
+                             "Price each at the lowest price break (usually qty 1).") & vbCrLf & "Click to sort."
     End Sub
 
     ''' <summary>Where a supplier's results got to, so Load more can fetch the next page.</summary>
     Private Class PagingState
         Public Query As String
         Public Mode As SearchMode
+        Public Filters As SupplierFilters ' in stock / RoHS, applied by the supplier
+        Public Filtered As Integer        ' parts left out by Advanced search filters
         Public NextOffset As Integer      ' where the next page starts (in the supplier's own numbering)
         Public Total As Integer?          ' total matches the supplier reported
         Public LastPageFull As Boolean    ' fallback when no total is given
@@ -584,14 +688,17 @@ Public Class MainForm
     Private ReadOnly _paging As New Dictionary(Of Supplier, PagingState)
     Private _busy As Boolean
 
-    ' The current search, so a supplier ticked afterwards can be searched on its own.
-    Private _lastSearch As (Query As String, Mode As SearchMode, Max As Integer)
+    ' The current search (normal or Advanced), so a supplier ticked afterwards can be searched on its own,
+    ' and so Load more applies the same filters.
+    Private _active As AdvancedSearchOptions
+    Private _advancedHidden As Integer   ' parts left out by Advanced filters in this search
+    Private _codeMpn As String = ""      ' order-code search: the part number the code turned out to be
     ' Names of suppliers already searched (or given a link row) in the current search.
     Private ReadOnly _searched As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
 
     ''' <summary>Runs one supplier's first page. Called on the UI thread, so it's safe to touch controls after each Await.</summary>
     Private Async Function SearchOneAsync(item As ListViewItem, query As String, mode As SearchMode,
-                                          max As Integer, ct As CancellationToken,
+                                          max As Integer, filters As SupplierFilters, ct As CancellationToken,
                                           Optional added As List(Of DataRow) = Nothing) As Task
         Dim s = DirectCast(item.Tag, Supplier)
         If added Is Nothing Then added = New List(Of DataRow)
@@ -601,7 +708,7 @@ Public Class MainForm
             item.SubItems(SubStatus).Text = "Link added"
             Return
         End If
-        Dim st As New PagingState With {.Query = query, .Mode = mode}
+        Dim st As New PagingState With {.Query = query, .Mode = mode, .Filters = filters}
         _paging(s) = st
         Await FetchPageAsync(item, st, max, ct, added)
     End Function
@@ -614,9 +721,12 @@ Public Class MainForm
         Dim added As New List(Of DataRow)
         _batch += 1 ' goes at the end, like Load more
         SetBusy(True)
-        SetStatus($"Searching {s.Name} for ""{_lastSearch.Query}""…")
+        ' After an order-code search, search the newcomer for the part number the code turned out to be.
+        Dim q = If(_active.Mode = SearchMode.SupplierCode AndAlso _codeMpn.Length > 0, _codeMpn, _active.Query)
+        Dim m = If(_active.Mode = SearchMode.SupplierCode AndAlso _codeMpn.Length > 0, SearchMode.ExactPartNumber, _active.Mode)
+        SetStatus($"Searching {s.Name} for ""{q}""…")
         Try
-            Await SearchOneAsync(item, _lastSearch.Query, _lastSearch.Mode, _lastSearch.Max, _cts.Token, added)
+            Await SearchOneAsync(item, q, m, _active.MaxResults, _active.SupplierFilters(), _cts.Token, added)
         Finally
             SetBusy(False)
         End Try
@@ -637,7 +747,7 @@ Public Class MainForm
         item.ToolTipText = ""
         Dim sw = Stopwatch.StartNew()
         Try
-            Dim page = Await s.SearchAsync(st.Query, st.Mode, pageSize, st.NextOffset, ct)
+            Dim page = Await s.SearchAsync(st.Query, st.Mode, pageSize, st.NextOffset, st.Filters, ct)
             st.NextOffset += pageSize
             st.Total = page.TotalAvailable
             st.LastPageFull = page.Parts.Count >= pageSize
@@ -652,6 +762,15 @@ Public Class MainForm
                     st.Duplicates += 1
                     Continue For
                 End If
+                ' Advanced search: price at the chosen quantity, then the "only show" filters.
+                If _active IsNot Nothing Then
+                    If _active.Quantity > 0 Then p.UnitPrice = AdvancedSearchOptions.PriceAt(p, _active.Quantity)
+                    If Not _active.Matches(p) Then
+                        st.Filtered += 1
+                        _advancedHidden += 1
+                        Continue For
+                    End If
+                End If
                 st.RowCount += 1
                 added.Add(AddResult(p, SeqFor(s, st.RowCount)))
             Next
@@ -662,6 +781,7 @@ Public Class MainForm
             item.ToolTipText = $"{s.Name}: {st.RowCount} result(s)" &
                                If(st.Total.HasValue, $" of {st.Total} found.", ".") &
                                If(st.Duplicates > 0, $" {st.Duplicates} repeated by {s.Name} and skipped.", "") &
+                               If(st.Filtered > 0, $" {st.Filtered} left out by the Advanced search filters.", "") &
                                If(HasMore(s), " Right-click > Load more for the next batch.", "")
             If Not firstPage AndAlso st.RowCount = before Then item.SubItems(SubStatus).Text = "No more"
         Catch ex As OperationCanceledException When ct.IsCancellationRequested
@@ -755,6 +875,7 @@ Public Class MainForm
     Private Sub SetBusy(busy As Boolean)
         _busy = busy
         btnSearch.Enabled = Not busy
+        btnAdvanced.Enabled = Not busy
         btnCancel.Enabled = busy
         btnSettings.Enabled = Not busy
         UseWaitCursor = busy
@@ -947,7 +1068,7 @@ Public Class MainForm
         ApplyFilter()
         UpdateLoadMoreButton()
 
-        Dim searchDone = Not String.IsNullOrEmpty(_lastSearch.Query)
+        Dim searchDone = _active IsNot Nothing AndAlso Not String.IsNullOrEmpty(_active.Query)
         If Not e.Item.Checked OrElse Not searchDone OrElse _searched.Contains(s.Name) Then Return
         If _busy Then
             ' Don't start a second search on top of one that's running.

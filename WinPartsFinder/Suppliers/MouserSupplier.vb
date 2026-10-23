@@ -24,28 +24,35 @@ Public Class MouserSupplier
 
     ' The part-number endpoint has no paging; keyword search does (startingRecord).
     Public Overrides Function CanLoadMore(mode As SearchMode) As Boolean
+        ' (Only keyword search pages.)
         Return mode = SearchMode.Keyword
     End Function
 
     Public Overrides Async Function SearchAsync(query As String, mode As SearchMode, maxResults As Integer, offset As Integer,
-                                                ct As CancellationToken) As Task(Of SearchPage)
+                                                filters As SupplierFilters, ct As CancellationToken) As Task(Of SearchPage)
+        filters = If(filters, SupplierFilters.None)
         Dim endpoint As String
         Dim payload As Object
-        If mode = SearchMode.PartNumber Then
-            endpoint = "partnumber"
-            payload = New With {
-                .SearchByPartRequest = New With {.mouserPartNumber = query, .partSearchOptions = "None"}
-            }
-        Else
+        If mode = SearchMode.Keyword Then
+            ' Mouser filters keyword searches itself: None / Rohs / InStock / RohsAndInStock.
+            Dim options = If(filters.InStockOnly AndAlso filters.RohsOnly, "RohsAndInStock",
+                          If(filters.InStockOnly, "InStock", If(filters.RohsOnly, "Rohs", "None")))
             endpoint = "keyword"
             payload = New With {
                 .SearchByKeywordRequest = New With {
                     .keyword = query,
                     .records = Math.Min(maxResults, 50),
                     .startingRecord = offset,
-                    .searchOptions = "None",
+                    .searchOptions = options,
                     .searchWithYourSignUpLanguage = "false"
                 }
+            }
+        Else
+            ' Part number, exact part number or Mouser order code ("595-LM358DR") - the part-number endpoint.
+            Dim exact = mode = SearchMode.ExactPartNumber OrElse mode = SearchMode.SupplierCode
+            endpoint = "partnumber"
+            payload = New With {
+                .SearchByPartRequest = New With {.mouserPartNumber = query, .partSearchOptions = If(exact, "Exact", "None")}
             }
         End If
 
@@ -57,6 +64,16 @@ Public Class MouserSupplier
             Dim root = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
             Dim parts = Parse(root, maxResults)
             Dim total = ToNullableInt(root.GetNum("SearchResults", "NumberOfResult"))
+            If mode <> SearchMode.Keyword Then
+                ' The part-number endpoint can't filter, so do it here.
+                If filters.InStockOnly Then parts = parts.Where(Function(p) p.Stock.GetValueOrDefault() > 0).ToList()
+                If mode = SearchMode.ExactPartNumber Then
+                    parts = parts.Where(Function(p) SamePartNumber(p.ManufacturerPartNumber, query)).ToList()
+                ElseIf mode = SearchMode.SupplierCode Then
+                    parts = parts.Where(Function(p) SamePartNumber(p.SupplierPartNumber, query)).ToList()
+                End If
+                total = parts.Count
+            End If
             Return New SearchPage(parts, total)
         End Using
     End Function

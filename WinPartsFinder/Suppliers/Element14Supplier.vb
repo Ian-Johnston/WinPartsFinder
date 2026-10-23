@@ -33,14 +33,22 @@ Public Class Element14Supplier
     End Property
 
     Public Overrides Async Function SearchAsync(query As String, mode As SearchMode, maxResults As Integer, offset As Integer,
-                                                ct As CancellationToken) As Task(Of SearchPage)
-        Dim term = If(mode = SearchMode.PartNumber, "manuPartNum:", "any:") & query
+                                                filters As SupplierFilters, ct As CancellationToken) As Task(Of SearchPage)
+        filters = If(filters, SupplierFilters.None)
+        ' any: = keyword, manuPartNum: = manufacturer part no., id: = Farnell/CPC/Newark order code
+        Dim prefix = If(mode = SearchMode.Keyword, "any:", If(mode = SearchMode.SupplierCode, "id:", "manuPartNum:"))
+        Dim term = prefix & query
+        ' element14 filters on its side: resultsSettings.refinements.filters=inStock,rohsCompliant
+        Dim refine As New List(Of String)
+        If filters.InStockOnly Then refine.Add("inStock")
+        If filters.RohsOnly Then refine.Add("rohsCompliant")
         ' (The API accepts at least 100 per request - tested - but 50 keeps it in step with the others.)
         Dim url = BaseUrl &
             "?term=" & Uri.EscapeDataString(term) &
             "&storeInfo.id=" & _storeId &
             "&resultsSettings.offset=" & offset.ToString() &
             "&resultsSettings.numberOfResults=" & Math.Min(maxResults, 50).ToString() &
+            If(refine.Count > 0, "&resultsSettings.refinements.filters=" & String.Join(",", refine), "") &
             "&resultsSettings.responseGroup=large" &
             "&callInfo.responseDataFormat=json" &
             "&callInfo.apiKey=" & Uri.EscapeDataString(_apiKey)
@@ -51,7 +59,15 @@ Public Class Element14Supplier
             If wait > TimeSpan.Zero Then Await Task.Delay(wait, ct).ConfigureAwait(False)
             Try
                 Using req As New HttpRequestMessage(HttpMethod.Get, url)
-                    Return Parse(Await SendForJsonAsync(req, ct).ConfigureAwait(False))
+                    Dim page = Parse(Await SendForJsonAsync(req, ct).ConfigureAwait(False))
+                    If mode = SearchMode.ExactPartNumber Then
+                        page = New SearchPage(page.Parts.Where(Function(p) SamePartNumber(p.ManufacturerPartNumber, query)).ToList(), Nothing)
+                        page.TotalAvailable = page.Parts.Count
+                    End If
+                    If filters.InStockOnly AndAlso mode <> SearchMode.Keyword Then
+                        page.Parts = page.Parts.Where(Function(p) p.Stock.GetValueOrDefault() > 0).ToList()
+                    End If
+                    Return page
                 End Using
             Finally
                 _lastCallUtc = DateTime.UtcNow

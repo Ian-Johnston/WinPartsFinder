@@ -31,6 +31,7 @@ Partial Class MainForm
         lblMax = New Label()
         nudMax = New NumericUpDown()
         btnSearch = New Button()
+        btnAdvanced = New Button()
         btnCancel = New Button()
         btnLoadMore = New Button()
         chkInStock = New CheckBox()
@@ -111,6 +112,7 @@ Partial Class MainForm
         flpTop.Controls.Add(lblMax)
         flpTop.Controls.Add(nudMax)
         flpTop.Controls.Add(btnSearch)
+        flpTop.Controls.Add(btnAdvanced)
         flpTop.Controls.Add(btnCancel)
         flpTop.Controls.Add(btnLoadMore)
         flpTop.Controls.Add(chkInStock)
@@ -179,6 +181,14 @@ Partial Class MainForm
         btnSearch.TabIndex = 5
         btnSearch.Text = "&Search"
         btnSearch.UseVisualStyleBackColor = True
+        '
+        'btnAdvanced
+        '
+        btnAdvanced.Name = "btnAdvanced"
+        btnAdvanced.Size = New Size(85, 28)
+        btnAdvanced.TabIndex = 5
+        btnAdvanced.Text = "&Advanced…"
+        btnAdvanced.UseVisualStyleBackColor = True
         '
         'btnCancel
         '
@@ -482,6 +492,7 @@ Partial Class MainForm
         tipMain.SetToolTip(cboMode, "Keyword: searches descriptions and part numbers." & vbCrLf & "Manufacturer part no.: looks for parts whose manufacturer part number starts with what you typed.")
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")
+        tipMain.SetToolTip(btnAdvanced, "Advanced search (Ctrl+F): exact part number, supplier order code," & vbCrLf & "RoHS, active parts, maker, quantity pricing, max price…")
         tipMain.SetToolTip(btnCancel, "Stop any searches still running.")
         tipMain.SetToolTip(btnLoadMore, "Fetch the next batch (Max/supp.) from every ticked supplier that has more - see Hits, e.g. 50 / 312." & vbCrLf & "Uses one API call per supplier. New rows are added at the end and selected - click the Supplier header to group them." & vbCrLf & "Right-click a supplier to load more from just that one.")
         tipMain.SetToolTip(chkInStock, "Hide parts with no stock. Website-link rows always stay.")
@@ -531,6 +542,7 @@ Partial Class MainForm
     Friend WithEvents lblMax As Label
     Friend WithEvents nudMax As NumericUpDown
     Friend WithEvents btnSearch As Button
+    Friend WithEvents btnAdvanced As Button
     Friend WithEvents btnCancel As Button
     Friend WithEvents btnLoadMore As Button
     Friend WithEvents chkInStock As CheckBox

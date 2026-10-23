@@ -16,10 +16,11 @@ WinPartsFinder searches several component suppliers at once and puts stock, pric
 - Results arrive from each supplier as soon as it answers. Click any column header to sort, e.g. by Price or Stock.
 
 # API KEYS
-Mouser, DigiKey and element14 (Farnell + Newark) have free APIs. Each user needs their own keys. Links to each sign-up page are in Settings.
+Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs. Each user needs their own keys. Links to each sign-up page are in Settings.
 - **Mouser:** sign up at the Mouser API Hub for a **Search API** key.
 - **DigiKey:** at developer.digikey.com create an Organization, then a **Production App** with **ProductInformation V4** selected. The OAuth Callback can be https://localhost. Copy the Client ID and Client Secret.
-- **element14:** register an application at partner.element14.com. The **Basic** tier is plenty. One key covers both Farnell and Newark.
+- **element14:** register an application at partner.element14.com. The **Basic** tier is plenty. One key covers Farnell, CPC and Newark.
+- **TME:** this takes two websites. (1) At developers.tme.eu sign up, enter an application name and click **Create application** - that gives the **Application secret**. (2) In another tab log in to your shop account at **www.tme.eu** (not the developers site), click **User panel > Applications > Register new app** and copy the **temporary token** it shows. (3) Back on developers.tme.eu paste it into **Temporary token**, choose Key purpose **To compare distributors offer**, click **Generate new private key**, then **Show private keys**. Enter that **Token** and the **Application secret** in Settings.
 Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder\settings.json. They are never stored in the program or its source code.
 
 # SEARCHING
@@ -27,6 +28,19 @@ Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder
 - **Max/supp.** is how many results are fetched from each supplier per search, up to 50. Suppliers don't send more than 50 at a time - use **Load more** for the next batch.
 - **Cancel** stops any searches still running.
 - Previous searches drop down as you type in the Search box.
+
+# ADVANCED SEARCH
+Click **Advanced…** next to Search, or press **Ctrl+F**. The window remembers your choices from last time. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
+- **Search type:** **Keyword**; **Manufacturer part no. (starts with)**; **Exact manufacturer part no.** (only parts whose number matches exactly, ignoring spaces); or **Supplier order code**, e.g. a Farnell 3117070 or Mouser 595-LM358DR. A code belongs to one supplier: WinPartsFinder finds it there, reads the manufacturer part number, then searches every other ticked supplier for that exact part.
+- **In stock only** and **RoHS only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box.
+- **Active parts only** hides parts marked obsolete, discontinued, end of life or not recommended for new designs. Parts with no status shown are kept.
+- **Manufacturer contains**, e.g. Texas, keeps only that maker's parts.
+- **Description also contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example.
+- **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
+- **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency.
+- **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
+- The options from **Active parts only** down are applied by WinPartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
+- **Clear** resets everything except the search text. **Cancel** closes the window without searching.
 
 # THE SUPPLIER LIST
 - Tick the suppliers to search. Your choice is remembered.
@@ -41,7 +55,7 @@ Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder
 # THE RESULTS
 - **#** numbers each row so you can note a part and find it again. Numbers are given when a search finishes and never change - removing, filtering or sorting rows leaves them as they are. Click **#** to sort by it. A new search starts again from 1; Load more carries on from the last number. Website-link rows aren't parts, so they have no number - the last # always matches **Total parts** in the bottom-right corner.
 - **Stock** is green when in stock. Rows with no stock are greyed out.
-- **Price (1)** is the price each at the lowest price break, usually quantity 1. **Price breaks** lists every break as quantity+ price.
+- **Price (1)** is the price each at the lowest price break, usually quantity 1 (after an Advanced search with a quantity, the price at that quantity). **Price breaks** lists every break as quantity+ price.
 - **MOQ** is the minimum order quantity. **Availability / lead** shows packaging and lead time. **Status** shows lifecycle, e.g. Obsolete.
 - Blue italic rows are **website links** for suppliers without an API (RS, Rapid, LCSC, AliExpress and any you add). Click them to see results on that website.
 - Click a **Supplier part no.** to open the product page. Double-clicking anywhere else on a row does the same.
@@ -57,6 +71,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - New rows are added at the end (or into place if you've sorted by a column), and are selected so you can spot them. Click the **Supplier** header to put each supplier's rows together.
 - Each Load more uses one API call per supplier. The batch size is the **Max/supp.** number.
 - Mouser can't load more when searching by **Manufacturer part no.** A new search starts again from the first batch.
+- Advanced searches by **Exact manufacturer part no.** or **Supplier order code** never need Load more: each supplier sends just the matching part(s).
 - If what you want isn't in the first batch, a more exact search usually works better than loading more, e.g. add the package: LM358 SOIC.
 
 # RIGHT-CLICK MENU
@@ -83,7 +98,8 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 # SUPPLIER NOTES
 - **Mouser** prices are in the currency of the account your key was registered with.
 - **DigiKey** shows the packaging with the smallest minimum order, usually Cut Tape, which suits repairs best.
-- **Farnell** prices are in GBP and **Newark** in USD. The two are searched one after the other to stay within element14's limit of 2 calls per second.
+- **Farnell** and **CPC** prices are in GBP and **Newark** in USD. They are searched one after the other to stay within element14's limit of 2 calls per second.
+- **TME** shows UK stock and prices in GBP. Prices are those of your own tme.eu account (net, ex VAT). Each search uses a few TME calls (log in, search, prices).
 - **RS Components**, **Rapid** and **LCSC** have no public search API, so they appear as website links.
 - **AliExpress** also appears as a website link. Its only API is for registered affiliates, so it isn't built in.
 - Free API tiers allow roughly 1000 calls a day per supplier. Each search, and each Load more, is one call. Mouser also allows 30 calls a minute.

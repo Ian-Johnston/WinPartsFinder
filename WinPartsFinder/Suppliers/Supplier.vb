@@ -18,15 +18,21 @@ Public MustInherit Class Supplier
     ''' <summary>Short text for the supplier list, e.g. "API" or "Web link".</summary>
     Public MustOverride ReadOnly Property ModeText As String
 
-    ''' <summary>Fetches one page of results, starting at <paramref name="offset"/> (0 = first page).</summary>
+    ''' <summary>Fetches one page of results, starting at <paramref name="offset"/> (0 = first page).
+    ''' <paramref name="filters"/> are applied by the supplier where its API can (in stock, RoHS).</summary>
     Public Overridable Function SearchAsync(query As String, mode As SearchMode, maxResults As Integer, offset As Integer,
-                                            ct As CancellationToken) As Task(Of SearchPage)
+                                            filters As SupplierFilters, ct As CancellationToken) As Task(Of SearchPage)
         Throw New NotSupportedException($"{Name} has no API search.")
     End Function
 
     ''' <summary>Whether "Load more" (next page) works for this kind of search.</summary>
     Public Overridable Function CanLoadMore(mode As SearchMode) As Boolean
         Return False
+    End Function
+
+    ''' <summary>For exact / code searches: same part number, ignoring case and spaces.</summary>
+    Public Shared Function SamePartNumber(a As String, b As String) As Boolean
+        Return String.Equals(If(a, "").Replace(" ", "").Trim(), If(b, "").Replace(" ", "").Trim(), StringComparison.OrdinalIgnoreCase)
     End Function
 
     Public Function GetSearchUrl(query As String) As String
@@ -81,8 +87,9 @@ Public MustInherit Class ApiSupplier
         End Get
     End Property
 
+    ' Exact and order-code searches return a handful of parts, so there's no "next page".
     Public Overrides Function CanLoadMore(mode As SearchMode) As Boolean
-        Return True
+        Return mode = SearchMode.Keyword OrElse mode = SearchMode.PartNumber
     End Function
 
 End Class
@@ -106,11 +113,14 @@ Public Module SupplierFactory
             {AppSettings.RS, New WebLinkSupplier(AppSettings.RS, s.GetSearchUrl(AppSettings.RS))},
             {AppSettings.Farnell, New Element14Supplier(AppSettings.Farnell, "uk.farnell.com", "GBP",
                                                         s.Element14ApiKey, s.GetSearchUrl(AppSettings.Farnell))},
+            {AppSettings.CPC, New Element14Supplier(AppSettings.CPC, "cpc.farnell.com", "GBP",
+                                                    s.Element14ApiKey, s.GetSearchUrl(AppSettings.CPC))},
             {AppSettings.DigiKey, New DigiKeySupplier(s.DigiKeyClientId, s.DigiKeyClientSecret, s.DigiKeySite,
                                                       s.DigiKeyLanguage, s.DigiKeyCurrency, s.GetSearchUrl(AppSettings.DigiKey))},
             {AppSettings.Mouser, New MouserSupplier(s.MouserApiKey, s.GetSearchUrl(AppSettings.Mouser))},
             {AppSettings.Newark, New Element14Supplier(AppSettings.Newark, "www.newark.com", "USD",
                                                        s.Element14ApiKey, s.GetSearchUrl(AppSettings.Newark))},
+            {AppSettings.TME, New TmeSupplier(s.TmeToken, s.TmeSecret, s.TmeCountry, s.TmeCurrency, s.GetSearchUrl(AppSettings.TME))},
             {AppSettings.Rapid, New WebLinkSupplier(AppSettings.Rapid, s.GetSearchUrl(AppSettings.Rapid))},
             {AppSettings.LCSC, New WebLinkSupplier(AppSettings.LCSC, s.GetSearchUrl(AppSettings.LCSC))},
             {AppSettings.AliExpress, New WebLinkSupplier(AppSettings.AliExpress, s.GetSearchUrl(AppSettings.AliExpress))}

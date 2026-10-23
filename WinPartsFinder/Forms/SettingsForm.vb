@@ -30,6 +30,8 @@ Public Class SettingsForm
         cboDkSite.Text = _settings.DigiKeySite
         cboDkCurrency.Text = _settings.DigiKeyCurrency
         txtE14Key.Text = _settings.Element14ApiKey
+        txtTmeToken.Text = _settings.TmeToken
+        txtTmeSecret.Text = _settings.TmeSecret
         chkShowThumbnails.Checked = _settings.ShowThumbnails
         chkDarkMode.Checked = _settings.DarkMode
         LoadUrls(Function(name) _settings.GetSearchUrl(name), _settings.CustomSuppliers)
@@ -141,6 +143,8 @@ Public Class SettingsForm
         _settings.DigiKeySite = cboDkSite.Text.Trim().ToUpperInvariant()
         _settings.DigiKeyCurrency = cboDkCurrency.Text.Trim().ToUpperInvariant()
         _settings.Element14ApiKey = txtE14Key.Text.Trim()
+        _settings.TmeToken = txtTmeToken.Text.Trim()
+        _settings.TmeSecret = txtTmeSecret.Text.Trim()
         _settings.ShowThumbnails = chkShowThumbnails.Checked
         _settings.DarkMode = chkDarkMode.Checked
 
@@ -171,7 +175,7 @@ Public Class SettingsForm
     End Sub
 
     Private Sub chkShowKeys_CheckedChanged(sender As Object, e As EventArgs) Handles chkShowKeys.CheckedChanged
-        For Each tb In {txtMouserKey, txtDkClientId, txtDkSecret, txtE14Key}
+        For Each tb In {txtMouserKey, txtDkClientId, txtDkSecret, txtE14Key, txtTmeToken, txtTmeSecret}
             tb.UseSystemPasswordChar = Not chkShowKeys.Checked
         Next
     End Sub
@@ -188,7 +192,7 @@ Public Class SettingsForm
     End Sub
 
     Private Sub KeyLink_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) _
-        Handles lnkMouser.LinkClicked, lnkDigiKey.LinkClicked, lnkE14.LinkClicked
+        Handles lnkMouser.LinkClicked, lnkDigiKey.LinkClicked, lnkE14.LinkClicked, lnkTme.LinkClicked
         WebHelper.OpenInBrowser(CStr(DirectCast(sender, LinkLabel).Tag))
     End Sub
 

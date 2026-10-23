@@ -41,6 +41,11 @@ Partial Class SettingsForm
         lblE14 = New Label()
         txtE14Key = New TextBox()
         lnkE14 = New LinkLabel()
+        lblTmeToken = New Label()
+        txtTmeToken = New TextBox()
+        lnkTme = New LinkLabel()
+        lblTmeSecret = New Label()
+        txtTmeSecret = New TextBox()
         lblUrls = New Label()
         dgvUrls = New DataGridView()
         colUrlSupplier = New DataGridViewTextBoxColumn()
@@ -82,14 +87,21 @@ Partial Class SettingsForm
         tlpMain.Controls.Add(lblE14, 0, 4)
         tlpMain.Controls.Add(txtE14Key, 1, 4)
         tlpMain.Controls.Add(lnkE14, 2, 4)
-        tlpMain.Controls.Add(lblUrls, 0, 5)
-        tlpMain.Controls.Add(dgvUrls, 0, 6)
-        tlpMain.Controls.Add(flpUrlButtons, 0, 7)
+        tlpMain.Controls.Add(lblTmeToken, 0, 5)
+        tlpMain.Controls.Add(txtTmeToken, 1, 5)
+        tlpMain.Controls.Add(lnkTme, 2, 5)
+        tlpMain.Controls.Add(lblTmeSecret, 0, 6)
+        tlpMain.Controls.Add(txtTmeSecret, 1, 6)
+        tlpMain.Controls.Add(lblUrls, 0, 7)
+        tlpMain.Controls.Add(dgvUrls, 0, 8)
+        tlpMain.Controls.Add(flpUrlButtons, 0, 9)
         tlpMain.Dock = DockStyle.Fill
         tlpMain.Location = New Point(0, 0)
         tlpMain.Name = "tlpMain"
         tlpMain.Padding = New Padding(8)
-        tlpMain.RowCount = 8
+        tlpMain.RowCount = 10
+        tlpMain.RowStyles.Add(New RowStyle())
+        tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
@@ -204,7 +216,7 @@ Partial Class SettingsForm
         lblE14.Anchor = AnchorStyles.Left
         lblE14.AutoSize = True
         lblE14.Name = "lblE14"
-        lblE14.Text = "element14 API key" & vbCrLf & "(Farnell + Newark):"
+        lblE14.Text = "element14 API key" & vbCrLf & "(Farnell, CPC, Newark):"
         '
         'txtE14Key
         '
@@ -221,6 +233,43 @@ Partial Class SettingsForm
         lnkE14.TabStop = True
         lnkE14.Tag = "https://partner.element14.com/"
         lnkE14.Text = "Get a key"
+        '
+        'lblTmeToken
+        '
+        lblTmeToken.Anchor = AnchorStyles.Left
+        lblTmeToken.AutoSize = True
+        lblTmeToken.Name = "lblTmeToken"
+        lblTmeToken.Text = "TME Token:"
+        '
+        'txtTmeToken
+        '
+        txtTmeToken.Dock = DockStyle.Fill
+        txtTmeToken.Name = "txtTmeToken"
+        txtTmeToken.TabIndex = 4
+        txtTmeToken.UseSystemPasswordChar = True
+        '
+        'lnkTme
+        '
+        lnkTme.Anchor = AnchorStyles.Left
+        lnkTme.AutoSize = True
+        lnkTme.Name = "lnkTme"
+        lnkTme.TabStop = True
+        lnkTme.Tag = "https://developers.tme.eu/en"
+        lnkTme.Text = "Get a key"
+        '
+        'lblTmeSecret
+        '
+        lblTmeSecret.Anchor = AnchorStyles.Left
+        lblTmeSecret.AutoSize = True
+        lblTmeSecret.Name = "lblTmeSecret"
+        lblTmeSecret.Text = "TME Application secret:"
+        '
+        'txtTmeSecret
+        '
+        txtTmeSecret.Dock = DockStyle.Fill
+        txtTmeSecret.Name = "txtTmeSecret"
+        txtTmeSecret.TabIndex = 4
+        txtTmeSecret.UseSystemPasswordChar = True
         '
         'lblUrls
         '
@@ -375,6 +424,9 @@ Partial Class SettingsForm
         tipSettings.SetToolTip(cboDkCurrency, "Currency DigiKey prices are shown in.")
         tipSettings.SetToolTip(txtE14Key, "Your element14 Product Search API key. One key covers both Farnell and Newark.")
         tipSettings.SetToolTip(lnkE14, "Opens the element14 partner portal - register an application for a free key.")
+        tipSettings.SetToolTip(txtTmeToken, "Your TME private key Token (50 characters), from developers.tme.eu > API Token keys > Show private keys." & vbCrLf & "Leave blank to use TME as a website link only.")
+        tipSettings.SetToolTip(txtTmeSecret, "The Application secret (20 characters) of your app at developers.tme.eu. Keep it private, like a password.")
+        tipSettings.SetToolTip(lnkTme, "Opens the TME developer site - create an application there, then generate a private key (see Help).")
         tipSettings.SetToolTip(dgvUrls, "Website search URL for each supplier. {0} is replaced by your search text." & vbCrLf & "Used for website-link rows and for suppliers without an API. Click a URL to edit it.")
         tipSettings.SetToolTip(btnAddSupplier, "Add your own supplier: give it a name and a search URL containing {0}." & vbCrLf & "It shows as a website link in the results.")
         tipSettings.SetToolTip(btnDeleteSupplier, "Delete the selected supplier you added. Built-in suppliers can't be deleted - untick them on the main window instead.")
@@ -392,12 +444,12 @@ Partial Class SettingsForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnCancel
-        ClientSize = New Size(900, 500)
+        ClientSize = New Size(900, 590)
         Controls.Add(tlpMain)
         Controls.Add(flpButtons)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(880, 480)
+        MinimumSize = New Size(880, 560)
         Name = "SettingsForm"
         ShowIcon = False
         ShowInTaskbar = False
@@ -433,6 +485,11 @@ Partial Class SettingsForm
     Friend WithEvents lblE14 As Label
     Friend WithEvents txtE14Key As TextBox
     Friend WithEvents lnkE14 As LinkLabel
+    Friend WithEvents lblTmeToken As Label
+    Friend WithEvents txtTmeToken As TextBox
+    Friend WithEvents lnkTme As LinkLabel
+    Friend WithEvents lblTmeSecret As Label
+    Friend WithEvents txtTmeSecret As TextBox
     Friend WithEvents lblUrls As Label
     Friend WithEvents dgvUrls As DataGridView
     Friend WithEvents colUrlSupplier As DataGridViewTextBoxColumn

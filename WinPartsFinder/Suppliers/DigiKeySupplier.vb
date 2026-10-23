@@ -64,9 +64,21 @@ Public Class DigiKeySupplier
     End Function
 
     Public Overrides Async Function SearchAsync(query As String, mode As SearchMode, maxResults As Integer, offset As Integer,
-                                                ct As CancellationToken) As Task(Of SearchPage)
+                                                filters As SupplierFilters, ct As CancellationToken) As Task(Of SearchPage)
+        filters = If(filters, SupplierFilters.None)
         Dim token = Await GetTokenAsync(ct).ConfigureAwait(False)
-        Dim payload = New With {.Keywords = query, .Limit = Math.Min(maxResults, 50), .Offset = offset}
+
+        ' DigiKey filters on its side via FilterOptionsRequest.SearchOptions.
+        Dim searchOptions As New List(Of String)
+        If filters.InStockOnly Then searchOptions.Add("InStock")
+        If filters.RohsOnly Then searchOptions.Add("RohsCompliant")
+        Dim payload As Object
+        If searchOptions.Count > 0 Then
+            payload = New With {.Keywords = query, .Limit = Math.Min(maxResults, 50), .Offset = offset,
+                                .FilterOptionsRequest = New With {.SearchOptions = searchOptions}}
+        Else
+            payload = New With {.Keywords = query, .Limit = Math.Min(maxResults, 50), .Offset = offset}
+        End If
 
         Using req As New HttpRequestMessage(HttpMethod.Post, SearchUrl) With {
             .Content = New StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json")
@@ -80,7 +92,10 @@ Public Class DigiKeySupplier
             Try
                 Dim root = Await SendForJsonAsync(req, ct).ConfigureAwait(False)
                 Dim parts = Parse(root, mode, query, includeExact:=offset = 0)
-                Return New SearchPage(parts, ToNullableInt(root.GetNum("ProductsCount")))
+                Dim total = ToNullableInt(root.GetNum("ProductsCount"))
+                If mode = SearchMode.ExactPartNumber OrElse mode = SearchMode.SupplierCode Then total = parts.Count
+                If filters.InStockOnly Then parts = parts.Where(Function(p) p.Stock.GetValueOrDefault() > 0).ToList() ' belt and braces
+                Return New SearchPage(parts, total)
             Catch ex As SupplierException When ex.Message.StartsWith("HTTP 401")
                 _token = Nothing ' force a fresh token next time
                 Throw
@@ -98,12 +113,21 @@ Public Class DigiKeySupplier
             Dim mpn = p.GetStr("ManufacturerProductNumber")
             If mode = SearchMode.PartNumber AndAlso
                Not mpn.StartsWith(query, StringComparison.OrdinalIgnoreCase) Then Continue For
+            If mode = SearchMode.ExactPartNumber AndAlso Not SamePartNumber(mpn, query) Then Continue For
 
             ' A product has several packagings (reel, cut tape, Digi-Reel...).
-            ' Pick the one with the smallest minimum order - the useful one for repairs.
-            Dim variation = p.GetArr("ProductVariations").
-                OrderBy(Function(v) v.GetNum("MinimumOrderQuantity").GetValueOrDefault(Decimal.MaxValue)).
-                FirstOrDefault()
+            ' Pick the one with the smallest minimum order - the useful one for repairs -
+            ' or, when looking up a DigiKey order code, the packaging with that exact code.
+            Dim variations = p.GetArr("ProductVariations")
+            Dim variation As JToken
+            If mode = SearchMode.SupplierCode Then
+                variation = variations.FirstOrDefault(Function(v) SamePartNumber(v.GetStr("DigiKeyProductNumber"), query))
+                If variation Is Nothing Then Continue For
+            Else
+                variation = variations.
+                    OrderBy(Function(v) v.GetNum("MinimumOrderQuantity").GetValueOrDefault(Decimal.MaxValue)).
+                    FirstOrDefault()
+            End If
 
             Dim dkPn = variation.GetStr("DigiKeyProductNumber")
             If Not seen.Add(mpn & "|" & dkPn) Then Continue For
