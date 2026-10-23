@@ -5,11 +5,10 @@ Imports System.Text
 ' The .exe's "Product version" (Explorer > Properties > Details) comes from AppVersion below too.
 <Assembly: AssemblyInformationalVersion(MainForm.AppVersion)>
 
-
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.002"
+    Public Const AppVersion As String = "V1.003"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -24,6 +23,7 @@ Public Class MainForm
     Private ReadOnly _imagesByMpn As New Dictionary(Of String, (Thumb As String, Large As String))
     Private colThumb As DataGridViewImageColumn
     Private colSupplierPartLink As DataGridViewLinkColumn
+    Private colDatasheetLink As DataGridViewLinkColumn
     Private _photoPopup As ImagePopupForm
 
     Private Const ThumbRowHeight As Integer = ImageCache.ThumbSize + 4
@@ -283,6 +283,17 @@ Public Class MainForm
         AddTextColumn("PriceBreaks", "Price breaks", 220)
         AddTextColumn("MOQ", "MOQ", 50).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
         AddTextColumn("Availability", "Availability / lead", 150)
+        ' Shows "Datasheet" (click to open) when the supplier gave a datasheet link, otherwise blank.
+        colDatasheetLink = New DataGridViewLinkColumn With {
+            .Name = "Datasheet",
+            .DataPropertyName = "DatasheetUrl",
+            .HeaderText = "Datasheet",
+            .Width = 75,
+            .SortMode = DataGridViewColumnSortMode.Automatic,
+            .TrackVisitedState = False,
+            .LinkBehavior = LinkBehavior.HoverUnderline
+        }
+        dgvResults.Columns.Add(colDatasheetLink)
         AddTextColumn("Status", "Status", 90)
 
         ' Header tooltips (click a header to sort; drag to reorder; drag the edge to resize).
@@ -298,7 +309,8 @@ Public Class MainForm
             {"PriceBreaks", "Quantity+ unit price, for each price break."},
             {"MOQ", "Minimum order quantity."},
             {"Availability", "Stock wording, packaging and lead time from the supplier."},
-            {"Status", "Lifecycle status, e.g. Active, Obsolete, Not recommended for new designs."}
+            {"Status", "Lifecycle status, e.g. Active, Obsolete, Not recommended for new designs."},
+            {"Datasheet", "Click to open the datasheet. Blank when the supplier didn't give one (TME and website links never do)."}
         }
         For Each kv In tips
             dgvResults.Columns(kv.Key).ToolTipText = kv.Value & vbCrLf & "Click to sort."
@@ -326,6 +338,12 @@ Public Class MainForm
             If dgvResults.Columns.Contains(kv.Key) Then
                 dgvResults.Columns(kv.Key).DisplayIndex = Math.Min(position, dgvResults.Columns.Count - 1)
                 position += 1
+            End If
+        Next
+        ' Columns added in a later version than the saved layout go just after the column they follow by default.
+        For Each col As DataGridViewColumn In dgvResults.Columns
+            If Not layout.ContainsKey(col.Name) AndAlso col.Index > 0 Then
+                col.DisplayIndex = Math.Min(dgvResults.Columns(col.Index - 1).DisplayIndex + 1, dgvResults.Columns.Count - 1)
             End If
         Next
         dgvResults.Columns("No").DisplayIndex = 0
@@ -921,6 +939,15 @@ Public Class MainForm
             e.FormattingApplied = True
         End If
 
+        ' The datasheet cell holds the URL; show a short link word instead (blank when there's none).
+        If e.ColumnIndex = colDatasheetLink.Index Then
+            Dim url = Field(row, "DatasheetUrl")
+            e.Value = If(url.Length > 0, "Datasheet", "")
+            e.FormattingApplied = True
+            dgvResults.Rows(e.RowIndex).Cells(e.ColumnIndex).ToolTipText = url
+            Return
+        End If
+
         If CBool(row("LinkOnly")) Then
             e.CellStyle.ForeColor = Theme.LinkText
             e.CellStyle.Font = _linkFont
@@ -941,13 +968,20 @@ Public Class MainForm
 
     Private Sub dgvResults_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellDoubleClick
         ' The photo and link cells already act on a single click.
-        If e.RowIndex < 0 OrElse e.ColumnIndex = colThumb.Index OrElse e.ColumnIndex = colSupplierPartLink.Index Then Return
+        If e.RowIndex < 0 OrElse e.ColumnIndex = colThumb.Index OrElse e.ColumnIndex = colSupplierPartLink.Index OrElse
+           e.ColumnIndex = colDatasheetLink.Index Then Return
         OpenUrl(Field(CurrentRow(), "ProductUrl"))
     End Sub
 
     Private Sub dgvResults_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellContentClick
-        If e.RowIndex < 0 OrElse e.ColumnIndex <> colSupplierPartLink.Index Then Return
-        OpenUrl(Field(TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView), "ProductUrl"))
+        If e.RowIndex < 0 Then Return
+        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        If e.ColumnIndex = colSupplierPartLink.Index Then
+            OpenUrl(Field(row, "ProductUrl"))
+        ElseIf e.ColumnIndex = colDatasheetLink.Index Then
+            Dim url = Field(row, "DatasheetUrl")
+            If url.Length > 0 Then OpenUrl(url)
+        End If
     End Sub
 
     Private Sub dgvResults_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellClick
@@ -1196,7 +1230,8 @@ Public Class MainForm
             .FileName = $"WinPartsFinder {safeName} {DateTime.Now:yyyy-MM-dd HHmm}.csv"
         }
             If dlg.ShowDialog(Me) <> DialogResult.OK Then Return
-            Dim cols = VisibleColumns()
+            ' The Datasheet column is the URL itself; it goes at the end as "Datasheet URL" instead.
+            Dim cols = VisibleColumns().Where(Function(c) c.Name <> "Datasheet").ToList()
             Dim names = cols.Select(Function(c) c.DataPropertyName).Concat({"ProductUrl", "DatasheetUrl"}).ToList()
             Dim headers = cols.Select(Function(c) c.HeaderText).Concat({"Product URL", "Datasheet URL"})
             Dim sb As New StringBuilder()
