@@ -72,7 +72,7 @@ Partial Class AboutForm
         flpLeft.Location = New Point(0, 0)
         flpLeft.Name = "flpLeft"
         flpLeft.Padding = New Padding(10, 8, 10, 8)
-        flpLeft.Size = New Size(640, 620)
+        flpLeft.Size = New Size(624, 620)
         flpLeft.TabIndex = 0
         flpLeft.WrapContents = False
         '
@@ -208,23 +208,23 @@ Partial Class AboutForm
         pnlRight.Controls.Add(btnDonate)
         pnlRight.Controls.Add(btnClose)
         pnlRight.Dock = DockStyle.Right
-        pnlRight.Location = New Point(640, 0)
+        pnlRight.Location = New Point(624, 0)
         pnlRight.Name = "pnlRight"
-        pnlRight.Size = New Size(440, 620)
+        pnlRight.Size = New Size(456, 620)
         pnlRight.TabIndex = 1
         '
         'lblAuthor
         '
         lblAuthor.AutoSize = True
         lblAuthor.Font = New Font("Segoe UI", 9.75F, FontStyle.Bold Or FontStyle.Italic)
-        lblAuthor.Location = New Point(4, 62)
+        lblAuthor.Location = New Point(0, 62)
         lblAuthor.Name = "lblAuthor"
         lblAuthor.Text = "Ian Johnston."
         '
         'lnkWebsite
         '
         lnkWebsite.AutoSize = True
-        lnkWebsite.Location = New Point(4, 86)
+        lnkWebsite.Location = New Point(0, 86)
         lnkWebsite.Name = "lnkWebsite"
         lnkWebsite.TabIndex = 0
         lnkWebsite.TabStop = True
@@ -234,7 +234,7 @@ Partial Class AboutForm
         'lnkYouTube
         '
         lnkYouTube.AutoSize = True
-        lnkYouTube.Location = New Point(4, 108)
+        lnkYouTube.Location = New Point(0, 108)
         lnkYouTube.Name = "lnkYouTube"
         lnkYouTube.TabIndex = 1
         lnkYouTube.TabStop = True
@@ -244,7 +244,7 @@ Partial Class AboutForm
         'lnkTwitter
         '
         lnkTwitter.AutoSize = True
-        lnkTwitter.Location = New Point(4, 130)
+        lnkTwitter.Location = New Point(0, 130)
         lnkTwitter.Name = "lnkTwitter"
         lnkTwitter.TabIndex = 2
         lnkTwitter.TabStop = True
@@ -254,7 +254,7 @@ Partial Class AboutForm
         'picCartoon
         '
         picCartoon.BackColor = Color.Transparent
-        picCartoon.Location = New Point(240, 12)
+        picCartoon.Location = New Point(256, 12)
         picCartoon.Name = "picCartoon"
         picCartoon.Size = New Size(150, 184)
         picCartoon.SizeMode = PictureBoxSizeMode.Zoom
@@ -265,7 +265,7 @@ Partial Class AboutForm
         '
         lblSupportBig.Font = New Font("Segoe UI", 12.0F, FontStyle.Bold)
         lblSupportBig.ForeColor = Color.FromArgb(220, 30, 30)
-        lblSupportBig.Location = New Point(210, 202)
+        lblSupportBig.Location = New Point(226, 202)
         lblSupportBig.Name = "lblSupportBig"
         lblSupportBig.Size = New Size(210, 26)
         lblSupportBig.Text = "SUPPORT WinPartsFinder"
@@ -273,7 +273,7 @@ Partial Class AboutForm
         '
         'btnDonate
         '
-        btnDonate.Location = New Point(250, 236)
+        btnDonate.Location = New Point(266, 236)
         btnDonate.Name = "btnDonate"
         btnDonate.Size = New Size(130, 56)
         btnDonate.TabIndex = 4
@@ -284,7 +284,7 @@ Partial Class AboutForm
         '
         btnClose.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
         btnClose.DialogResult = DialogResult.Cancel
-        btnClose.Location = New Point(335, 578)
+        btnClose.Location = New Point(351, 578)
         btnClose.Name = "btnClose"
         btnClose.Size = New Size(90, 28)
         btnClose.TabIndex = 5

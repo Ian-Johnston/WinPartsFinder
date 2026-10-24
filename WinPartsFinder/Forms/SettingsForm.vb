@@ -191,6 +191,25 @@ Public Class SettingsForm
         If DialogResult <> DialogResult.OK Then Theme.IsDark = _settings.DarkMode ' undo the preview
     End Sub
 
+    ' API Help isn't modal: it's owned by this window, so the key boxes stay usable while it's open,
+    ' and it closes along with Settings. One at a time.
+    Private _apiHelp As HelpForm
+
+    Private Sub btnApiHelp_Click(sender As Object, e As EventArgs) Handles btnApiHelp.Click
+        If _apiHelp IsNot Nothing AndAlso Not _apiHelp.IsDisposed Then
+            _apiHelp.Activate()
+            Return
+        End If
+        _apiHelp = New HelpForm(apiHelp:=True) With {.StartPosition = FormStartPosition.Manual}
+        ' Beside Settings (right if there's room, else left) so it doesn't cover the key boxes.
+        Dim area = Screen.FromControl(Me).WorkingArea
+        Dim w = Math.Min(_apiHelp.Width, area.Width)
+        Dim h = Math.Min(Math.Max(_apiHelp.MinimumSize.Height, Height), area.Height)
+        Dim x = If(Right + w <= area.Right, Right, Math.Max(area.Left, Left - w))
+        _apiHelp.Bounds = New Rectangle(x, Math.Max(area.Top, Math.Min(Top, area.Bottom - h)), w, h)
+        _apiHelp.Show(Me)
+    End Sub
+
     Private Sub KeyLink_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) _
         Handles lnkMouser.LinkClicked, lnkDigiKey.LinkClicked, lnkE14.LinkClicked, lnkTme.LinkClicked
         WebHelper.OpenInBrowser(CStr(DirectCast(sender, LinkLabel).Tag))

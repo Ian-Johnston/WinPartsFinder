@@ -1,6 +1,6 @@
 # WinPartsFinder
 
-**Search the big electronic component suppliers at once — stock, prices, price breaks, MOQ and lifecycle status side by side in one grid.**
+**Search the big electronic component suppliers at once — stock, prices, price breaks, MOQ, lifecycle status and datasheets side by side in one grid.**
 
 Built for repairing test equipment and other electronics: type a part number or a few keywords, press Enter, and see who has it, how many, and at what price — without opening six browser tabs.
 
@@ -20,7 +20,7 @@ Windows 10 / 11 desktop app, written in VB.NET (Visual Studio 2022, .NET Framewo
 | **Farnell** (UK) | Live API — stock, prices | Free **element14** API key |
 | **CPC** (UK) | Live API — stock, prices | Same element14 key as Farnell |
 | **Newark** (US) | Live API — stock, prices | Same element14 key as Farnell |
-| **TME** (EU, ships to UK) | Live API — stock, prices | Free TME **Token + Application secret** |
+| **TME** (EU, ships to UK) | Live API — stock, prices (no datasheet links or RoHS filter) | Free TME **Token + Application secret** |
 | **RS Components** | Website link | Nothing — no public search API |
 | **Rapid** | Website link | Nothing — no public search API |
 | **LCSC** | Website link | Nothing — no official public search API |
@@ -32,14 +32,25 @@ A *website link* row opens that supplier's own search results in your browser wi
 ## Features
 
 - **One search, every supplier** — results arrive as each supplier answers.
-- **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS / active only, maker, quantity pricing and max price.
+- **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS / active only, maker, description words (with or without a search term), quantity pricing and max price.
+- **Types filtering** — after a search, click **Types…** to see every kind of part found (e.g. *Analogue to Digital Converter*, *Evaluation Kit*, *Flip-Flops*) with how many came from each supplier. Untick the ones you don't need and they disappear from the results instantly.
 - **Load more** — fetch the next batch from suppliers that have more (e.g. *50 / 312*).
 - **Part photos** — thumbnails, click for a bigger view.
-- **Click the supplier part number** to open the product page; right-click for the datasheet or to copy part numbers.
-- **Sort, filter and tidy** — sort by price or stock, *In stock only*, a live text filter, remove rows you don't want, untick a supplier to hide its results.
+- **Type** and **Datasheet** columns — the kind of part in each supplier's own words, and a one-click link to the datasheet when the supplier provides one.
+- **Click the supplier part number** to open the product page; right-click to copy part numbers.
+- **Sort, filter and tidy** — sort by any column, *In stock only*, a live text filter, remove rows you don't want, untick a supplier to hide its results (tick one after a search and it's searched straight away).
 - **Row numbers** (#) that stay put, so you can note a part and find it again.
 - **Export to CSV** for Excel.
-- **Dark mode**, remembered window and column layout, tooltips on everything, built-in Help.
+- **Dark mode**, remembered window and column layout, tooltips on everything, built-in Help — plus a separate **API Help** in Settings that stays open while you paste in your keys.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Types filtering](docs/WinPartsFinder_Main_Types.png) | ![Advanced search](docs/WinPartsFinder_AdvancedSearch.png) |
+| *Types… — untick the kinds of part you don't want* | *Advanced search (Ctrl+F)* |
+| ![Settings](docs/WinPartsFinder_Settings.png) | |
+| *Settings — your own API keys, suppliers and search URLs* | |
 
 ## Download and run
 
@@ -53,7 +64,7 @@ To upgrade, just run the newer `.msi` — it replaces the old version and keeps 
 
 ## Getting your free API keys
 
-Each user needs their own keys — they're free. The **Get a key** links in Settings open each sign-up page.
+Each user needs their own keys — they're free. The **Get a key** links in Settings open each sign-up page, and the **API Help** button in Settings has these same steps in a window you can keep open while you paste the keys in.
 
 **Mouser**
 1. Go to the [Mouser API Hub](https://www.mouser.co.uk/api-hub/) and sign up for the **Search API**.
@@ -76,7 +87,7 @@ Each user needs their own keys — they're free. The **Get a key** links in Sett
 3. Back on developers.tme.eu, paste it into **Temporary token**, choose Key purpose **To compare distributors offer**, click **Generate new private key**, then **Show private keys**.
 4. Paste that **Token** and the **Application secret** into Settings.
 
-Free tiers allow roughly 1,000 calls a day per supplier; each search, and each *Load more*, is one call.
+Free tiers allow roughly 1,000 calls a day per supplier; each search, and each *Load more*, is one call (a TME search uses a few). You don't need every key — any supplier without one still appears as a website link.
 
 ## Your keys and privacy
 
@@ -92,13 +103,13 @@ The version number lives in one place: `AppVersion` at the top of `WinPartsFinde
 
 ```
 WinPartsFinder/
-  Forms/           Main window, Settings, Help, About, photo pop-up
-  Suppliers/       Mouser, DigiKey, element14 (Farnell/Newark), website-link suppliers
-  Models/          PartResult, PriceBreak
+  Forms/           Main window, Advanced search, Types, Settings, Help / API Help, About, photo pop-up
+  Suppliers/       Mouser, DigiKey, element14 (Farnell/CPC/Newark), TME, website-link suppliers
+  Models/          PartResult, PriceBreak, AdvancedSearchOptions
   Infrastructure/  Settings, theming (dark mode), web/JSON helpers, photo cache
 ```
 
-**Adding an API supplier:** create a class in `Suppliers/` that inherits `ApiSupplier`, implement `IsConfigured` and `SearchAsync`, then add it in `AppSettings` and `SupplierFactory.Create`.
+**Adding an API supplier:** create a class in `Suppliers/` that inherits `ApiSupplier`, implement `IsConfigured` and `SearchAsync` (fill in `Category` so the part shows up in Types…), then add it in `AppSettings` and `SupplierFactory.Create`.
 
 ## Licence and usage
 

@@ -47,6 +47,7 @@ Partial Class SettingsForm
         lblTmeSecret = New Label()
         txtTmeSecret = New TextBox()
         lblUrls = New Label()
+        btnApiHelp = New Button()
         dgvUrls = New DataGridView()
         colUrlSupplier = New DataGridViewTextBoxColumn()
         colUrlTemplate = New DataGridViewTextBoxColumn()
@@ -93,6 +94,7 @@ Partial Class SettingsForm
         tlpMain.Controls.Add(lblTmeSecret, 0, 6)
         tlpMain.Controls.Add(txtTmeSecret, 1, 6)
         tlpMain.Controls.Add(lblUrls, 0, 7)
+        tlpMain.Controls.Add(btnApiHelp, 2, 7)
         tlpMain.Controls.Add(dgvUrls, 0, 8)
         tlpMain.Controls.Add(flpUrlButtons, 0, 9)
         tlpMain.Dock = DockStyle.Fill
@@ -274,10 +276,20 @@ Partial Class SettingsForm
         'lblUrls
         '
         lblUrls.AutoSize = True
-        tlpMain.SetColumnSpan(lblUrls, 3)
+        tlpMain.SetColumnSpan(lblUrls, 2)
         lblUrls.Margin = New Padding(3, 12, 3, 3)
         lblUrls.Name = "lblUrls"
         lblUrls.Text = "Suppliers and website search URLs - {0} is replaced by the search text. Add your own suppliers here:"
+        '
+        'btnApiHelp - beside the key boxes: how to get each key
+        '
+        btnApiHelp.Anchor = AnchorStyles.Right
+        btnApiHelp.Margin = New Padding(3, 8, 3, 3)
+        btnApiHelp.Name = "btnApiHelp"
+        btnApiHelp.Size = New Size(85, 28)
+        btnApiHelp.TabIndex = 5
+        btnApiHelp.Text = "API &Help"
+        btnApiHelp.UseVisualStyleBackColor = True
         '
         'dgvUrls
         '
@@ -422,11 +434,12 @@ Partial Class SettingsForm
         tipSettings.SetToolTip(lnkDigiKey, "Opens the DigiKey developer portal - create an Organization, then a Production App.")
         tipSettings.SetToolTip(cboDkSite, "Which DigiKey country site to price and stock from (UK = digikey.co.uk).")
         tipSettings.SetToolTip(cboDkCurrency, "Currency DigiKey prices are shown in.")
-        tipSettings.SetToolTip(txtE14Key, "Your element14 Product Search API key. One key covers both Farnell and Newark.")
+        tipSettings.SetToolTip(txtE14Key, "Your element14 Product Search API key. One key covers Farnell, CPC and Newark.")
         tipSettings.SetToolTip(lnkE14, "Opens the element14 partner portal - register an application for a free key.")
         tipSettings.SetToolTip(txtTmeToken, "Your TME private key Token (50 characters), from developers.tme.eu > API Token keys > Show private keys." & vbCrLf & "Leave blank to use TME as a website link only.")
         tipSettings.SetToolTip(txtTmeSecret, "The Application secret (20 characters) of your app at developers.tme.eu. Keep it private, like a password.")
-        tipSettings.SetToolTip(lnkTme, "Opens the TME developer site - create an application there, then generate a private key (see Help).")
+        tipSettings.SetToolTip(lnkTme, "Opens the TME developer site - create an application there, then generate a private key (see API Help).")
+        tipSettings.SetToolTip(btnApiHelp, "Step-by-step instructions for getting each supplier's free API keys." & vbCrLf & "Stays open beside Settings while you paste the keys in.")
         tipSettings.SetToolTip(dgvUrls, "Website search URL for each supplier. {0} is replaced by your search text." & vbCrLf & "Used for website-link rows and for suppliers without an API. Click a URL to edit it.")
         tipSettings.SetToolTip(btnAddSupplier, "Add your own supplier: give it a name and a search URL containing {0}." & vbCrLf & "It shows as a website link in the results.")
         tipSettings.SetToolTip(btnDeleteSupplier, "Delete the selected supplier you added. Built-in suppliers can't be deleted - untick them on the main window instead.")
@@ -449,7 +462,7 @@ Partial Class SettingsForm
         Controls.Add(flpButtons)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(880, 560)
+        MinimumSize = New Size(924, 560) ' wide enough that the bottom row of buttons stays on one line
         Name = "SettingsForm"
         ShowIcon = False
         ShowInTaskbar = False
@@ -491,6 +504,7 @@ Partial Class SettingsForm
     Friend WithEvents lblTmeSecret As Label
     Friend WithEvents txtTmeSecret As TextBox
     Friend WithEvents lblUrls As Label
+    Friend WithEvents btnApiHelp As Button
     Friend WithEvents dgvUrls As DataGridView
     Friend WithEvents colUrlSupplier As DataGridViewTextBoxColumn
     Friend WithEvents colUrlTemplate As DataGridViewTextBoxColumn

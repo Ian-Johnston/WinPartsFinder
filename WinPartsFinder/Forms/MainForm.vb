@@ -13,7 +13,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.004"
+    Public Const AppVersion As String = "V1.005"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -1068,6 +1068,12 @@ Public Class MainForm
     End Sub
 
     Private Sub cmsResults_Opening(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles cmsResults.Opening
+        ' The part menu is for rows - not for a right-click on the column headers.
+        Dim hit = dgvResults.HitTest(dgvResults.PointToClient(Cursor.Position).X, dgvResults.PointToClient(Cursor.Position).Y)
+        If hit.Type = DataGridViewHitTestType.ColumnHeader OrElse hit.Type = DataGridViewHitTestType.TopLeftHeader Then
+            e.Cancel = True
+            Return
+        End If
         Dim row = CurrentRow()
         Dim removed = RemovedCount()
         ' With every row removed there's nothing to click on, but Restore must still be reachable.

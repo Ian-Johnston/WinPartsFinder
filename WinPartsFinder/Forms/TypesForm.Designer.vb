@@ -126,7 +126,6 @@ Partial Class TypesForm
         '
         tipTypes.AutoPopDelay = 15000
         tipTypes.InitialDelay = 500
-        tipTypes.SetToolTip(lvTypes, "Ticked types are shown, unticked ones hidden. Click a column header to sort.")
         tipTypes.SetToolTip(btnAll, "Show every type.")
         tipTypes.SetToolTip(btnNone, "Hide every type - then tick just the ones you want.")
         tipTypes.SetToolTip(btnOK, "Show the ticked types and hide the rest.")

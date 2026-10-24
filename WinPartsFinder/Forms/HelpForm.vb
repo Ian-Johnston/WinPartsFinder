@@ -11,17 +11,12 @@ Public Class HelpForm
 # GETTING STARTED
 WinPartsFinder searches several component suppliers at once and puts stock, prices, minimum order and lifecycle status side by side in one grid.
 
-- Click **Settings…** and enter your API keys (see API KEYS below). Without keys, suppliers still appear as website links.
+- Click **Settings…** and enter your API keys - click **API Help** in Settings for step-by-step instructions. Without keys, suppliers still appear as website links.
 - Type a part number or some keywords in the **Search** box, e.g. LM358 or 100nF 50V 0603, and press **Enter**.
 - Results arrive from each supplier as soon as it answers. Click any column header to sort, e.g. by Price or Stock.
 
 # API KEYS
-Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs. Each user needs their own keys. Links to each sign-up page are in Settings.
-- **Mouser:** sign up at the Mouser API Hub for a **Search API** key.
-- **DigiKey:** at developer.digikey.com create an Organization, then a **Production App** with **ProductInformation V4** selected. The OAuth Callback can be https://localhost. Copy the Client ID and Client Secret.
-- **element14:** register an application at partner.element14.com. The **Basic** tier is plenty. One key covers Farnell, CPC and Newark.
-- **TME:** this takes two websites. (1) At developers.tme.eu sign up, enter an application name and click **Create application** - that gives the **Application secret**. (2) In another tab log in to your shop account at **www.tme.eu** (not the developers site), click **User panel > Applications > Register new app** and copy the **temporary token** it shows. (3) Back on developers.tme.eu paste it into **Temporary token**, choose Key purpose **To compare distributors offer**, click **Generate new private key**, then **Show private keys**. Enter that **Token** and the **Application secret** in Settings.
-Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder\settings.json. They are never stored in the program or its source code.
+Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs, and each user needs their own keys. The step-by-step instructions for getting them are in a separate window: click **Settings…**, then **API Help**. It can stay open beside Settings while you paste the keys in.
 
 # SEARCHING
 - **Keyword** searches descriptions and part numbers. **Manufacturer part no.** looks for parts whose manufacturer part number starts with what you typed.
@@ -90,7 +85,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **Export CSV…** saves the rows currently shown, including their **#**, product and datasheet links, to a file that opens in Excel.
 
 # SETTINGS
-- Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, and **Show keys** shows them as text instead of dots.
+- Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, **API Help** explains how to get each key, and **Show keys** shows them as text instead of dots.
 - **DigiKey site** and **Currency** choose which DigiKey country prices and stock are shown for.
 - **Search URLs** are used for website links. {0} is replaced by your search text. **Reset URLs** puts the built-in ones back.
 - **Add supplier** adds your own supplier as a website link: give it a name and its search URL with {0} where the search text goes, e.g. https://cpc.farnell.com/search?st={0}. **Delete supplier** removes it.
@@ -120,6 +115,68 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **About…** shows the version, licence and credits, and has the **Donate via PayPal** button. The version number is also in the title bar.
 "
 
+    ' API Help (opened from Settings): how to get each supplier's keys. Same markup as above.
+    Private Const ApiHelpContent As String = "
+# API KEYS - OVERVIEW
+Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search APIs. Each person using WinPartsFinder needs their own keys - they're free, and take a few minutes to get.
+- Keep this window open beside Settings and paste each key into its box as you get it. **Get a key** next to each box opens that supplier's sign-up page.
+- Tick **Show keys** to see what you've pasted instead of dots, and check there are no spaces at either end.
+- Click **OK** in Settings to save. You can do one supplier now and the rest later - suppliers without keys still appear as website links.
+- Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder\settings.json. They are never stored in the program or its source code, and never sent anywhere except to that supplier.
+
+# MOUSER
+- Click **Get a key** (the Mouser API Hub) and sign in or create a Mouser account.
+- Ask for a **Search API** key (not the Cart or Order API). It's emailed to you, and shown in your account under APIs.
+- Paste it into **Mouser Search API key**.
+- Prices are in the currency of the Mouser account the key was registered with. Mouser allows about 1000 searches a day and 30 a minute.
+
+# DIGIKEY
+- Click **Get a key** (developer.digikey.com) and sign in with your DigiKey account.
+- Create an **Organization** (any name), then inside it create a **Production App** - not a Sandbox app.
+- Give the app a name, tick **ProductInformation V4**, and set the **OAuth Callback** to https://localhost (it isn't used, but it must be filled in).
+- Open the app and copy its **Client ID** and **Client Secret** into the two DigiKey boxes.
+- **DigiKey site** and **Currency** choose which country's prices and stock you see, e.g. UK and GBP.
+- **HTTP 403** usually means ProductInformation V4 isn't ticked on the app, or it's a Sandbox app.
+
+# ELEMENT14 (FARNELL, CPC AND NEWARK)
+- Click **Get a key** (partner.element14.com) and register.
+- Register an application. The free **Basic** tier is plenty. The key is shown in your account and emailed to you.
+- Paste it into **element14 API key**. One key covers **Farnell**, **CPC** and **Newark**.
+- element14 allows 2 searches a second, so WinPartsFinder searches Farnell, CPC and Newark one after the other.
+
+# TME
+TME takes two websites, so allow 10 minutes.
+- **1.** Click **Get a key** (developers.tme.eu), sign up, enter an application name and click **Create application**. That shows the **Application secret** - paste it into **TME Application secret**.
+- **2.** In another browser tab, log in to your normal shop account at **www.tme.eu** (not the developers site). Go to **User panel > Applications > Register new app** and copy the **temporary token** it shows.
+- **3.** Back on developers.tme.eu, paste that into **Temporary token**, choose Key purpose **To compare distributors offer**, and click **Generate new private key**.
+- **4.** Click **Show private keys** and copy the **Token** (about 50 characters) into **TME Token**.
+- Prices are those of your own tme.eu account (net, ex VAT), in GBP with UK stock.
+- The **User panel** button on the developers site only reloads that site - the temporary token comes from the www.tme.eu shop account.
+
+# IF A KEY DOESN'T WORK
+- The supplier's **Status** on the main window says **Error** - hover over it to see why.
+- **HTTP 401** - the key or secret is wrong. Paste it again, checking for spaces at either end.
+- **HTTP 403** - the key isn't active yet (new keys can take a few minutes), or for DigiKey, ProductInformation V4 isn't ticked.
+- Free tiers allow roughly 1000 calls a day per supplier. Each search, and each Load more, is one call (TME uses a few).
+"
+
+    Private ReadOnly _apiHelp As Boolean
+
+    ' Parameterless constructor for the WinForms designer (and the main Help).
+    Public Sub New()
+        Me.New(False)
+    End Sub
+
+    ''' <param name="apiHelp">True for the API key instructions (opened from Settings) instead of the main Help.</param>
+    Public Sub New(apiHelp As Boolean)
+        InitializeComponent()
+        _apiHelp = apiHelp
+        If apiHelp Then
+            Text = "WinPartsFinder    API Help"
+            tipHelp.SetToolTip(btnOK, "Close API Help (Esc). You can keep it open while you type your keys into Settings.")
+        End If
+    End Sub
+
     Private Sub HelpForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Theme.Apply(Me)
         ' A read-only RichTextBox goes grey; keep it looking like a page.
@@ -138,7 +195,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
               heading As New Font(body.FontFamily, body.Size + 1.5F, FontStyle.Bold),
               gap As New Font(body.FontFamily, 4.0F)
             rtbHelp.Clear()
-            Dim lines = HelpContent.Replace(vbCrLf, vbLf).Trim(ChrW(10)).Split(ChrW(10))
+            Dim lines = If(_apiHelp, ApiHelpContent, HelpContent).Replace(vbCrLf, vbLf).Trim(ChrW(10)).Split(ChrW(10))
             For Each raw In lines
                 Dim line = raw.TrimEnd()
                 If line.StartsWith("# ") Then
