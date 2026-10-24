@@ -90,7 +90,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 
 # SETTINGS
 - Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, **API Help** explains how to get each key, and **Show keys** shows them as text instead of dots.
-- **DigiKey site** and **Currency** choose which DigiKey country prices and stock are shown for.
+- **Country and currency:** **DigiKey site** and **Currency** choose which DigiKey country's prices and stock you see (e.g. NZ and NZD). **Farnell store** picks the Farnell / element14 country store - its own stock, prices and currency (e.g. New Zealand, NZD); the same element14 key works for all of them. **TME country** and **Currency** do the same for TME. Pick from the lists or type a code. CPC (UK) and Newark (USA) are fixed. Mouser uses the country of the account your key was registered with.
 - **Search URLs** are used for website links. {0} is replaced by your search text. **Reset URLs** puts the built-in ones back.
 - **Add supplier** adds your own supplier as a website link: give it a name and its search URL with {0} where the search text goes, e.g. https://cpc.farnell.com/search?st={0}. **Delete supplier** removes it.
 - **Show part photos** turns the photo column on or off. **Dark mode** switches the whole app to a dark theme.
@@ -100,8 +100,8 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 # SUPPLIER NOTES
 - **Mouser** prices are in the currency of the account your key was registered with.
 - **DigiKey** shows the packaging with the smallest minimum order, usually Cut Tape, which suits repairs best.
-- **Farnell** and **CPC** prices are in GBP and **Newark** in USD. They are searched one after the other to stay within element14's limit of 2 calls per second.
-- **TME** shows UK stock and prices in GBP. Prices are those of your own tme.eu account (net, ex VAT). Each search uses a few TME calls (log in, search, prices).
+- **Farnell** prices are in the currency of the store chosen in Settings (GBP for the UK store), **CPC** in GBP and **Newark** in USD. They are searched one after the other to stay within element14's limit of 2 calls per second.
+- **TME** shows stock and prices for the country and currency chosen in Settings (GB and GBP to start with). Prices are those of your own tme.eu account (net, ex VAT). Each search uses a few TME calls (log in, search, prices).
 - **RS Components**, **Rapid** and **LCSC** have no public search API, so they appear as website links.
 - **AliExpress** also appears as a website link. Its only API is for registered affiliates, so it isn't built in.
 - Free API tiers allow roughly 1000 calls a day per supplier. Each search, and each Load more, is one call. Mouser also allows 30 calls a minute.
@@ -141,13 +141,14 @@ Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search AP
 - Create an **Organization** (any name), then inside it create a **Production App** - not a Sandbox app.
 - Give the app a name, tick **ProductInformation V4**, and set the **OAuth Callback** to https://localhost (it isn't used, but it must be filled in).
 - Open the app and copy its **Client ID** and **Client Secret** into the two DigiKey boxes.
-- **DigiKey site** and **Currency** choose which country's prices and stock you see, e.g. UK and GBP.
+- **DigiKey site** and **Currency** choose which country's prices and stock you see, e.g. UK and GBP, or NZ and NZD.
 - **HTTP 403** usually means ProductInformation V4 isn't ticked on the app, or it's a Sandbox app.
 
 # ELEMENT14 (FARNELL, CPC AND NEWARK)
 - Click **Get a key** (partner.element14.com) and register.
 - Register an application. The free **Basic** tier is plenty. The key is shown in your account and emailed to you.
 - Paste it into **element14 API key**. One key covers **Farnell**, **CPC** and **Newark**.
+- **Farnell store** (below the key) chooses which country's Farnell / element14 store the Farnell supplier uses, e.g. **New Zealand - nz.element14.com (NZD)**. The same key works for every store.
 - element14 allows 2 searches a second, so WinPartsFinder searches Farnell, CPC and Newark one after the other.
 
 # TME
@@ -156,7 +157,7 @@ TME takes two websites, so allow 10 minutes.
 - **2.** In another browser tab, log in to your normal shop account at **www.tme.eu** (not the developers site). Go to **User panel > Applications > Register new app** and copy the **temporary token** it shows.
 - **3.** Back on developers.tme.eu, paste that into **Temporary token**, choose Key purpose **To compare distributors offer**, and click **Generate new private key**.
 - **4.** Click **Show private keys** and copy the **Token** (about 50 characters) into **TME Token**.
-- Prices are those of your own tme.eu account (net, ex VAT), in GBP with UK stock.
+- Prices are those of your own tme.eu account (net, ex VAT). **TME country** and **Currency** (below the secret) choose the country and currency, GB and GBP to start with.
 - The **User panel** button on the developers site only reloads that site - the temporary token comes from the www.tme.eu shop account.
 
 # IF A KEY DOESN'T WORK

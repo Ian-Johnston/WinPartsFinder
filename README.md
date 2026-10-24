@@ -75,20 +75,23 @@ Each user needs their own keys — they're free. The **Get a key** links in Sett
 1. Sign in at [developer.digikey.com](https://developer.digikey.com/) and create an **Organization**.
 2. Add a **Production App**. Select **ProductInformation V4** (leave the others as *None*). The *OAuth Callback* can be `https://localhost` — it isn't used.
 3. Open the app and copy its **Client ID** and **Client Secret** into Settings.
-4. Choose your DigiKey **site** and **currency** (e.g. UK / GBP).
+4. Choose your DigiKey **site** and **currency** (e.g. UK / GBP, or NZ / NZD) — 44 countries and 26 currencies are listed.
 
 **element14 (Farnell, CPC + Newark)**
 1. Register an application at [partner.element14.com](https://partner.element14.com/).
 2. Tick *Issue a new key for Product Search API*. The **Basic** tier is plenty for one person.
 3. Paste the key into *element14 API key* — it works for Farnell, CPC and Newark.
+4. Choose your **Farnell store** — any of 40 element14 country stores (UK, Ireland, Europe, Australia, New Zealand, Singapore, India…), each with its own stock, prices and currency.
 
 **TME** (two websites are involved)
 1. At [developers.tme.eu](https://developers.tme.eu/en) sign up, enter an application name (e.g. *WinPartsFinder*) and click **Create application**. This gives you the **Application secret**.
 2. In another tab, log in to your **shop** account at [www.tme.eu](https://www.tme.eu) (not the developers site) — create a free customer account if you don't have one. Click **User panel → Applications → Register new app** and copy the **temporary token** it shows.
 3. Back on developers.tme.eu, paste it into **Temporary token**, choose Key purpose **To compare distributors offer**, click **Generate new private key**, then **Show private keys**.
-4. Paste that **Token** and the **Application secret** into Settings.
+4. Paste that **Token** and the **Application secret** into Settings, and choose the **country** and **currency** for TME's prices (GB / GBP to start with).
 
 Free tiers allow roughly 1,000 calls a day per supplier; each search, and each *Load more*, is one call (a TME search uses a few). You don't need every key — any supplier without one still appears as a website link.
+
+Outside the UK? DigiKey, Farnell and TME can all be set to your own country and currency in Settings. Mouser uses the country of the account your key was registered with; CPC is UK-only and Newark US-only.
 
 ## Your keys and privacy
 

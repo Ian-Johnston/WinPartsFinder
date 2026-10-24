@@ -27,11 +27,19 @@ Public Class SettingsForm
         txtMouserKey.Text = _settings.MouserApiKey
         txtDkClientId.Text = _settings.DigiKeyClientId
         txtDkSecret.Text = _settings.DigiKeyClientSecret
+        cboDkSite.Items.AddRange(DigiKeySupplier.Sites)
+        cboDkCurrency.Items.AddRange(DigiKeySupplier.Currencies)
         cboDkSite.Text = _settings.DigiKeySite
         cboDkCurrency.Text = _settings.DigiKeyCurrency
         txtE14Key.Text = _settings.Element14ApiKey
+        cboFarnellStore.Items.AddRange(Element14Supplier.FarnellStores.ToArray())
+        cboFarnellStore.SelectedItem = Element14Supplier.FindFarnellStore(_settings.FarnellStore)
         txtTmeToken.Text = _settings.TmeToken
         txtTmeSecret.Text = _settings.TmeSecret
+        cboTmeCountry.Items.AddRange(TmeSupplier.Countries)
+        cboTmeCurrency.Items.AddRange(TmeSupplier.Currencies)
+        cboTmeCountry.Text = _settings.TmeCountry
+        cboTmeCurrency.Text = _settings.TmeCurrency
         chkShowThumbnails.Checked = _settings.ShowThumbnails
         chkDarkMode.Checked = _settings.DarkMode
         LoadUrls(Function(name) _settings.GetSearchUrl(name), _settings.CustomSuppliers)
@@ -143,8 +151,11 @@ Public Class SettingsForm
         _settings.DigiKeySite = cboDkSite.Text.Trim().ToUpperInvariant()
         _settings.DigiKeyCurrency = cboDkCurrency.Text.Trim().ToUpperInvariant()
         _settings.Element14ApiKey = txtE14Key.Text.Trim()
+        _settings.FarnellStore = SelectedFarnellStore()
         _settings.TmeToken = txtTmeToken.Text.Trim()
         _settings.TmeSecret = txtTmeSecret.Text.Trim()
+        If cboTmeCountry.Text.Trim().Length > 0 Then _settings.TmeCountry = cboTmeCountry.Text.Trim().ToUpperInvariant()
+        If cboTmeCurrency.Text.Trim().Length > 0 Then _settings.TmeCurrency = cboTmeCurrency.Text.Trim().ToUpperInvariant()
         _settings.ShowThumbnails = chkShowThumbnails.Checked
         _settings.DarkMode = chkDarkMode.Checked
 
@@ -154,7 +165,7 @@ Public Class SettingsForm
             Dim name = Convert.ToString(row.Cells(0).Value)
             Dim url = Convert.ToString(row.Cells(1).Value).Trim()
             ' Only store overrides, so future default changes still apply.
-            If url.Length > 0 AndAlso url <> AppSettings.DefaultSearchUrls(name) Then _settings.SearchUrls(name) = url
+            If url.Length > 0 AndAlso url <> AppSettings.DefaultSearchUrl(name, _settings.FarnellStore) Then _settings.SearchUrls(name) = url
         Next
         _settings.CustomSuppliers = CurrentCustoms()
 
@@ -165,7 +176,28 @@ Public Class SettingsForm
     Private Sub btnResetUrls_Click(sender As Object, e As EventArgs) Handles btnResetUrls.Click
         ' Resets the built-in URLs only; your own suppliers are kept.
         dgvUrls.EndEdit()
-        LoadUrls(Function(name) AppSettings.DefaultSearchUrls(name), CurrentCustoms())
+        LoadUrls(Function(name) AppSettings.DefaultSearchUrl(name, SelectedFarnellStore()), CurrentCustoms())
+    End Sub
+
+    Private Function SelectedFarnellStore() As String
+        Dim st = TryCast(cboFarnellStore.SelectedItem, Element14Supplier.Store)
+        Return If(st Is Nothing, _settings.FarnellStore, st.Id)
+    End Function
+
+    ' Changing the Farnell store also moves Farnell's website link to that store - unless you'd set your own link.
+    Private _shownFarnellStore As String
+
+    Private Sub cboFarnellStore_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboFarnellStore.SelectedIndexChanged
+        Dim newStore = SelectedFarnellStore()
+        If _shownFarnellStore IsNot Nothing AndAlso newStore <> _shownFarnellStore Then
+            For Each row As DataGridViewRow In dgvUrls.Rows
+                If Convert.ToString(row.Cells(0).Value) = AppSettings.Farnell AndAlso
+                   Convert.ToString(row.Cells(1).Value).Trim() = AppSettings.DefaultSearchUrl(AppSettings.Farnell, _shownFarnellStore) Then
+                    row.Cells(1).Value = AppSettings.DefaultSearchUrl(AppSettings.Farnell, newStore)
+                End If
+            Next
+        End If
+        _shownFarnellStore = newStore
     End Sub
 
     Private Sub btnResetWindow_Click(sender As Object, e As EventArgs) Handles btnResetWindow.Click

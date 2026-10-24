@@ -109,10 +109,11 @@ End Class
 Public Module SupplierFactory
 
     Public Function Create(s As AppSettings) As List(Of Supplier)
+        Dim farnellStore = Element14Supplier.FindFarnellStore(s.FarnellStore) ' the country chosen in Settings
         Dim all As New Dictionary(Of String, Supplier) From {
             {AppSettings.RS, New WebLinkSupplier(AppSettings.RS, s.GetSearchUrl(AppSettings.RS))},
-            {AppSettings.Farnell, New Element14Supplier(AppSettings.Farnell, "uk.farnell.com", "GBP",
-                                                        s.Element14ApiKey, s.GetSearchUrl(AppSettings.Farnell))},
+            {AppSettings.Farnell, New Element14Supplier(AppSettings.Farnell, farnellStore.Id, farnellStore.Currency,
+                                                        s.Element14ApiKey, s.GetSearchUrl(AppSettings.Farnell), farnellStore.ImageLocale)},
             {AppSettings.CPC, New Element14Supplier(AppSettings.CPC, "cpc.farnell.com", "GBP",
                                                     s.Element14ApiKey, s.GetSearchUrl(AppSettings.CPC))},
             {AppSettings.DigiKey, New DigiKeySupplier(s.DigiKeyClientId, s.DigiKeyClientSecret, s.DigiKeySite,

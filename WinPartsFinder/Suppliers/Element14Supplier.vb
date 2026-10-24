@@ -15,14 +15,82 @@ Public Class Element14Supplier
     Private Shared _lastCallUtc As DateTime = DateTime.MinValue
     Private Shared ReadOnly MinCallSpacing As TimeSpan = TimeSpan.FromMilliseconds(600)
 
+    ''' <summary>One element14 country store: same API key, its own stock and prices.</summary>
+    Public Class Store
+        Public ReadOnly Property Id As String           ' e.g. "nz.element14.com"
+        Public ReadOnly Property Country As String
+        Public ReadOnly Property Currency As String     ' the API doesn't say, so it's listed here (checked against live prices)
+        Public ReadOnly Property ImageLocale As String  ' photo folder: en_GB on most stores, en_US on AU/NZ
+
+        Public Sub New(id As String, country As String, currency As String, Optional imageLocale As String = "en_GB")
+            Me.Id = id : Me.Country = country : Me.Currency = currency : Me.ImageLocale = imageLocale
+        End Sub
+
+        Public Overrides Function ToString() As String
+            Return $"{Country} - {Id} ({Currency})"
+        End Function
+    End Class
+
+    ''' <summary>The stores the Farnell supplier can use - each one tested live with a search and a photo (Oct 2026).</summary>
+    Public Shared ReadOnly FarnellStores As New List(Of Store) From {
+        New Store("uk.farnell.com", "United Kingdom", "GBP"),
+        New Store("ie.farnell.com", "Ireland", "EUR"),
+        New Store("de.farnell.com", "Germany", "EUR"),
+        New Store("fr.farnell.com", "France", "EUR"),
+        New Store("it.farnell.com", "Italy", "EUR"),
+        New Store("es.farnell.com", "Spain", "EUR"),
+        New Store("nl.farnell.com", "Netherlands", "EUR"),
+        New Store("be.farnell.com", "Belgium", "EUR"),
+        New Store("at.farnell.com", "Austria", "EUR"),
+        New Store("pt.farnell.com", "Portugal", "EUR"),
+        New Store("fi.farnell.com", "Finland", "EUR"),
+        New Store("sk.farnell.com", "Slovakia", "EUR"),
+        New Store("si.farnell.com", "Slovenia", "EUR"),
+        New Store("ee.farnell.com", "Estonia", "EUR"),
+        New Store("lv.farnell.com", "Latvia", "EUR"),
+        New Store("lt.farnell.com", "Lithuania", "EUR"),
+        New Store("bg.farnell.com", "Bulgaria", "EUR"),
+        New Store("ch.farnell.com", "Switzerland", "CHF"),
+        New Store("se.farnell.com", "Sweden", "SEK"),
+        New Store("dk.farnell.com", "Denmark", "DKK"),
+        New Store("no.farnell.com", "Norway", "NOK"),
+        New Store("pl.farnell.com", "Poland", "PLN"),
+        New Store("cz.farnell.com", "Czech Republic", "CZK"),
+        New Store("hu.farnell.com", "Hungary", "HUF"),
+        New Store("ro.farnell.com", "Romania", "RON"),
+        New Store("il.farnell.com", "Israel", "USD"),
+        New Store("tr.farnell.com", "Turkey", "EUR"),
+        New Store("export.farnell.com", "Export (other countries)", "GBP"),
+        New Store("au.element14.com", "Australia", "AUD", "en_US"),
+        New Store("nz.element14.com", "New Zealand", "NZD", "en_US"),
+        New Store("sg.element14.com", "Singapore", "SGD"),
+        New Store("my.element14.com", "Malaysia", "MYR"),
+        New Store("in.element14.com", "India", "INR"),
+        New Store("cn.element14.com", "China", "CNY"),
+        New Store("hk.element14.com", "Hong Kong", "HKD"),
+        New Store("tw.element14.com", "Taiwan", "TWD"),
+        New Store("kr.element14.com", "South Korea", "KRW"),
+        New Store("th.element14.com", "Thailand", "THB"),
+        New Store("ph.element14.com", "Philippines", "PHP"),
+        New Store("vn.element14.com", "Vietnam", "USD")
+    }
+
+    ''' <summary>The store with this id, or the UK one if it isn't known.</summary>
+    Public Shared Function FindFarnellStore(id As String) As Store
+        Return If(FarnellStores.FirstOrDefault(Function(s) String.Equals(s.Id, id, StringComparison.OrdinalIgnoreCase)), FarnellStores(0))
+    End Function
+
     Private ReadOnly _storeId As String
     Private ReadOnly _currency As String
+    Private ReadOnly _imageLocale As String
     Private ReadOnly _apiKey As String
 
-    Public Sub New(name As String, storeId As String, currency As String, apiKey As String, searchUrlTemplate As String)
+    Public Sub New(name As String, storeId As String, currency As String, apiKey As String, searchUrlTemplate As String,
+                   Optional imageLocale As String = "en_GB")
         MyBase.New(name, searchUrlTemplate)
         _storeId = storeId
         _currency = currency
+        _imageLocale = imageLocale
         _apiKey = If(apiKey, "").Trim()
     End Sub
 
@@ -130,12 +198,12 @@ Public Class Element14Supplier
             Dim ds = p.GetArr("datasheets").FirstOrDefault()
             r.DatasheetUrl = ds.GetStr("url")
 
-            ' Only the file name comes back, e.g. "/GE8SOIC-40.jpg". Both stores serve
-            ' it from the en_GB path (en_US 404s, even on Newark).
+            ' Only the file name comes back, e.g. "/GE8SOIC-40.jpg". Most stores (Newark too) serve it from
+            ' the en_GB folder; Australia and New Zealand only from en_US.
             Dim imageFile = p.GetStr("image", "baseName")
             If imageFile.Length > 0 Then
-                r.ImageUrl = $"https://{_storeId}/productimages/standard/en_GB{imageFile}"
-                r.LargeImageUrl = $"https://{_storeId}/productimages/large/en_GB{imageFile}"
+                r.ImageUrl = $"https://{_storeId}/productimages/standard/{_imageLocale}{imageFile}"
+                r.LargeImageUrl = $"https://{_storeId}/productimages/large/{_imageLocale}{imageFile}"
             End If
             results.Add(r)
         Next

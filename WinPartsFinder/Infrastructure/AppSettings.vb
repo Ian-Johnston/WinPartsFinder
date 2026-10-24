@@ -57,6 +57,9 @@ Public Class AppSettings
     Public Property DigiKeyLanguage As String = "en"
     Public Property DigiKeyCurrency As String = "GBP"
 
+    ' ---- Farnell country store (element14), e.g. "nz.element14.com" - the same key works for all of them ----
+    Public Property FarnellStore As String = "uk.farnell.com"
+
     ' ---- TME locale (country decides stock/prices offered; currency of the prices) ----
     Public Property TmeCountry As String = "GB"
     Public Property TmeCurrency As String = "GBP"
@@ -105,8 +108,14 @@ Public Class AppSettings
     Public Function GetSearchUrl(supplierName As String) As String
         Dim url As String = Nothing
         If SearchUrls.TryGetValue(supplierName, url) AndAlso Not String.IsNullOrWhiteSpace(url) Then Return url
-        If DefaultSearchUrls.TryGetValue(supplierName, url) Then Return url
-        Return ""
+        Return DefaultSearchUrl(supplierName, FarnellStore)
+    End Function
+
+    ''' <summary>The built-in website search URL. Farnell's follows the country store chosen in Settings.</summary>
+    Public Shared Function DefaultSearchUrl(supplierName As String, farnellStore As String) As String
+        If supplierName = Farnell Then Return $"https://{Element14Supplier.FindFarnellStore(farnellStore).Id}/search?st={{0}}"
+        Dim url As String = Nothing
+        Return If(DefaultSearchUrls.TryGetValue(supplierName, url), url, "")
     End Function
 
     Public Function IsEnabled(supplierName As String) As Boolean

@@ -11,6 +11,17 @@ Imports System.Text
 Public Class TmeSupplier
     Inherits ApiSupplier
 
+    ''' <summary>
+    ''' Countries for Settings (TME prices and stock for that country). TME ships to many more - any two-letter
+    ''' country code can be typed in. Only GB / GBP has been tested live; the rest follow TME's documentation.
+    ''' </summary>
+    Public Shared ReadOnly Countries As String() = {
+        "GB", "IE", "PL", "DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "FI", "SE", "DK", "NO", "CZ", "SK",
+        "HU", "RO", "BG", "LT", "LV", "EE", "SI", "HR", "GR", "CH", "US", "CA", "AU", "NZ"}
+
+    ''' <summary>Currencies for Settings. TME's own currencies are PLN, EUR and USD; GBP also works.</summary>
+    Public Shared ReadOnly Currencies As String() = {"GBP", "EUR", "USD", "PLN"}
+
     Private Const BaseUrl As String = "https://api.tme.eu"
     Private Const MaxPerPage As Integer = 50 ' /products/data takes up to 50 symbols
 
