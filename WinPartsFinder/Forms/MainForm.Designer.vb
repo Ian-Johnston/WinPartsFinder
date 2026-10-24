@@ -501,7 +501,7 @@ Partial Class MainForm
         tipMain.AutoPopDelay = 15000
         tipMain.InitialDelay = 500
         tipMain.ReshowDelay = 100
-        tipMain.SetToolTip(txtSearch, "Part number or keywords to search for, e.g. LM358 or 10uF 25V 0805." & vbCrLf & "Press Enter to search. Previous searches drop down as you type.")
+        tipMain.SetToolTip(txtSearch, "Part number or keywords to search for, e.g. LM358 or 10uF 25V 0805." & vbCrLf & "Press Enter to search. Click in the box and pause to see your last 20 searches; matching ones are also suggested as you type.")
         tipMain.SetToolTip(cboMode, "Keyword: searches descriptions and part numbers." & vbCrLf & "Manufacturer part no.: looks for parts whose manufacturer part number starts with what you typed.")
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")

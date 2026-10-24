@@ -75,8 +75,9 @@ Public Class AppSettings
     Public Property EnabledSuppliers As New Dictionary(Of String, Boolean)
     Public Property SearchUrls As New Dictionary(Of String, String)
     Public Property RecentSearches As New List(Of String)
-    ''' <summary>The Advanced search window reopens with these.</summary>
-    Public Property LastAdvanced As New AdvancedSearchOptions
+    ''' <summary>The Advanced search window reopens with these - while the app is open only (not saved),
+    ''' so every run starts with a plain Advanced search.</summary>
+    <JsonIgnore> Public Property LastAdvanced As New AdvancedSearchOptions
 
     Public Shared ReadOnly Property FilePath As String =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinPartsFinder", "settings.json")

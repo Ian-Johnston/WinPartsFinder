@@ -20,17 +20,20 @@ Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs, and e
 
 # SEARCHING
 - **Keyword** searches descriptions and part numbers. **Manufacturer part no.** looks for parts whose manufacturer part number starts with what you typed.
+- Keyword searches are matched by each supplier's own search, so a part number can also bring back its close relatives - e.g. LT1121CST-3.3**#PBF** also finds the **#TRPBF** (tape and reel) version of the same chip. Use **Advanced… > Exact manufacturer part no.** for only that exact number.
 - **Max/supp.** is how many results are fetched from each supplier per search, up to 50. Suppliers don't send more than 50 at a time - use **Load more** for the next batch.
 - **Cancel** stops any searches still running.
-- Previous searches drop down as you type in the Search box.
+- **Recent searches:** click into the Search box and pause for a moment, and your last 20 searches drop down underneath (or press **↓** in an empty box). Click one, or use **↑ ↓** and **Enter**, to put it in the box - change the search type or edit it, then press Enter to search. Start typing and it closes; **Esc** closes it too.
+- As you type, matching previous searches are also suggested.
 
 # ADVANCED SEARCH
-Click **Advanced…** next to Search, or press **Ctrl+F**. The window remembers your choices from last time. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
+Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder is open, the window remembers your choices from last time; each time you start the app it begins fresh. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
 - **Search type:** **Keyword**; **Manufacturer part no. (starts with)**; **Exact manufacturer part no.** (only parts whose number matches exactly, ignoring spaces); or **Supplier order code**, e.g. a Farnell 3117070 or Mouser 595-LM358DR. A code belongs to one supplier: WinPartsFinder finds it there, reads the manufacturer part number, then searches every other ticked supplier for that exact part.
 - **In stock only** and **RoHS only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box.
 - **Active parts only** hides parts marked obsolete, discontinued, end of life or not recommended for new designs. Parts with no status shown are kept.
-- **Manufacturer contains**, e.g. Texas, keeps only that maker's parts.
-- **Description also contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example. Leave **Search for** blank to search for these words on their own (as a Keyword search), e.g. 20-Bit ADC. The suppliers then match the words their own way (DigiKey finds 20-Bit as 20BIT), so they aren't also checked letter-for-letter in the description.
+- **Manufacturer name contains**, e.g. Texas, keeps only that maker's parts. It's the maker's name, not the part number.
+- **Manufacturer part no. contains** keeps parts whose manufacturer part number contains what you type anywhere in it, e.g. **931G** keeps KSC931G LFS. If you only remember part of a number, leave **Search for** blank, put the fragment here and what the part is in **Description also contains** (e.g. 931G and switch) - they're searched for together. DigiKey and Mouser can find part of a number; Farnell, CPC and Newark only match whole part numbers or numbers from the start, so search those once you know the full number.
+- **Description also contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example. Leave **Search for** blank to search for these words (plus any manufacturer part no. fragment) instead, as a Keyword search, e.g. 20-Bit ADC. The suppliers then match the words their own way (DigiKey finds 20-Bit as 20BIT), so they aren't also checked letter-for-letter in the description.
 - **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
 - **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency.
 - **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
@@ -82,6 +85,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **Types…** lists every type of part in the results (e.g. Analogue to Digital Converter, Evaluation Kit, Flip-Flops) with how many parts and which suppliers. Untick the ones you don't want and click **OK** to hide them; tick them again to bring them back. The button shows how many types are hidden, and a new search shows every type again. Each supplier words types its own way (Farnell: Analogue to Digital Converter, Mouser: Analog to Digital Converters - ADC), so similar ones appear separately - click **Type** in the window to sort them together.
 - **Filter** narrows the current results as you type. It matches the supplier, both part numbers, manufacturer, type and description. It is not case sensitive.
 - **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, In stock only, Types…, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
+- If parts were found but **all** of them are hidden, the status line at the bottom says what's hiding them, e.g. *All 5 are hidden by In stock only (none are in stock)*.
 - **Export CSV…** saves the rows currently shown, including their **#**, product and datasheet links, to a file that opens in Excel.
 
 # SETTINGS
@@ -106,6 +110,8 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **HTTP 401** - the key or secret is wrong. Paste it again in Settings, checking for spaces at either end.
 - **HTTP 403** - the key isn't active yet, or (DigiKey) ProductInformation V4 isn't selected on your app.
 - **Timeout** - the supplier was slow to answer. Search again.
+- **Parts found but the grid is empty** - something is hiding them, usually **In stock only** for an old part. The status line says which; **Total parts = 5 (showing 0)** in the corner is the clue.
+- **Advanced search finds nothing** - check each box holds the right thing: **Manufacturer name contains** is the maker (e.g. C&K), not the part number or what the part is.
 - If the main window ends up off-screen or a mess, use **Settings > Reset main window layout**.
 - Prices and stock come from the suppliers and can change quickly. Always check on the supplier's website before ordering.
 

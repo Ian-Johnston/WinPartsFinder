@@ -53,6 +53,13 @@ Public Module Theme
         End Get
     End Property
 
+    ''' <summary>Background of text boxes and lists.</summary>
+    Public ReadOnly Property InputBack As Color
+        Get
+            Return If(IsDark, DarkInput, SystemColors.Window)
+        End Get
+    End Property
+
     Public ReadOnly Property BorderColor As Color
         Get
             Return If(IsDark, DarkBorder, SystemColors.ControlDark)

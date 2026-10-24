@@ -40,6 +40,7 @@ Public Class AdvancedSearchForm
         chkRohs.Checked = o.RohsOnly
         chkActive.Checked = o.ActiveOnly
         txtMaker.Text = o.ManufacturerContains
+        txtPartNo.Text = o.PartNoContains
         txtContains.Text = o.MustContain
         nudQty.Value = Math.Max(nudQty.Minimum, Math.Min(nudQty.Maximum, o.Quantity))
         txtMaxPrice.Text = If(o.MaxUnitPrice.HasValue, o.MaxUnitPrice.Value.ToString("0.00##", CultureInfo.CurrentCulture), "")
@@ -53,17 +54,19 @@ Public Class AdvancedSearchForm
         Dim query = txtQuery.Text.Trim()
         Dim mode = CType(Math.Max(0, cboMode.SelectedIndex), SearchMode)
         Dim mustContain = txtContains.Text.Trim()
+        Dim partNo = txtPartNo.Text.Trim()
         Dim containsIsQuery = False
         If query.Length = 0 Then
-            ' Nothing in Search for: the suppliers still need search text, so search for the description words.
-            ' The suppliers then match them their own way (DigiKey finds "20-Bit" as "20BIT"), so they aren't
+            ' Nothing in Search for: the suppliers still need search text, so search for the part-number fragment
+            ' and description words together, e.g. "931G switch" (DigiKey and Mouser match part of a number).
+            ' The suppliers match the words their own way (DigiKey finds "20-Bit" as "20BIT"), so they aren't
             ' also checked letter-for-letter - that would throw most of those parts away.
-            query = mustContain
+            query = String.Join(" ", {partNo, mustContain}.Where(Function(x) x.Length > 0))
             containsIsQuery = True
             mode = SearchMode.Keyword
         End If
         If query.Length < 2 Then
-            MessageBox.Show(Me, "Type at least 2 characters in Search for (or in Description also contains).", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            MessageBox.Show(Me, "Type at least 2 characters in Search for (or in Manufacturer part no. contains / Description also contains).", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             txtQuery.Select()
             Return
         End If
@@ -94,6 +97,7 @@ Public Class AdvancedSearchForm
             .RohsOnly = chkRohs.Checked,
             .ActiveOnly = chkActive.Checked,
             .ManufacturerContains = txtMaker.Text.Trim(),
+            .PartNoContains = partNo,
             .MustContain = mustContain,
             .ContainsIsQuery = containsIsQuery,
             .Quantity = CInt(nudQty.Value),

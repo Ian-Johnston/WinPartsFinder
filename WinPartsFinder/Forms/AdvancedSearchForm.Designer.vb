@@ -37,6 +37,8 @@ Partial Class AdvancedSearchForm
         chkActive = New CheckBox()
         lblMaker = New Label()
         txtMaker = New TextBox()
+        lblPartNo = New Label()
+        txtPartNo = New TextBox()
         lblContains = New Label()
         txtContains = New TextBox()
         lblQty = New Label()
@@ -76,20 +78,23 @@ Partial Class AdvancedSearchForm
         tlpMain.Controls.Add(chkActive, 1, 3)
         tlpMain.Controls.Add(lblMaker, 0, 4)
         tlpMain.Controls.Add(txtMaker, 1, 4)
-        tlpMain.Controls.Add(lblContains, 0, 5)
-        tlpMain.Controls.Add(txtContains, 1, 5)
-        tlpMain.Controls.Add(lblQty, 0, 6)
-        tlpMain.Controls.Add(flpQty, 1, 6)
-        tlpMain.Controls.Add(lblMax, 0, 7)
-        tlpMain.Controls.Add(nudMax, 1, 7)
-        tlpMain.Controls.Add(lblSuppliers, 0, 8)
-        tlpMain.Controls.Add(clbSuppliers, 1, 8)
-        tlpMain.Controls.Add(lblHint, 0, 9)
+        tlpMain.Controls.Add(lblPartNo, 0, 5)
+        tlpMain.Controls.Add(txtPartNo, 1, 5)
+        tlpMain.Controls.Add(lblContains, 0, 6)
+        tlpMain.Controls.Add(txtContains, 1, 6)
+        tlpMain.Controls.Add(lblQty, 0, 7)
+        tlpMain.Controls.Add(flpQty, 1, 7)
+        tlpMain.Controls.Add(lblMax, 0, 8)
+        tlpMain.Controls.Add(nudMax, 1, 8)
+        tlpMain.Controls.Add(lblSuppliers, 0, 9)
+        tlpMain.Controls.Add(clbSuppliers, 1, 9)
+        tlpMain.Controls.Add(lblHint, 0, 10)
         tlpMain.Dock = DockStyle.Fill
         tlpMain.Location = New Point(0, 0)
         tlpMain.Name = "tlpMain"
         tlpMain.Padding = New Padding(10)
-        tlpMain.RowCount = 10
+        tlpMain.RowCount = 11
+        tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
@@ -188,13 +193,26 @@ Partial Class AdvancedSearchForm
         lblMaker.Anchor = AnchorStyles.Left
         lblMaker.AutoSize = True
         lblMaker.Name = "lblMaker"
-        lblMaker.Text = "Manufacturer contains:"
+        lblMaker.Text = "Manufacturer name contains:"
         '
         'txtMaker
         '
         txtMaker.Dock = DockStyle.Fill
         txtMaker.Name = "txtMaker"
         txtMaker.TabIndex = 4
+        '
+        'lblPartNo
+        '
+        lblPartNo.Anchor = AnchorStyles.Left
+        lblPartNo.AutoSize = True
+        lblPartNo.Name = "lblPartNo"
+        lblPartNo.Text = "Manufacturer part no. contains:"
+        '
+        'txtPartNo
+        '
+        txtPartNo.Dock = DockStyle.Fill
+        txtPartNo.Name = "txtPartNo"
+        txtPartNo.TabIndex = 5
         '
         'lblContains
         '
@@ -333,12 +351,13 @@ Partial Class AdvancedSearchForm
         '
         tipAdv.AutoPopDelay = 15000
         tipAdv.InitialDelay = 500
-        tipAdv.SetToolTip(txtQuery, "Part number, keywords or a supplier order code (2-40 characters for TME)." & vbCrLf & "Leave blank to search for the Description also contains words.")
+        tipAdv.SetToolTip(txtQuery, "Part number, keywords or a supplier order code (2-40 characters for TME)." & vbCrLf & "Leave blank to search for the Manufacturer part no. contains and Description also contains text instead.")
         tipAdv.SetToolTip(cboMode, "Keyword: descriptions and part numbers." & vbCrLf & "Manufacturer part no.: starts with what you typed." & vbCrLf & "Exact: only that exact manufacturer part number." & vbCrLf & "Supplier order code: e.g. a Farnell, CPC, Mouser, DigiKey or TME number - finds that part, then searches every other supplier for the same part.")
         tipAdv.SetToolTip(chkInStock, "The suppliers send only parts they have in stock, so you get a full page of in-stock parts.")
         tipAdv.SetToolTip(chkRohs, "The suppliers send only RoHS compliant parts (Mouser, DigiKey, Farnell, CPC, Newark - TME has no RoHS search option).")
         tipAdv.SetToolTip(chkActive, "Leave out parts whose status says obsolete, discontinued, not recommended for new designs, end of life etc.")
-        tipAdv.SetToolTip(txtMaker, "Only parts whose manufacturer name contains this, e.g. Texas or Analog.")
+        tipAdv.SetToolTip(txtMaker, "Only parts whose manufacturer (the maker's name) contains this, e.g. Texas or Analog. Not the part number.")
+        tipAdv.SetToolTip(txtPartNo, "Only parts whose manufacturer part number contains this, anywhere in it, e.g. 931G finds KSC931G LFS." & vbCrLf & "Tip: leave Search for blank and put what the part is in Description also contains, e.g. switch -" & vbCrLf & "the two are then searched for together. DigiKey and Mouser match part of a number; Farnell, CPC and Newark don't.")
         tipAdv.SetToolTip(txtContains, "Only parts whose description (or part number) contains all of these words, e.g. SOIC or 0603 X7R." & vbCrLf & "With Search for blank, these words become the search instead (matched the suppliers' own way).")
         tipAdv.SetToolTip(nudQty, "How many you need. Prices are then shown at that quantity, and parts with a higher minimum order are left out. 0 = ignore.")
         tipAdv.SetToolTip(txtMaxPrice, "Leave out parts costing more than this each (at the quantity above). Blank = no limit.")
@@ -352,12 +371,12 @@ Partial Class AdvancedSearchForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnCancel
-        ClientSize = New Size(560, 570)
+        ClientSize = New Size(560, 600)
         Controls.Add(tlpMain)
         Controls.Add(flpButtons)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(540, 560)
+        MinimumSize = New Size(540, 590)
         Name = "AdvancedSearchForm"
         ShowIcon = False
         ShowInTaskbar = False
@@ -390,6 +409,8 @@ Partial Class AdvancedSearchForm
     Friend WithEvents chkActive As CheckBox
     Friend WithEvents lblMaker As Label
     Friend WithEvents txtMaker As TextBox
+    Friend WithEvents lblPartNo As Label
+    Friend WithEvents txtPartNo As TextBox
     Friend WithEvents lblContains As Label
     Friend WithEvents txtContains As TextBox
     Friend WithEvents lblQty As Label

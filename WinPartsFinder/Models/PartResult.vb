@@ -78,11 +78,13 @@ Public Class AdvancedSearchOptions
     ' Applied by the app to what comes back
     Public Property ActiveOnly As Boolean
     Public Property ManufacturerContains As String = ""
+    ''' <summary>Only parts whose manufacturer part number contains this (case and spaces ignored), e.g. 931G.</summary>
+    Public Property PartNoContains As String = ""
     Public Property MustContain As String = ""
     ''' <summary>
-    ''' True when Search for was left blank, so the MustContain words were searched for instead. They're then
-    ''' not checked again letter-for-letter (the suppliers matched them their own way), and the window
-    ''' reopens with Search for blank.
+    ''' True when Search for was left blank, so the part-number fragment and MustContain words were searched for
+    ''' instead. The words are then not checked again letter-for-letter (the suppliers matched them their own way),
+    ''' and the window reopens with Search for blank.
     ''' </summary>
     Public Property ContainsIsQuery As Boolean
     ''' <summary>0 = not set. When set, prices are shown at this quantity and parts with a higher MOQ are left out.</summary>
@@ -109,6 +111,7 @@ Public Class AdvancedSearchOptions
         If RohsOnly Then bits.Add("RoHS")
         If ActiveOnly Then bits.Add("active only")
         If ManufacturerContains.Trim().Length > 0 Then bits.Add($"maker ""{ManufacturerContains.Trim()}""")
+        If PartNoContains.Trim().Length > 0 Then bits.Add($"part no. contains ""{PartNoContains.Trim()}""")
         If WordsToCheck.Length > 0 Then bits.Add($"contains ""{WordsToCheck}""")
         If Quantity > 0 Then bits.Add($"qty {Quantity}")
         If MaxUnitPrice.HasValue Then bits.Add($"max {MaxUnitPrice.Value:0.00##} each")
@@ -125,7 +128,7 @@ Public Class AdvancedSearchOptions
     ''' <summary>True if any of the app-side filters are set.</summary>
     Public ReadOnly Property HasAppFilters As Boolean
         Get
-            Return ActiveOnly OrElse ManufacturerContains.Trim().Length > 0 OrElse WordsToCheck.Length > 0 OrElse
+            Return ActiveOnly OrElse ManufacturerContains.Trim().Length > 0 OrElse PartNoContains.Trim().Length > 0 OrElse WordsToCheck.Length > 0 OrElse
                    Quantity > 0 OrElse MaxUnitPrice.HasValue
         End Get
     End Property
@@ -136,6 +139,8 @@ Public Class AdvancedSearchOptions
         If ActiveOnly AndAlso IsNotActive(p.Status) Then Return False
         If ManufacturerContains.Trim().Length > 0 AndAlso
            p.Manufacturer.IndexOf(ManufacturerContains.Trim(), StringComparison.OrdinalIgnoreCase) < 0 Then Return False
+        If PartNoContains.Trim().Length > 0 AndAlso
+           NoSpaces(p.ManufacturerPartNumber).IndexOf(NoSpaces(PartNoContains), StringComparison.OrdinalIgnoreCase) < 0 Then Return False
         For Each word In WordsToCheck.Split({" "c, ","c}, StringSplitOptions.RemoveEmptyEntries)
             If p.Description.IndexOf(word, StringComparison.OrdinalIgnoreCase) < 0 AndAlso
                p.ManufacturerPartNumber.IndexOf(word, StringComparison.OrdinalIgnoreCase) < 0 Then Return False
@@ -158,6 +163,10 @@ Public Class AdvancedSearchOptions
             If b.Quantity <= qty Then best = b
         Next
         Return best.Price
+    End Function
+
+    Private Shared Function NoSpaces(s As String) As String
+        Return If(s, "").Replace(" ", "")
     End Function
 
     Private Shared Function IsNotActive(status As String) As Boolean

@@ -72,7 +72,7 @@ Partial Class AboutForm
         flpLeft.Location = New Point(0, 0)
         flpLeft.Name = "flpLeft"
         flpLeft.Padding = New Padding(10, 8, 10, 8)
-        flpLeft.Size = New Size(624, 620)
+        flpLeft.Size = New Size(604, 670)
         flpLeft.TabIndex = 0
         flpLeft.WrapContents = False
         '
@@ -99,7 +99,7 @@ Partial Class AboutForm
         lblVersion.Font = New Font("Segoe UI", 8.25F)
         lblVersion.Margin = New Padding(10, 22, 0, 0)
         lblVersion.Name = "lblVersion"
-        lblVersion.Text = "(UK 2026)"
+        lblVersion.Text = "© 2026 Ian Johnston"
         '
         'lblCreditsHead
         '
@@ -112,11 +112,11 @@ Partial Class AboutForm
         'lblCredits
         '
         lblCredits.AutoSize = True
-        lblCredits.MaximumSize = New Size(600, 0)
+        lblCredits.MaximumSize = New Size(584, 0)
         lblCredits.Margin = New Padding(0)
         lblCredits.Name = "lblCredits"
         lblCredits.Text = "WinPartsFinder app by Ian Johnston." & vbCrLf &
-            "Part data from Mouser, DigiKey and element14 (Farnell / Newark) web APIs." & vbCrLf &
+            "Part data from Mouser, DigiKey, element14 (Farnell / CPC / Newark) and TME web APIs." & vbCrLf &
             "Supplier names and trademarks belong to their respective owners."
         '
         'lblDevHead
@@ -130,7 +130,7 @@ Partial Class AboutForm
         'lblDev
         '
         lblDev.AutoSize = True
-        lblDev.MaximumSize = New Size(600, 0)
+        lblDev.MaximumSize = New Size(584, 0)
         lblDev.Margin = New Padding(0)
         lblDev.Name = "lblDev"
         lblDev.Text = "Developed in VB.NET using Microsoft Visual Studio."
@@ -146,7 +146,7 @@ Partial Class AboutForm
         'lblSupport
         '
         lblSupport.AutoSize = True
-        lblSupport.MaximumSize = New Size(600, 0)
+        lblSupport.MaximumSize = New Size(584, 0)
         lblSupport.Margin = New Padding(0)
         lblSupport.Name = "lblSupport"
         lblSupport.Text = "If you find the program useful, please consider donating using the button provided." & vbCrLf &
@@ -164,7 +164,7 @@ Partial Class AboutForm
         'lblLicence
         '
         lblLicence.AutoSize = True
-        lblLicence.MaximumSize = New Size(600, 0)
+        lblLicence.MaximumSize = New Size(584, 0)
         lblLicence.Margin = New Padding(0)
         lblLicence.Name = "lblLicence"
         lblLicence.Text = "WinPartsFinder is provided free of charge for personal, non-commercial use only." & vbCrLf &
@@ -173,6 +173,8 @@ Partial Class AboutForm
             "Neither WinPartsFinder nor its source code, in whole or in part, may be used for commercial purposes " &
             "without a separate commercial licence from the author. This includes use within businesses and organisations." & vbCrLf &
             "Please contact the author (www.ianjohnston.com) to discuss commercial licensing arrangements." & vbCrLf &
+            "The WinPartsFinder name and icon belong to the author. Modified or derived versions must not be called " &
+            "WinPartsFinder, or use a name or icon likely to be confused with it, without the author's written permission." & vbCrLf &
             "Each user must obtain their own supplier API keys and follow each supplier's API terms of use."
         '
         'lblDisclaimerHead
@@ -186,7 +188,7 @@ Partial Class AboutForm
         'lblDisclaimer
         '
         lblDisclaimer.AutoSize = True
-        lblDisclaimer.MaximumSize = New Size(600, 0)
+        lblDisclaimer.MaximumSize = New Size(584, 0)
         lblDisclaimer.Margin = New Padding(0)
         lblDisclaimer.Name = "lblDisclaimer"
         lblDisclaimer.Text = "WinPartsFinder and its source code are provided ""as is"", without warranty of any kind, express or implied. " &
@@ -208,9 +210,9 @@ Partial Class AboutForm
         pnlRight.Controls.Add(btnDonate)
         pnlRight.Controls.Add(btnClose)
         pnlRight.Dock = DockStyle.Right
-        pnlRight.Location = New Point(624, 0)
+        pnlRight.Location = New Point(604, 0)
         pnlRight.Name = "pnlRight"
-        pnlRight.Size = New Size(456, 620)
+        pnlRight.Size = New Size(476, 670)
         pnlRight.TabIndex = 1
         '
         'lblAuthor
@@ -254,7 +256,7 @@ Partial Class AboutForm
         'picCartoon
         '
         picCartoon.BackColor = Color.Transparent
-        picCartoon.Location = New Point(256, 12)
+        picCartoon.Location = New Point(276, 12)
         picCartoon.Name = "picCartoon"
         picCartoon.Size = New Size(150, 184)
         picCartoon.SizeMode = PictureBoxSizeMode.Zoom
@@ -265,7 +267,7 @@ Partial Class AboutForm
         '
         lblSupportBig.Font = New Font("Segoe UI", 12.0F, FontStyle.Bold)
         lblSupportBig.ForeColor = Color.FromArgb(220, 30, 30)
-        lblSupportBig.Location = New Point(226, 202)
+        lblSupportBig.Location = New Point(246, 202)
         lblSupportBig.Name = "lblSupportBig"
         lblSupportBig.Size = New Size(210, 26)
         lblSupportBig.Text = "SUPPORT WinPartsFinder"
@@ -273,7 +275,7 @@ Partial Class AboutForm
         '
         'btnDonate
         '
-        btnDonate.Location = New Point(266, 236)
+        btnDonate.Location = New Point(286, 236)
         btnDonate.Name = "btnDonate"
         btnDonate.Size = New Size(130, 56)
         btnDonate.TabIndex = 4
@@ -284,7 +286,7 @@ Partial Class AboutForm
         '
         btnClose.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
         btnClose.DialogResult = DialogResult.Cancel
-        btnClose.Location = New Point(351, 578)
+        btnClose.Location = New Point(371, 628)
         btnClose.Name = "btnClose"
         btnClose.Size = New Size(90, 28)
         btnClose.TabIndex = 5
@@ -307,7 +309,7 @@ Partial Class AboutForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnClose
-        ClientSize = New Size(1080, 620)
+        ClientSize = New Size(1080, 670)
         Controls.Add(flpLeft)
         Controls.Add(pnlRight)
         FormBorderStyle = FormBorderStyle.FixedDialog

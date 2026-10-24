@@ -13,7 +13,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.005"
+    Public Const AppVersion As String = "V1.006"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -200,6 +200,135 @@ Public Class MainForm
         src.AddRange(_settings.RecentSearches.ToArray())
         txtSearch.AutoCompleteCustomSource = src
     End Sub
+
+    ' ---- Recent searches: click into the Search box and pause, and the last 20 drop down under it ----
+    ' A plain ListBox on the form (not a pop-up window), so the Search box keeps the keyboard and typing works as normal.
+    Private Const RecentShown As Integer = 20
+    Private WithEvents _recentTimer As New System.Windows.Forms.Timer With {.Interval = 1500}
+    Private WithEvents _recentList As ListBox
+    Private _fillingFromRecent As Boolean
+
+    Private Sub txtSearch_MouseDown(sender As Object, e As MouseEventArgs) Handles txtSearch.MouseDown
+        _recentTimer.Stop()
+        If _settings.RecentSearches.Count > 0 AndAlso Not RecentVisible Then _recentTimer.Start()
+    End Sub
+
+    Private Sub _recentTimer_Tick(sender As Object, e As EventArgs) Handles _recentTimer.Tick
+        _recentTimer.Stop()
+        If txtSearch.Focused AndAlso Not _busy Then ShowRecent()
+    End Sub
+
+    Private Sub txtSearch_TextChanged(sender As Object, e As EventArgs) Handles txtSearch.TextChanged
+        If _fillingFromRecent Then Return
+        ' Typing: the normal type-ahead suggestions take over.
+        _recentTimer.Stop()
+        HideRecent()
+    End Sub
+
+    Private Sub txtSearch_Leave(sender As Object, e As EventArgs) Handles txtSearch.Leave
+        _recentTimer.Stop()
+        ' Clicking an item in the list takes focus from the box for a moment - don't close it for that.
+        If RecentVisible AndAlso _recentList.ClientRectangle.Contains(_recentList.PointToClient(Cursor.Position)) Then Return
+        HideRecent()
+    End Sub
+
+    Private ReadOnly Property RecentVisible As Boolean
+        Get
+            Return _recentList IsNot Nothing AndAlso _recentList.Visible
+        End Get
+    End Property
+
+    Private Sub ShowRecent()
+        Dim recent = _settings.RecentSearches.Take(RecentShown).ToList()
+        If recent.Count = 0 Then Return
+        If _recentList Is Nothing Then
+            _recentList = New ListBox With {
+                .BorderStyle = BorderStyle.FixedSingle,
+                .IntegralHeight = False,
+                .TabStop = False,
+                .Visible = False}
+            Controls.Add(_recentList)
+        End If
+        _recentList.Font = txtSearch.Font
+        _recentList.BackColor = Theme.InputBack
+        _recentList.ForeColor = Theme.TextColor
+        _recentList.BeginUpdate()
+        _recentList.Items.Clear()
+        _recentList.Items.AddRange(recent.Cast(Of Object)().ToArray())
+        _recentList.SelectedIndex = -1
+        _recentList.EndUpdate()
+
+        Dim widest = recent.Max(Function(r) TextRenderer.MeasureText(r, txtSearch.Font).Width)
+        _recentList.Bounds = New Rectangle(
+            PointToClient(txtSearch.PointToScreen(New Point(0, txtSearch.Height))),
+            New Size(Math.Max(txtSearch.Width, widest + 12), _recentList.ItemHeight * recent.Count + 4))
+        _recentList.Visible = True
+        _recentList.BringToFront()
+    End Sub
+
+    Private Sub HideRecent()
+        _recentTimer.Stop()
+        If RecentVisible Then _recentList.Visible = False
+    End Sub
+
+    ''' <summary>Puts the chosen search in the box (it doesn't search - change the mode or edit it first if you like).</summary>
+    Private Sub FillFromRecent(index As Integer)
+        If index < 0 OrElse index >= _recentList.Items.Count Then Return
+        _fillingFromRecent = True
+        txtSearch.Text = CStr(_recentList.Items(index))
+        _fillingFromRecent = False
+        HideRecent()
+        txtSearch.Focus()
+        txtSearch.SelectionStart = txtSearch.TextLength
+        txtSearch.SelectionLength = 0
+    End Sub
+
+    Private Sub _recentList_MouseMove(sender As Object, e As MouseEventArgs) Handles _recentList.MouseMove
+        Dim i = _recentList.IndexFromPoint(e.Location)
+        If i >= 0 AndAlso i <> _recentList.SelectedIndex Then _recentList.SelectedIndex = i
+    End Sub
+
+    Private Sub _recentList_MouseClick(sender As Object, e As MouseEventArgs) Handles _recentList.MouseClick
+        FillFromRecent(_recentList.IndexFromPoint(e.Location))
+    End Sub
+
+    ' Close it if the window moves, resizes or loses focus, so it never floats in the wrong place.
+    Private Sub HideRecentOnWindowChange(sender As Object, e As EventArgs) Handles Me.Move, Me.Resize, Me.Deactivate
+        HideRecent()
+    End Sub
+
+    ''' <summary>Keys for the recent-searches list, while the Search box has focus. True = handled.</summary>
+    Private Function RecentKey(keyData As Keys) As Boolean
+        If Not txtSearch.Focused Then Return False
+        If Not RecentVisible Then
+            ' Down opens it straight away - when the box is empty or all selected, so it doesn't clash with type-ahead.
+            If keyData = Keys.Down AndAlso (txtSearch.TextLength = 0 OrElse txtSearch.SelectionLength = txtSearch.TextLength) Then
+                _recentTimer.Stop()
+                ShowRecent()
+                Return RecentVisible
+            End If
+            Return False
+        End If
+        Select Case keyData
+            Case Keys.Down
+                _recentList.SelectedIndex = Math.Min(_recentList.Items.Count - 1, _recentList.SelectedIndex + 1)
+                Return True
+            Case Keys.Up
+                _recentList.SelectedIndex = Math.Max(-1, _recentList.SelectedIndex - 1)
+                Return True
+            Case Keys.Enter
+                If _recentList.SelectedIndex >= 0 Then
+                    FillFromRecent(_recentList.SelectedIndex)
+                    Return True
+                End If
+                HideRecent()
+                Return False ' nothing picked: Enter searches as normal
+            Case Keys.Escape
+                HideRecent()
+                Return True
+        End Select
+        Return False
+    End Function
 
 #End Region
 
@@ -529,7 +658,8 @@ Public Class MainForm
         If total = 0 Then Return
         Dim removed = RemovedCount()
         SetStatus($"{shown} of {total} results shown." &
-                  If(removed > 0, $" ({removed} removed - right-click > Restore removed rows to bring them back)", ""))
+                  If(removed > 0, $" ({removed} removed - right-click > Restore removed rows to bring them back)", "") &
+                  If(HiddenNote().Length > 0, " " & HiddenNote(), ""))
     End Sub
 
     ''' <summary>"Total parts = 140", plus "(showing 98)" when Filter / In stock only / Remove hide some. Website-link rows don't count.</summary>
@@ -615,11 +745,12 @@ Public Class MainForm
         Next
         _loading = False
 
-        Await RunSearchAsync(o)
+        Await RunSearchAsync(o, fromAdvanced:=True)
     End Sub
 
     ' Ctrl+F opens Advanced search.
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If RecentKey(keyData) Then Return True
         If keyData = (Keys.Control Or Keys.F) Then
             btnAdvanced.PerformClick()
             Return True
@@ -628,7 +759,8 @@ Public Class MainForm
     End Function
 
     ''' <summary>Runs a search (normal or Advanced) across the ticked suppliers.</summary>
-    Private Async Function RunSearchAsync(opts As AdvancedSearchOptions) As Task
+    ''' <param name="fromAdvanced">True when it came from the Advanced search window, so the status line lists its options.</param>
+    Private Async Function RunSearchAsync(opts As AdvancedSearchOptions, Optional fromAdvanced As Boolean = False) As Task
         Dim query = opts.Query
         If query.Length = 0 Then
             txtSearch.Select()
@@ -668,7 +800,8 @@ Public Class MainForm
         Dim max = opts.MaxResults
         Dim filters = opts.SupplierFilters()
         Dim sw = Stopwatch.StartNew()
-        Dim advanced = opts.Describe()
+        ' A normal search's Manufacturer part no. mode isn't an "Advanced" option, so only describe Advanced searches.
+        Dim advanced = If(fromAdvanced, opts.Describe(), "")
 
         SetBusy(True)
         SetStatus($"Searching {selected.Count} supplier(s) for ""{query}""" & If(advanced.Length > 0, $" ({advanced})", "") & "…")
@@ -688,9 +821,26 @@ Public Class MainForm
         Dim more = LoadMoreCandidates().Select(Function(i) i.Text).ToList()
         SetStatus(If(codeNote.Length > 0, codeNote & " ", "") &
                   $"""{query}"": {apiHits} part(s) found in {sw.Elapsed.TotalSeconds:0.0}s. " &
-                  If(advanced.Length > 0, $"Advanced: {advanced}" & If(_advancedHidden > 0, $" ({_advancedHidden} left out)", "") & ". ", "") &
+                  If(advanced.Length > 0, $"Advanced: {advanced.TrimEnd("."c)}" & If(_advancedHidden > 0, $" ({_advancedHidden} left out)", "") & ". ", "") &
                   If(more.Count > 0, $"More available from {String.Join(", ", more)} - click Load more. ", "") &
-                  "Double-click a row to open it in your browser.")
+                  If(HiddenNote().Length > 0, HiddenNote(), "Double-click a row to open it in your browser."))
+    End Function
+
+    ''' <summary>
+    ''' When every part found is hidden (e.g. In stock only with nothing in stock), says what's hiding them,
+    ''' so an empty grid doesn't look like "no results". Empty when some parts are showing.
+    ''' </summary>
+    Private Function HiddenNote() As String
+        Dim found = _table.Rows.Cast(Of DataRow)().Count(Function(r) Not CBool(r("LinkOnly")))
+        Dim showing = _table.DefaultView.Cast(Of DataRowView)().Count(Function(v) Not CBool(v("LinkOnly")))
+        If found = 0 OrElse showing > 0 Then Return ""
+        Dim why As New List(Of String)
+        If chkInStock.Checked Then why.Add("In stock only (none are in stock)")
+        If txtFilter.Text.Trim().Length > 0 Then why.Add("the Filter box")
+        If _hiddenTypes.Count > 0 Then why.Add("hidden Types")
+        If lvSuppliers.Items.Cast(Of ListViewItem)().Any(Function(i) Not i.Checked) Then why.Add("unticked suppliers")
+        If RemovedCount() > 0 Then why.Add("removed rows")
+        Return $"All {found} are hidden by {String.Join(", ", why)} - change that to see them."
     End Function
 
     ''' <summary>
@@ -946,6 +1096,7 @@ Public Class MainForm
 
     Private Sub SetBusy(busy As Boolean)
         _busy = busy
+        If busy Then HideRecent()
         btnSearch.Enabled = Not busy
         btnAdvanced.Enabled = Not busy
         btnCancel.Enabled = busy
