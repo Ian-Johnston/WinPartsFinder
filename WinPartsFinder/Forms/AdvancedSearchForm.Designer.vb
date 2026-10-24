@@ -219,7 +219,7 @@ Partial Class AdvancedSearchForm
         lblContains.Anchor = AnchorStyles.Left
         lblContains.AutoSize = True
         lblContains.Name = "lblContains"
-        lblContains.Text = "Description also contains:"
+        lblContains.Text = "Description contains:"
         '
         'txtContains
         '
@@ -351,13 +351,13 @@ Partial Class AdvancedSearchForm
         '
         tipAdv.AutoPopDelay = 15000
         tipAdv.InitialDelay = 500
-        tipAdv.SetToolTip(txtQuery, "Part number, keywords or a supplier order code (2-40 characters for TME)." & vbCrLf & "Leave blank to search for the Manufacturer part no. contains and Description also contains text instead.")
+        tipAdv.SetToolTip(txtQuery, "Part number, keywords or a supplier order code (2-40 characters for TME)." & vbCrLf & "Leave blank to search for the Manufacturer part no. contains and Description contains text instead.")
         tipAdv.SetToolTip(cboMode, "Keyword: descriptions and part numbers." & vbCrLf & "Manufacturer part no.: starts with what you typed." & vbCrLf & "Exact: only that exact manufacturer part number." & vbCrLf & "Supplier order code: e.g. a Farnell, CPC, Mouser, DigiKey or TME number - finds that part, then searches every other supplier for the same part.")
         tipAdv.SetToolTip(chkInStock, "The suppliers send only parts they have in stock, so you get a full page of in-stock parts.")
         tipAdv.SetToolTip(chkRohs, "The suppliers send only RoHS compliant parts (Mouser, DigiKey, Farnell, CPC, Newark - TME has no RoHS search option).")
         tipAdv.SetToolTip(chkActive, "Leave out parts whose status says obsolete, discontinued, not recommended for new designs, end of life etc.")
         tipAdv.SetToolTip(txtMaker, "Only parts whose manufacturer (the maker's name) contains this, e.g. Texas or Analog. Not the part number.")
-        tipAdv.SetToolTip(txtPartNo, "Only parts whose manufacturer part number contains this, anywhere in it, e.g. 931G finds KSC931G LFS." & vbCrLf & "Tip: leave Search for blank and put what the part is in Description also contains, e.g. switch -" & vbCrLf & "the two are then searched for together. DigiKey and Mouser match part of a number; Farnell, CPC and Newark don't.")
+        tipAdv.SetToolTip(txtPartNo, "Only parts whose manufacturer part number contains this, anywhere in it, e.g. 931G finds KSC931G LFS." & vbCrLf & "Tip: leave Search for blank and put what the part is in Description contains, e.g. switch -" & vbCrLf & "the two are then searched for together. DigiKey and Mouser match part of a number; Farnell, CPC and Newark don't.")
         tipAdv.SetToolTip(txtContains, "Only parts whose description (or part number) contains all of these words, e.g. SOIC or 0603 X7R." & vbCrLf & "With Search for blank, these words become the search instead (matched the suppliers' own way).")
         tipAdv.SetToolTip(nudQty, "How many you need. Prices are then shown at that quantity, and parts with a higher minimum order are left out. 0 = ignore.")
         tipAdv.SetToolTip(txtMaxPrice, "Leave out parts costing more than this each (at the quantity above). Blank = no limit.")

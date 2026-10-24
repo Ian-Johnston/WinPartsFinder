@@ -13,7 +13,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.006"
+    Public Const AppVersion As String = "V1.007"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -77,18 +77,55 @@ Public Class MainForm
         RefreshAutoComplete()
         ApplyFilter()
         Theme.Apply(Me)
+        AlignToolbar()
 
         If Not _suppliers.Any(Function(s) s.IsConfigured) Then
             SetStatus("No API keys set yet - open Settings to add Mouser / DigiKey / element14 keys. Until then you get website links.")
         Else
             SetStatus("Ready.")
         End If
-        txtSearch.Select()
+        cboSearch.Select()
     End Sub
 
     Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
         _cts?.Cancel()
         SaveUiSettings()
+    End Sub
+
+    ''' <summary>
+    ''' Gives the toolbar one even height and centres everything on one line. Worked out from the real control
+    ''' sizes when the window opens (and after a theme change), so it stays lined up at any Windows scaling.
+    ''' </summary>
+    Private Sub AlignToolbar()
+        ' The drop-downs set the height: Windows sizes them from the font and won't stretch them.
+        Dim rowHeight = cboMode.Height
+        txtFilter.AutoSize = False
+        txtFilter.Height = rowHeight
+        ' Types… grows with its text ("Types (3 hidden)…") - its width is set in UpdateTypesButton instead.
+        btnTypes.AutoSize = False
+        btnTypes.MinimumSize = Size.Empty
+        UpdateTypesButton()
+        For Each b In {btnSearch, btnAdvanced, btnCancel, btnLoadMore, btnTypes, btnExport, btnSettings, btnHelp, btnAbout}
+            b.Height = rowHeight
+        Next
+
+        ' Everything else (labels, tick box, number box) is centred on the same middle line.
+        Dim lineHeight = flpTop.Controls.Cast(Of Control)().Where(Function(c) c IsNot flpFilter).
+                             Concat(flpFilter.Controls.Cast(Of Control)()).Max(Function(c) c.Height)
+        Const Gap As Integer = 3 ' normal space above and below each control
+        Dim centre = Sub(c As Control, extraTop As Integer)
+                         Dim spare = lineHeight - c.Height
+                         c.Margin = New Padding(c.Margin.Left, Gap + extraTop + spare \ 2, c.Margin.Right, Gap + spare - spare \ 2)
+                     End Sub
+        For Each c As Control In flpTop.Controls
+            If c IsNot flpFilter Then centre(c, 0) ' the Filter panel's own two controls are centred below
+        Next
+        For Each c As Control In flpFilter.Controls
+            centre(c, 0)
+        Next
+        ' Help and About sit outside the toolbar's panel, so they also need its inside padding.
+        centre(btnHelp, flpTop.Padding.Top)
+        centre(btnAbout, flpTop.Padding.Top)
     End Sub
 
     Private Sub RestoreWindowPlacement()
@@ -195,140 +232,21 @@ Public Class MainForm
         UpdateLoadMoreButton()
     End Sub
 
+    ' The Search box is an editable drop-down: type as normal (matching saved searches are suggested),
+    ' or click its arrow to pick one of the last 30. Picking one only fills the box - Enter or Search runs it.
+    Private Const RecentShown As Integer = 30
+
     Private Sub RefreshAutoComplete()
         Dim src As New AutoCompleteStringCollection()
         src.AddRange(_settings.RecentSearches.ToArray())
-        txtSearch.AutoCompleteCustomSource = src
+        cboSearch.AutoCompleteCustomSource = src
+        Dim typed = cboSearch.Text ' refilling the list can clear the text
+        cboSearch.BeginUpdate()
+        cboSearch.Items.Clear()
+        cboSearch.Items.AddRange(_settings.RecentSearches.Take(RecentShown).Cast(Of Object)().ToArray())
+        cboSearch.EndUpdate()
+        cboSearch.Text = typed
     End Sub
-
-    ' ---- Recent searches: click into the Search box and pause, and the last 20 drop down under it ----
-    ' A plain ListBox on the form (not a pop-up window), so the Search box keeps the keyboard and typing works as normal.
-    Private Const RecentShown As Integer = 20
-    Private WithEvents _recentTimer As New System.Windows.Forms.Timer With {.Interval = 1500}
-    Private WithEvents _recentList As ListBox
-    Private _fillingFromRecent As Boolean
-
-    Private Sub txtSearch_MouseDown(sender As Object, e As MouseEventArgs) Handles txtSearch.MouseDown
-        _recentTimer.Stop()
-        If _settings.RecentSearches.Count > 0 AndAlso Not RecentVisible Then _recentTimer.Start()
-    End Sub
-
-    Private Sub _recentTimer_Tick(sender As Object, e As EventArgs) Handles _recentTimer.Tick
-        _recentTimer.Stop()
-        If txtSearch.Focused AndAlso Not _busy Then ShowRecent()
-    End Sub
-
-    Private Sub txtSearch_TextChanged(sender As Object, e As EventArgs) Handles txtSearch.TextChanged
-        If _fillingFromRecent Then Return
-        ' Typing: the normal type-ahead suggestions take over.
-        _recentTimer.Stop()
-        HideRecent()
-    End Sub
-
-    Private Sub txtSearch_Leave(sender As Object, e As EventArgs) Handles txtSearch.Leave
-        _recentTimer.Stop()
-        ' Clicking an item in the list takes focus from the box for a moment - don't close it for that.
-        If RecentVisible AndAlso _recentList.ClientRectangle.Contains(_recentList.PointToClient(Cursor.Position)) Then Return
-        HideRecent()
-    End Sub
-
-    Private ReadOnly Property RecentVisible As Boolean
-        Get
-            Return _recentList IsNot Nothing AndAlso _recentList.Visible
-        End Get
-    End Property
-
-    Private Sub ShowRecent()
-        Dim recent = _settings.RecentSearches.Take(RecentShown).ToList()
-        If recent.Count = 0 Then Return
-        If _recentList Is Nothing Then
-            _recentList = New ListBox With {
-                .BorderStyle = BorderStyle.FixedSingle,
-                .IntegralHeight = False,
-                .TabStop = False,
-                .Visible = False}
-            Controls.Add(_recentList)
-        End If
-        _recentList.Font = txtSearch.Font
-        _recentList.BackColor = Theme.InputBack
-        _recentList.ForeColor = Theme.TextColor
-        _recentList.BeginUpdate()
-        _recentList.Items.Clear()
-        _recentList.Items.AddRange(recent.Cast(Of Object)().ToArray())
-        _recentList.SelectedIndex = -1
-        _recentList.EndUpdate()
-
-        Dim widest = recent.Max(Function(r) TextRenderer.MeasureText(r, txtSearch.Font).Width)
-        _recentList.Bounds = New Rectangle(
-            PointToClient(txtSearch.PointToScreen(New Point(0, txtSearch.Height))),
-            New Size(Math.Max(txtSearch.Width, widest + 12), _recentList.ItemHeight * recent.Count + 4))
-        _recentList.Visible = True
-        _recentList.BringToFront()
-    End Sub
-
-    Private Sub HideRecent()
-        _recentTimer.Stop()
-        If RecentVisible Then _recentList.Visible = False
-    End Sub
-
-    ''' <summary>Puts the chosen search in the box (it doesn't search - change the mode or edit it first if you like).</summary>
-    Private Sub FillFromRecent(index As Integer)
-        If index < 0 OrElse index >= _recentList.Items.Count Then Return
-        _fillingFromRecent = True
-        txtSearch.Text = CStr(_recentList.Items(index))
-        _fillingFromRecent = False
-        HideRecent()
-        txtSearch.Focus()
-        txtSearch.SelectionStart = txtSearch.TextLength
-        txtSearch.SelectionLength = 0
-    End Sub
-
-    Private Sub _recentList_MouseMove(sender As Object, e As MouseEventArgs) Handles _recentList.MouseMove
-        Dim i = _recentList.IndexFromPoint(e.Location)
-        If i >= 0 AndAlso i <> _recentList.SelectedIndex Then _recentList.SelectedIndex = i
-    End Sub
-
-    Private Sub _recentList_MouseClick(sender As Object, e As MouseEventArgs) Handles _recentList.MouseClick
-        FillFromRecent(_recentList.IndexFromPoint(e.Location))
-    End Sub
-
-    ' Close it if the window moves, resizes or loses focus, so it never floats in the wrong place.
-    Private Sub HideRecentOnWindowChange(sender As Object, e As EventArgs) Handles Me.Move, Me.Resize, Me.Deactivate
-        HideRecent()
-    End Sub
-
-    ''' <summary>Keys for the recent-searches list, while the Search box has focus. True = handled.</summary>
-    Private Function RecentKey(keyData As Keys) As Boolean
-        If Not txtSearch.Focused Then Return False
-        If Not RecentVisible Then
-            ' Down opens it straight away - when the box is empty or all selected, so it doesn't clash with type-ahead.
-            If keyData = Keys.Down AndAlso (txtSearch.TextLength = 0 OrElse txtSearch.SelectionLength = txtSearch.TextLength) Then
-                _recentTimer.Stop()
-                ShowRecent()
-                Return RecentVisible
-            End If
-            Return False
-        End If
-        Select Case keyData
-            Case Keys.Down
-                _recentList.SelectedIndex = Math.Min(_recentList.Items.Count - 1, _recentList.SelectedIndex + 1)
-                Return True
-            Case Keys.Up
-                _recentList.SelectedIndex = Math.Max(-1, _recentList.SelectedIndex - 1)
-                Return True
-            Case Keys.Enter
-                If _recentList.SelectedIndex >= 0 Then
-                    FillFromRecent(_recentList.SelectedIndex)
-                    Return True
-                End If
-                HideRecent()
-                Return False ' nothing picked: Enter searches as normal
-            Case Keys.Escape
-                HideRecent()
-                Return True
-        End Select
-        Return False
-    End Function
 
 #End Region
 
@@ -623,6 +541,8 @@ Public Class MainForm
     Private Sub UpdateTypesButton()
         btnTypes.Enabled = Not _busy AndAlso _table.Rows.Cast(Of DataRow)().Any(Function(r) Not CBool(r("LinkOnly")))
         btnTypes.Text = If(_hiddenTypes.Count > 0, $"Types ({_hiddenTypes.Count} hidden)…", "Types…")
+        ' Wide enough for its text, never narrower than the other buttons.
+        btnTypes.Width = Math.Max(btnSearch.Width, TextRenderer.MeasureText(btnTypes.Text, btnTypes.Font).Width + 20)
     End Sub
 
     ''' <summary>
@@ -710,7 +630,7 @@ Public Class MainForm
     Private Async Sub btnSearch_Click(sender As Object, e As EventArgs) Handles btnSearch.Click
         ' A normal search: just the toolbar settings, no Advanced filters.
         Await RunSearchAsync(New AdvancedSearchOptions With {
-            .Query = txtSearch.Text.Trim(),
+            .Query = cboSearch.Text.Trim(),
             .Mode = If(cboMode.SelectedIndex = 1, SearchMode.PartNumber, SearchMode.Keyword),
             .MaxResults = CInt(nudMax.Value)})
     End Sub
@@ -720,7 +640,7 @@ Public Class MainForm
         ' Open with last time's choices, but today's search text, batch size and ticked suppliers.
         Dim start = _settings.LastAdvanced
         ' (Unless Search for was left blank last time and the search box still shows those words.)
-        Dim typed = txtSearch.Text.Trim()
+        Dim typed = cboSearch.Text.Trim()
         If typed.Length > 0 AndAlso Not (start.ContainsIsQuery AndAlso String.Equals(typed, start.Query, StringComparison.OrdinalIgnoreCase)) Then
             start.Query = typed
             start.ContainsIsQuery = False
@@ -734,7 +654,7 @@ Public Class MainForm
             o = f.Options
         End Using
         _settings.LastAdvanced = o
-        txtSearch.Text = o.Query
+        cboSearch.Text = o.Query
         nudMax.Value = Math.Max(nudMax.Minimum, Math.Min(nudMax.Maximum, o.MaxResults))
 
         ' Make the supplier list match the window (without the "ticked after a search" auto-search).
@@ -750,7 +670,13 @@ Public Class MainForm
 
     ' Ctrl+F opens Advanced search.
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
-        If RecentKey(keyData) Then Return True
+        ' Enter in the open recent-searches list just picks that search (it would otherwise also press Search).
+        If keyData = Keys.Enter AndAlso cboSearch.DroppedDown Then
+            cboSearch.DroppedDown = False
+            cboSearch.SelectionStart = cboSearch.Text.Length
+            cboSearch.SelectionLength = 0
+            Return True
+        End If
         If keyData = (Keys.Control Or Keys.F) Then
             btnAdvanced.PerformClick()
             Return True
@@ -763,7 +689,7 @@ Public Class MainForm
     Private Async Function RunSearchAsync(opts As AdvancedSearchOptions, Optional fromAdvanced As Boolean = False) As Task
         Dim query = opts.Query
         If query.Length = 0 Then
-            txtSearch.Select()
+            cboSearch.Select()
             Return
         End If
         If _busy Then Return
@@ -1096,7 +1022,7 @@ Public Class MainForm
 
     Private Sub SetBusy(busy As Boolean)
         _busy = busy
-        If busy Then HideRecent()
+        If busy Then cboSearch.DroppedDown = False
         btnSearch.Enabled = Not busy
         btnAdvanced.Enabled = Not busy
         btnCancel.Enabled = busy
@@ -1326,7 +1252,7 @@ Public Class MainForm
     End Sub
 
     Private Sub cmsSuppliers_Opening(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles cmsSuppliers.Opening
-        Dim hasQuery = txtSearch.Text.Trim().Length > 0
+        Dim hasQuery = cboSearch.Text.Trim().Length > 0
         mnuOpenSupplierSearch.Enabled = hasQuery AndAlso lvSuppliers.SelectedItems.Count > 0
         mnuOpenAllSearches.Enabled = hasQuery
 
@@ -1343,12 +1269,12 @@ Public Class MainForm
 
     Private Sub mnuOpenSupplierSearch_Click(sender As Object, e As EventArgs) Handles mnuOpenSupplierSearch.Click
         If lvSuppliers.SelectedItems.Count = 0 Then Return
-        OpenUrl(DirectCast(lvSuppliers.SelectedItems(0).Tag, Supplier).GetSearchUrl(txtSearch.Text.Trim()))
+        OpenUrl(DirectCast(lvSuppliers.SelectedItems(0).Tag, Supplier).GetSearchUrl(cboSearch.Text.Trim()))
     End Sub
 
     Private Sub mnuOpenAllSearches_Click(sender As Object, e As EventArgs) Handles mnuOpenAllSearches.Click
         For Each item As ListViewItem In lvSuppliers.Items
-            If item.Checked Then OpenUrl(DirectCast(item.Tag, Supplier).GetSearchUrl(txtSearch.Text.Trim()))
+            If item.Checked Then OpenUrl(DirectCast(item.Tag, Supplier).GetSearchUrl(cboSearch.Text.Trim()))
         Next
     End Sub
 
@@ -1402,6 +1328,7 @@ Public Class MainForm
                 RebuildSuppliers()
                 ApplyThumbnailSetting()
                 Theme.Apply(Me)
+                AlignToolbar() ' dark mode changes some control heights
                 SetStatus("Settings saved.")
             End If
         End Using
@@ -1436,7 +1363,7 @@ Public Class MainForm
             MessageBox.Show(Me, "Nothing to export yet.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             Return
         End If
-        Dim safeName = String.Concat(txtSearch.Text.Trim().Split(Path.GetInvalidFileNameChars()))
+        Dim safeName = String.Concat(cboSearch.Text.Trim().Split(Path.GetInvalidFileNameChars()))
         Using dlg As New SaveFileDialog With {
             .Filter = "CSV file (*.csv)|*.csv",
             .FileName = $"WinPartsFinder {safeName} {DateTime.Now:yyyy-MM-dd HHmm}.csv"

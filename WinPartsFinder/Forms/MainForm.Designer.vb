@@ -26,7 +26,7 @@ Partial Class MainForm
         tlpTop = New TableLayoutPanel()
         flpTop = New FlowLayoutPanel()
         lblSearch = New Label()
-        txtSearch = New TextBox()
+        cboSearch = New ComboBox()
         cboMode = New ComboBox()
         lblMax = New Label()
         nudMax = New NumericUpDown()
@@ -108,7 +108,7 @@ Partial Class MainForm
         flpTop.AutoSize = True
         flpTop.AutoSizeMode = AutoSizeMode.GrowAndShrink
         flpTop.Controls.Add(lblSearch)
-        flpTop.Controls.Add(txtSearch)
+        flpTop.Controls.Add(cboSearch)
         flpTop.Controls.Add(cboMode)
         flpTop.Controls.Add(lblMax)
         flpTop.Controls.Add(nudMax)
@@ -138,15 +138,16 @@ Partial Class MainForm
         lblSearch.TabIndex = 0
         lblSearch.Text = "Search:"
         '
-        'txtSearch
+        'cboSearch
         '
-        txtSearch.AutoCompleteMode = AutoCompleteMode.SuggestAppend
-        txtSearch.AutoCompleteSource = AutoCompleteSource.CustomSource
-        txtSearch.Font = New Font("Segoe UI", 10.0F)
-        txtSearch.Margin = New Padding(3, 4, 3, 3)
-        txtSearch.Name = "txtSearch"
-        txtSearch.Size = New Size(240, 25)
-        txtSearch.TabIndex = 1
+        cboSearch.AutoCompleteMode = AutoCompleteMode.SuggestAppend
+        cboSearch.AutoCompleteSource = AutoCompleteSource.CustomSource
+        cboSearch.DropDownStyle = ComboBoxStyle.DropDown
+        cboSearch.MaxDropDownItems = 30
+        cboSearch.Margin = New Padding(3, 4, 3, 3)
+        cboSearch.Name = "cboSearch"
+        cboSearch.Size = New Size(240, 25)
+        cboSearch.TabIndex = 1
         '
         'cboMode
         '
@@ -501,7 +502,7 @@ Partial Class MainForm
         tipMain.AutoPopDelay = 15000
         tipMain.InitialDelay = 500
         tipMain.ReshowDelay = 100
-        tipMain.SetToolTip(txtSearch, "Part number or keywords to search for, e.g. LM358 or 10uF 25V 0805." & vbCrLf & "Press Enter to search. Click in the box and pause to see your last 20 searches; matching ones are also suggested as you type.")
+        tipMain.SetToolTip(cboSearch, "Part number or keywords to search for, e.g. LM358 or 10uF 25V 0805. Press Enter to search." & vbCrLf & "Click the arrow to pick one of your last 30 searches; matching ones are also suggested as you type.")
         tipMain.SetToolTip(cboMode, "Keyword: searches descriptions and part numbers." & vbCrLf & "Manufacturer part no.: looks for parts whose manufacturer part number starts with what you typed.")
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")
@@ -551,7 +552,7 @@ Partial Class MainForm
     Friend WithEvents tlpTop As TableLayoutPanel
     Friend WithEvents flpTop As FlowLayoutPanel
     Friend WithEvents lblSearch As Label
-    Friend WithEvents txtSearch As TextBox
+    Friend WithEvents cboSearch As ComboBox
     Friend WithEvents cboMode As ComboBox
     Friend WithEvents lblMax As Label
     Friend WithEvents nudMax As NumericUpDown

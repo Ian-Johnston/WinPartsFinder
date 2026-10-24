@@ -34,7 +34,7 @@ A *website link* row opens that supplier's own search results in your browser wi
 - **One search, every supplier** — results arrive as each supplier answers.
 - **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS / active only, manufacturer name, **part of a part number** (only remember "931G" and that it's a switch? it'll find KSC931G), description words (with or without a search term), quantity pricing and max price.
 - **Types filtering** — after a search, click **Types…** to see every kind of part found (e.g. *Analogue to Digital Converter*, *Evaluation Kit*, *Flip-Flops*) with how many came from each supplier. Untick the ones you don't need and they disappear from the results instantly.
-- **Recent searches** — click in the Search box and pause to pick from your last 20 searches; matching ones are also suggested as you type.
+- **Recent searches** — click the arrow on the Search box to pick from your last 30 searches; matching ones are also suggested as you type.
 - **Load more** — fetch the next batch from suppliers that have more (e.g. *50 / 312*).
 - **Part photos** — thumbnails, click for a bigger view.
 - **Type** and **Datasheet** columns — the kind of part in each supplier's own words, and a one-click link to the datasheet when the supplier provides one.

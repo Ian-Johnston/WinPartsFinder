@@ -118,7 +118,7 @@ Public Class AdvancedSearchOptions
         Return String.Join(", ", bits)
     End Function
 
-    ''' <summary>The Description also contains words to check in each part - none when they were the search itself.</summary>
+    ''' <summary>The Description contains words to check in each part - none when they were the search itself.</summary>
     Private ReadOnly Property WordsToCheck As String
         Get
             Return If(ContainsIsQuery, "", MustContain.Trim())

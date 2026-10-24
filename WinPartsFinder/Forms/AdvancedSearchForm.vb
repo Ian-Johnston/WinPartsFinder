@@ -28,8 +28,14 @@ Public Class AdvancedSearchForm
         Next
         Show(_start)
         Theme.Apply(Me)
+        FitSupplierColumns()
         txtQuery.Select()
         txtQuery.SelectAll()
+    End Sub
+
+    ' Two columns exactly fill the supplier list, so it only scrolls sideways if it ever needs a third.
+    Private Sub FitSupplierColumns() Handles clbSuppliers.Resize
+        If clbSuppliers.ClientSize.Width > 0 Then clbSuppliers.ColumnWidth = Math.Max(60, clbSuppliers.ClientSize.Width \ 2)
     End Sub
 
     Private Overloads Sub Show(o As AdvancedSearchOptions)
@@ -66,7 +72,7 @@ Public Class AdvancedSearchForm
             mode = SearchMode.Keyword
         End If
         If query.Length < 2 Then
-            MessageBox.Show(Me, "Type at least 2 characters in Search for (or in Manufacturer part no. contains / Description also contains).", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            MessageBox.Show(Me, "Type at least 2 characters in Search for (or in Manufacturer part no. contains / Description contains).", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             txtQuery.Select()
             Return
         End If
