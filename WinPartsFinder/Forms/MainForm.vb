@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.009"
+    Public Const AppVersion As String = "V1.010"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -1210,6 +1210,12 @@ Public Class MainForm
         btnCancel.Enabled = busy
         btnSettings.Enabled = Not busy
         UseWaitCursor = busy
+        If Not busy Then
+            ' Windows only redraws the cursor when the mouse moves, so the hourglass would stay until then.
+            ' Put the arrow back and "move" the mouse to where it already is, so it changes straight away.
+            Cursor.Current = Cursors.Default
+            Cursor.Position = Cursor.Position
+        End If
         UpdateLoadMoreButton()
         UpdateTypesButton()
     End Sub
