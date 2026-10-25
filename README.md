@@ -43,7 +43,7 @@ A *website link* row opens that supplier's own search results in your browser wi
 - **Sort, filter and tidy** — sort by any column, *In stock only*, a live text filter, remove rows you don't want, untick a supplier to hide its results (tick one after a search and it's searched straight away).
 - **Row numbers** (#) that stay put, so you can note a part and find it again.
 - **Export to CSV** for Excel.
-- **Dark mode**, remembered window and column layout, tooltips on everything, built-in Help — plus a separate **API Help** in Settings that stays open while you paste in your keys.
+- **Four colour themes** (Light, Soft grey, Dark grey and Dark), remembered window and column layout, tooltips on everything, built-in Help — plus a separate **API Help** in Settings that stays open while you paste in your keys.
 
 ## Screenshots
 
@@ -111,7 +111,7 @@ WinPartsFinder/
   Forms/           Main window, Advanced search, Types, Settings, Help / API Help, About, photo pop-up
   Suppliers/       Mouser, DigiKey, element14 (Farnell/CPC/Newark), TME, website-link suppliers
   Models/          PartResult, PriceBreak, AdvancedSearchOptions
-  Infrastructure/  Settings, theming (dark mode), web/JSON helpers, photo cache
+  Infrastructure/  Settings, theming (Light / Soft grey / Dark grey / Dark), web/JSON helpers, photo cache
 ```
 
 **Adding an API supplier:** create a class in `Suppliers/` that inherits `ApiSupplier`, implement `IsConfigured` and `SearchAsync` (fill in `Category` so the part shows up in Types…), then add it in `AppSettings` and `SupplierFactory.Create`.

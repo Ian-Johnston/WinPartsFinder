@@ -95,7 +95,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **Country and currency:** **DigiKey site** and **Currency** choose which DigiKey country's prices and stock you see (e.g. NZ and NZD). **Farnell store** picks the Farnell / element14 country store - its own stock, prices and currency (e.g. New Zealand, NZD); the same element14 key works for all of them. **TME country** and **Currency** do the same for TME. Pick from the lists or type a code. CPC (UK) and Newark (USA) are fixed. Mouser uses the country of the account your key was registered with.
 - **Search URLs** are used for website links. {0} is replaced by your search text. **Reset URLs** puts the built-in ones back.
 - **Add supplier** adds your own supplier as a website link: give it a name and its search URL with {0} where the search text goes, e.g. https://cpc.farnell.com/search?st={0}. **Delete supplier** removes it.
-- **Show part photos** turns the photo column on or off. **Dark mode** switches the whole app to a dark theme.
+- **Show part photos** turns the photo column on or off. **Theme** sets the colours for the whole app: **Light** (normal Windows), **Soft grey** (light, with less glare), **Dark grey** (a softer slate-grey dark) or **Dark**. It previews in Settings straight away and applies everywhere when you click OK.
 - **Reset main window layout** puts the main window's size and position, the divider, and the results column widths and order back to how they started. Like everything in Settings, it happens when you click **OK**; **Cancel** changes nothing.
 - Saving settings keeps your current results, supplier statuses and Load more position.
 
@@ -190,7 +190,7 @@ TME takes two websites, so allow 10 minutes.
     Private Sub HelpForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Theme.Apply(Me)
         ' A read-only RichTextBox goes grey; keep it looking like a page.
-        If Not Theme.IsDark Then
+        If Not Theme.IsCustom Then
             rtbHelp.BackColor = SystemColors.Window
             pnlText.BackColor = SystemColors.Window
         Else

@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.010"
+    Public Const AppVersion As String = "V1.011"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -51,7 +51,7 @@ Public Class MainForm
         _settings = AppSettings.Load()
         Text = $"WinPartsFinder - {AppVersion}      {TitleSuffix}"
         Icon = Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ' WinPartsFinder.ico, via <ApplicationIcon>
-        Theme.IsDark = _settings.DarkMode
+        Theme.Current = _settings.AppTheme
         lvSuppliers.OwnerDraw = True ' only so the column headers can be drawn dark
         _defaultSize = Size
         _defaultSplitter = splitMain.SplitterDistance
@@ -1481,7 +1481,7 @@ Public Class MainForm
 
     ' Owner drawing is only used for the header (so it can go dark); rows draw normally.
     Private Sub lvSuppliers_DrawColumnHeader(sender As Object, e As DrawListViewColumnHeaderEventArgs) Handles lvSuppliers.DrawColumnHeader
-        If Not Theme.IsDark Then
+        If Not Theme.IsCustom Then
             e.DrawDefault = True
             Return
         End If
@@ -1525,7 +1525,7 @@ Public Class MainForm
             If result = DialogResult.OK Then
                 If f.ResetWindowRequested Then ResetWindowLayout()
                 SaveUiSettings()
-                Theme.IsDark = _settings.DarkMode
+                Theme.Current = _settings.AppTheme
                 RebuildSuppliers()
                 ApplyThumbnailSetting()
                 Theme.Apply(Me)

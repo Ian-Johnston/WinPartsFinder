@@ -44,7 +44,8 @@ Public Class SettingsForm
         cboConvertCurrency.SelectedItem = If(ExchangeRates.Currencies.Contains(_settings.ConvertCurrency), _settings.ConvertCurrency, "GBP")
         ShowRatesInfo()
         chkShowThumbnails.Checked = _settings.ShowThumbnails
-        chkDarkMode.Checked = _settings.DarkMode
+        cboTheme.Items.AddRange(Theme.Names)
+        cboTheme.SelectedIndex = CInt(_settings.AppTheme)
         LoadUrls(Function(name) _settings.GetSearchUrl(name), _settings.CustomSuppliers)
         Theme.Apply(Me)
     End Sub
@@ -161,7 +162,7 @@ Public Class SettingsForm
         If cboTmeCurrency.Text.Trim().Length > 0 Then _settings.TmeCurrency = cboTmeCurrency.Text.Trim().ToUpperInvariant()
         If cboConvertCurrency.SelectedItem IsNot Nothing Then _settings.ConvertCurrency = CStr(cboConvertCurrency.SelectedItem)
         _settings.ShowThumbnails = chkShowThumbnails.Checked
-        _settings.DarkMode = chkDarkMode.Checked
+        _settings.AppTheme = CType(Math.Max(0, cboTheme.SelectedIndex), ThemeKind)
 
         _settings.SearchUrls.Clear()
         For Each row As DataGridViewRow In dgvUrls.Rows
@@ -239,15 +240,15 @@ Public Class SettingsForm
         Next
     End Sub
 
-    Private Sub chkDarkMode_CheckedChanged(sender As Object, e As EventArgs) Handles chkDarkMode.CheckedChanged
+    Private Sub cboTheme_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboTheme.SelectedIndexChanged
         ' Live preview on this window; the main window follows when OK is clicked.
-        If Not IsHandleCreated Then Return
-        Theme.IsDark = chkDarkMode.Checked
+        If Not IsHandleCreated OrElse cboTheme.SelectedIndex < 0 Then Return
+        Theme.Current = CType(cboTheme.SelectedIndex, ThemeKind)
         Theme.Apply(Me)
     End Sub
 
     Private Sub SettingsForm_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
-        If DialogResult <> DialogResult.OK Then Theme.IsDark = _settings.DarkMode ' undo the preview
+        If DialogResult <> DialogResult.OK Then Theme.Current = _settings.AppTheme ' undo the preview
     End Sub
 
     ' API Help isn't modal: it's owned by this window, so the key boxes stay usable while it's open,

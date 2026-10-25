@@ -74,7 +74,20 @@ Public Class AppSettings
     Public Property MaxResults As Integer = 25
     Public Property InStockOnly As Boolean = False
     Public Property ShowThumbnails As Boolean = True
+    ''' <summary>Older settings files only have this (ticked = Dark); kept so they still load the right theme.</summary>
     Public Property DarkMode As Boolean = False
+    ''' <summary>Light, SoftGrey, DarkGrey or Dark. Nothing in settings from before themes - then DarkMode decides.</summary>
+    Public Property ThemeName As ThemeKind?
+
+    <JsonIgnore> Public Property AppTheme As ThemeKind
+        Get
+            Return If(ThemeName, If(DarkMode, ThemeKind.Dark, ThemeKind.Light))
+        End Get
+        Set(value As ThemeKind)
+            ThemeName = value
+            DarkMode = (value = ThemeKind.Dark OrElse value = ThemeKind.DarkGrey)
+        End Set
+    End Property
     ''' <summary>User-added website-link suppliers, searched after the built-in ones.</summary>
     Public Property CustomSuppliers As New List(Of CustomSupplier)
     ''' <summary>Main window size/position from last time; Nothing = designer default.</summary>

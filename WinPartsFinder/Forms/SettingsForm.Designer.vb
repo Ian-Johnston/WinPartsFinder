@@ -79,7 +79,8 @@ Partial Class SettingsForm
         btnAddSupplier = New Button()
         btnDeleteSupplier = New Button()
         btnResetWindow = New Button()
-        chkDarkMode = New CheckBox()
+        lblTheme = New Label()
+        cboTheme = New ComboBox()
         flpButtons = New FlowLayoutPanel()
         btnCancel = New Button()
         btnOK = New Button()
@@ -629,14 +630,20 @@ Partial Class SettingsForm
         btnResetWindow.Text = "Reset main &window layout"
         btnResetWindow.UseVisualStyleBackColor = True
         '
-        'chkDarkMode
+        'lblTheme
         '
-        chkDarkMode.AutoSize = True
-        chkDarkMode.Margin = New Padding(3, 8, 12, 3)
-        chkDarkMode.Name = "chkDarkMode"
-        chkDarkMode.TabIndex = 5
-        chkDarkMode.Text = "Dark mode"
-        chkDarkMode.UseVisualStyleBackColor = True
+        lblTheme.AutoSize = True
+        lblTheme.Margin = New Padding(3, 9, 0, 3)
+        lblTheme.Name = "lblTheme"
+        lblTheme.Text = "Theme:"
+        '
+        'cboTheme - Light / Soft grey / Dark grey / Dark (Theme.Names)
+        '
+        cboTheme.DropDownStyle = ComboBoxStyle.DropDownList
+        cboTheme.Margin = New Padding(3, 5, 12, 3)
+        cboTheme.Name = "cboTheme"
+        cboTheme.Size = New Size(90, 23)
+        cboTheme.TabIndex = 5
         '
         'flpButtons
         '
@@ -647,7 +654,8 @@ Partial Class SettingsForm
         flpButtons.Controls.Add(btnResetUrls)
         flpButtons.Controls.Add(chkShowKeys)
         flpButtons.Controls.Add(chkShowThumbnails)
-        flpButtons.Controls.Add(chkDarkMode)
+        flpButtons.Controls.Add(cboTheme)
+        flpButtons.Controls.Add(lblTheme)
         flpButtons.Dock = DockStyle.Bottom
         flpButtons.FlowDirection = FlowDirection.RightToLeft
         flpButtons.Name = "flpButtons"
@@ -725,7 +733,7 @@ Partial Class SettingsForm
         tipSettings.SetToolTip(dgvUrls, "Website search URL for each supplier. {0} is replaced by your search text." & vbCrLf & "Used for website-link rows and for suppliers without an API. Click a URL to edit it.")
         tipSettings.SetToolTip(btnAddSupplier, "Add your own supplier: give it a name and a search URL containing {0}." & vbCrLf & "It shows as a website link in the results.")
         tipSettings.SetToolTip(btnDeleteSupplier, "Delete the selected supplier you added. Built-in suppliers can't be deleted - untick them on the main window instead.")
-        tipSettings.SetToolTip(chkDarkMode, "Switch the whole app to a dark theme. Previews here straight away.")
+        tipSettings.SetToolTip(cboTheme, "Colour theme for the whole app: Light (normal Windows), Soft grey (light, less glare)," & vbCrLf & "Dark grey (a softer dark) or Dark. Previews here straight away; applies everywhere when you click OK.")
         tipSettings.SetToolTip(chkShowThumbnails, "Show a small part photo at the start of each result row. Untick for a compact grid.")
         tipSettings.SetToolTip(chkShowKeys, "Show the API keys as plain text instead of dots.")
         tipSettings.SetToolTip(btnResetUrls, "Put the built-in suppliers' search URLs back to the defaults. Your own suppliers are kept.")
@@ -739,12 +747,12 @@ Partial Class SettingsForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnCancel
-        ClientSize = New Size(900, 818)
+        ClientSize = New Size(950, 818)
         Controls.Add(tlpMain)
         Controls.Add(flpButtons)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(924, 818) ' wide enough that the bottom row of buttons stays on one line
+        MinimumSize = New Size(974, 818) ' wide enough that the bottom row of buttons stays on one line
         Name = "SettingsForm"
         ShowIcon = False
         ShowInTaskbar = False
@@ -836,6 +844,7 @@ Partial Class SettingsForm
     Friend WithEvents btnAddSupplier As Button
     Friend WithEvents btnDeleteSupplier As Button
     Friend WithEvents btnResetWindow As Button
-    Friend WithEvents chkDarkMode As CheckBox
+    Friend WithEvents lblTheme As Label
+    Friend WithEvents cboTheme As ComboBox
 
 End Class
