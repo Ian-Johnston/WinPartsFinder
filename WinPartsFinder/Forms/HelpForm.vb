@@ -35,7 +35,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 - **Manufacturer part no. contains** keeps parts whose manufacturer part number contains what you type anywhere in it, e.g. **931G** keeps KSC931G LFS. If you only remember part of a number, leave **Search for** blank, put the fragment here and what the part is in **Description contains** (e.g. 931G and switch) - they're searched for together. DigiKey and Mouser can find part of a number; Farnell, CPC and Newark only match whole part numbers or numbers from the start, so search those once you know the full number.
 - **Description contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example. Leave **Search for** blank to search for these words (plus any manufacturer part no. fragment) instead, as a Keyword search, e.g. 20-Bit ADC. The suppliers then match the words their own way (DigiKey finds 20-Bit as 20BIT), so they aren't also checked letter-for-letter in the description.
 - **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
-- **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency.
+- **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency - or in your chosen currency when **Prices in** is ticked.
 - **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
 - The options from **Active parts only** down are applied by WinPartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
 - **Clear** resets everything except the search text. **Cancel** closes the window without searching.
@@ -53,7 +53,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 # THE RESULTS
 - **#** numbers each row so you can note a part and find it again. Numbers are given when a search finishes and never change - removing, filtering or sorting rows leaves them as they are. Click **#** to sort by it. A new search starts again from 1; Load more carries on from the last number. Website-link rows aren't parts, so they have no number - the last # always matches **Total parts** in the bottom-right corner.
 - **Stock** is green when in stock. Rows with no stock are greyed out.
-- **Price (1)** is the price each at the lowest price break, usually quantity 1 (after an Advanced search with a quantity, the price at that quantity). **Price breaks** lists every break as quantity+ price.
+- **Price (1)** is the price each at the lowest price break, usually quantity 1 (after an Advanced search with a quantity, the price at that quantity). With **Prices in** ticked it shows e.g. **Price (1) GBP**, and converted prices (and their **Cur** and **Price breaks**) are purple. **Price breaks** lists every break as quantity+ price.
 - **Datasheet** opens the part's datasheet in your browser (hover to see the link). It's blank when the supplier didn't send one - TME and the website-link suppliers never do.
 - **Type** is the kind of part, in the supplier's own words: Mouser, DigiKey and TME send a category; for Farnell, CPC and Newark it's taken from the product name. Website-link rows have none.
 - **MOQ** is the minimum order quantity. **Availability / lead** shows packaging and lead time. **Status** shows lifecycle, e.g. Obsolete.
@@ -82,6 +82,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 
 # FILTERING AND EXPORT
 - **In stock only** hides parts with no stock.
+- **Prices in GBP** (the currency is chosen in Settings) shows every price in one currency, so you can compare suppliers and sort by price properly. It uses the European Central Bank's daily exchange rates, fetched when you tick it and then at most every 12 hours - the last rates are saved, so it still works offline. Converted prices are **purple** and the Price column says e.g. **Price (1) GBP**; prices already in your currency stay as they are. Hover over a purple price to see the supplier's own price and the rate used. Converted prices are approximate - the supplier's own rate, VAT and import charges will differ. Export CSV also saves the supplier's own prices.
 - **Types…** lists every type of part in the results (e.g. Analogue to Digital Converter, Evaluation Kit, Flip-Flops) with how many parts and which suppliers. Untick the ones you don't want and click **OK** to hide them; tick them again to bring them back. The button shows how many types are hidden, and a new search shows every type again. Each supplier words types its own way (Farnell: Analogue to Digital Converter, Mouser: Analog to Digital Converters - ADC), so similar ones appear separately - click **Type** in the window to sort them together.
 - **Filter** narrows the current results as you type. It matches the supplier, both part numbers, manufacturer, type and description. It is not case sensitive.
 - **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, In stock only, Types…, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
@@ -90,6 +91,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 
 # SETTINGS
 - Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, **API Help** explains how to get each key, and **Show keys** shows them as text instead of dots.
+- **Prices - Single currency (if enabled):** choose the currency for the main window's **Prices in** tick box. The date of the saved exchange rates is shown next to it; **Update now** fetches today's, and **ECB rates webpage** opens the European Central Bank's exchange-rate page where they come from.
 - **Country and currency:** **DigiKey site** and **Currency** choose which DigiKey country's prices and stock you see (e.g. NZ and NZD). **Farnell store** picks the Farnell / element14 country store - its own stock, prices and currency (e.g. New Zealand, NZD); the same element14 key works for all of them. **TME country** and **Currency** do the same for TME. Pick from the lists or type a code. CPC (UK) and Newark (USA) are fixed. Mouser uses the country of the account your key was registered with.
 - **Search URLs** are used for website links. {0} is replaced by your search text. **Reset URLs** puts the built-in ones back.
 - **Add supplier** adds your own supplier as a website link: give it a name and its search URL with {0} where the search text goes, e.g. https://cpc.farnell.com/search?st={0}. **Delete supplier** removes it.
@@ -110,6 +112,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **HTTP 401** - the key or secret is wrong. Paste it again in Settings, checking for spaces at either end.
 - **HTTP 403** - the key isn't active yet, or (DigiKey) ProductInformation V4 isn't selected on your app.
 - **Timeout** - the supplier was slow to answer. Search again.
+- **Prices in GBP unticks itself, or says it couldn't get exchange rates** - check your internet connection. When new rates can't be fetched, the last saved ones are used (the status line says how old they are); the box only unticks if no rates have ever been saved. Tick it again, or use **Settings > Update now**.
 - **Parts found but the grid is empty** - something is hiding them, usually **In stock only** for an old part. The status line says which; **Total parts = 5 (showing 0)** in the corner is the clue.
 - **Advanced search finds nothing** - check each box holds the right thing: **Manufacturer name contains** is the maker (e.g. C&K), not the part number or what the part is.
 - If the main window ends up off-screen or a mess, use **Settings > Reset main window layout**.

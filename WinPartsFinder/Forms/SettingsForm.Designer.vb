@@ -25,10 +25,23 @@ Partial Class SettingsForm
         components = New System.ComponentModel.Container()
         tipSettings = New ToolTip(components)
         tlpMain = New TableLayoutPanel()
+        flpHdrMouser = New FlowLayoutPanel()
+        flpHdrDigiKey = New FlowLayoutPanel()
+        flpHdrE14 = New FlowLayoutPanel()
+        flpHdrTme = New FlowLayoutPanel()
         lblHdrMouser = New Label()
         lblHdrDigiKey = New Label()
         lblHdrE14 = New Label()
         lblHdrTme = New Label()
+        lblPricesRule = New Label()
+        lblPricesRuleEnd = New Label()
+        lblHdrPrices = New Label()
+        lblConvert = New Label()
+        flpConvert = New FlowLayoutPanel()
+        cboConvertCurrency = New ComboBox()
+        lblRates = New Label()
+        btnUpdateRates = New Button()
+        lnkRates = New LinkLabel()
         lblMouser = New Label()
         txtMouserKey = New TextBox()
         lnkMouser = New LinkLabel()
@@ -76,6 +89,11 @@ Partial Class SettingsForm
         tlpMain.SuspendLayout()
         flpDkLocale.SuspendLayout()
         flpTmeLocale.SuspendLayout()
+        flpHdrMouser.SuspendLayout()
+        flpHdrDigiKey.SuspendLayout()
+        flpHdrE14.SuspendLayout()
+        flpHdrTme.SuspendLayout()
+        flpConvert.SuspendLayout()
         CType(dgvUrls, System.ComponentModel.ISupportInitialize).BeginInit()
         flpUrlButtons.SuspendLayout()
         flpButtons.SuspendLayout()
@@ -87,41 +105,46 @@ Partial Class SettingsForm
         tlpMain.ColumnStyles.Add(New ColumnStyle())
         tlpMain.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0F))
         tlpMain.ColumnStyles.Add(New ColumnStyle())
-        tlpMain.Controls.Add(lblHdrMouser, 0, 0)
-        tlpMain.Controls.Add(lnkMouser, 2, 0)
+        tlpMain.Controls.Add(flpHdrMouser, 0, 0)
         tlpMain.Controls.Add(lblMouser, 0, 1)
         tlpMain.Controls.Add(txtMouserKey, 1, 1)
-        tlpMain.Controls.Add(lblHdrDigiKey, 0, 2)
-        tlpMain.Controls.Add(lnkDigiKey, 2, 2)
+        tlpMain.Controls.Add(flpHdrDigiKey, 0, 2)
         tlpMain.Controls.Add(lblDkId, 0, 3)
         tlpMain.Controls.Add(txtDkClientId, 1, 3)
         tlpMain.Controls.Add(lblDkSecret, 0, 4)
         tlpMain.Controls.Add(txtDkSecret, 1, 4)
         tlpMain.Controls.Add(lblDkLocale, 0, 5)
         tlpMain.Controls.Add(flpDkLocale, 1, 5)
-        tlpMain.Controls.Add(lblHdrE14, 0, 6)
-        tlpMain.Controls.Add(lnkE14, 2, 6)
+        tlpMain.Controls.Add(flpHdrE14, 0, 6)
         tlpMain.Controls.Add(lblE14, 0, 7)
         tlpMain.Controls.Add(txtE14Key, 1, 7)
         tlpMain.Controls.Add(lblE14Store, 0, 8)
         tlpMain.Controls.Add(cboFarnellStore, 1, 8)
-        tlpMain.Controls.Add(lblHdrTme, 0, 9)
-        tlpMain.Controls.Add(lnkTme, 2, 9)
+        tlpMain.Controls.Add(flpHdrTme, 0, 9)
         tlpMain.Controls.Add(lblTmeToken, 0, 10)
         tlpMain.Controls.Add(txtTmeToken, 1, 10)
         tlpMain.Controls.Add(lblTmeSecret, 0, 11)
         tlpMain.Controls.Add(txtTmeSecret, 1, 11)
         tlpMain.Controls.Add(lblTmeLocale, 0, 12)
         tlpMain.Controls.Add(flpTmeLocale, 1, 12)
-        tlpMain.Controls.Add(lblUrls, 0, 13)
-        tlpMain.Controls.Add(btnApiHelp, 2, 13)
-        tlpMain.Controls.Add(dgvUrls, 0, 14)
-        tlpMain.Controls.Add(flpUrlButtons, 0, 15)
+        tlpMain.Controls.Add(lblPricesRule, 0, 13)
+        tlpMain.Controls.Add(lblHdrPrices, 0, 14)
+        tlpMain.Controls.Add(lblConvert, 0, 15)
+        tlpMain.Controls.Add(flpConvert, 1, 15)
+        tlpMain.Controls.Add(lblPricesRuleEnd, 0, 16)
+        tlpMain.Controls.Add(lblUrls, 0, 17)
+        tlpMain.Controls.Add(btnApiHelp, 2, 12)
+        tlpMain.Controls.Add(dgvUrls, 0, 18)
+        tlpMain.Controls.Add(flpUrlButtons, 0, 19)
         tlpMain.Dock = DockStyle.Fill
         tlpMain.Location = New Point(0, 0)
         tlpMain.Name = "tlpMain"
         tlpMain.Padding = New Padding(8)
-        tlpMain.RowCount = 16
+        tlpMain.RowCount = 20
+        tlpMain.RowStyles.Add(New RowStyle())
+        tlpMain.RowStyles.Add(New RowStyle())
+        tlpMain.RowStyles.Add(New RowStyle())
+        tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
@@ -141,41 +164,160 @@ Partial Class SettingsForm
         tlpMain.Size = New Size(684, 421)
         tlpMain.TabIndex = 0
         '
+        'flpHdrMouser - supplier heading with its Get a key link right after it
+        '
+        flpHdrMouser.AutoSize = True
+        flpHdrMouser.Controls.Add(lblHdrMouser)
+        flpHdrMouser.Controls.Add(lnkMouser)
+        tlpMain.SetColumnSpan(flpHdrMouser, 3)
+        flpHdrMouser.Margin = New Padding(0, 0, 0, 0)
+        flpHdrMouser.Name = "flpHdrMouser"
+        flpHdrMouser.WrapContents = False
+        '
         'lblHdrMouser - supplier heading
         '
         lblHdrMouser.AutoSize = True
-        tlpMain.SetColumnSpan(lblHdrMouser, 2)
         lblHdrMouser.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold)
-        lblHdrMouser.Margin = New Padding(3, 2, 3, 3)
+        lblHdrMouser.Margin = New Padding(3, 6, 3, 0) ' lower, so the Get a key underline lines up with the bottom of the heading
         lblHdrMouser.Name = "lblHdrMouser"
         lblHdrMouser.Text = "Mouser"
+        '
+        'flpHdrDigiKey - supplier heading with its Get a key link right after it
+        '
+        flpHdrDigiKey.AutoSize = True
+        flpHdrDigiKey.Controls.Add(lblHdrDigiKey)
+        flpHdrDigiKey.Controls.Add(lnkDigiKey)
+        tlpMain.SetColumnSpan(flpHdrDigiKey, 3)
+        flpHdrDigiKey.Margin = New Padding(0, 8, 0, 0)
+        flpHdrDigiKey.Name = "flpHdrDigiKey"
+        flpHdrDigiKey.WrapContents = False
         '
         'lblHdrDigiKey - supplier heading
         '
         lblHdrDigiKey.AutoSize = True
-        tlpMain.SetColumnSpan(lblHdrDigiKey, 2)
         lblHdrDigiKey.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold)
-        lblHdrDigiKey.Margin = New Padding(3, 14, 3, 3)
+        lblHdrDigiKey.Margin = New Padding(3, 6, 3, 0) ' lower, so the Get a key underline lines up with the bottom of the heading
         lblHdrDigiKey.Name = "lblHdrDigiKey"
         lblHdrDigiKey.Text = "DigiKey"
+        '
+        'flpHdrE14 - supplier heading with its Get a key link right after it
+        '
+        flpHdrE14.AutoSize = True
+        flpHdrE14.Controls.Add(lblHdrE14)
+        flpHdrE14.Controls.Add(lnkE14)
+        tlpMain.SetColumnSpan(flpHdrE14, 3)
+        flpHdrE14.Margin = New Padding(0, 8, 0, 0)
+        flpHdrE14.Name = "flpHdrE14"
+        flpHdrE14.WrapContents = False
         '
         'lblHdrE14 - supplier heading
         '
         lblHdrE14.AutoSize = True
-        tlpMain.SetColumnSpan(lblHdrE14, 2)
         lblHdrE14.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold)
-        lblHdrE14.Margin = New Padding(3, 14, 3, 3)
+        lblHdrE14.Margin = New Padding(3, 6, 3, 0) ' lower, so the Get a key underline lines up with the bottom of the heading
         lblHdrE14.Name = "lblHdrE14"
         lblHdrE14.Text = "element14 - Farnell, CPC and Newark (one key for all three)"
+        '
+        'flpHdrTme - supplier heading with its Get a key link right after it
+        '
+        flpHdrTme.AutoSize = True
+        flpHdrTme.Controls.Add(lblHdrTme)
+        flpHdrTme.Controls.Add(lnkTme)
+        tlpMain.SetColumnSpan(flpHdrTme, 3)
+        flpHdrTme.Margin = New Padding(0, 8, 0, 0)
+        flpHdrTme.Name = "flpHdrTme"
+        flpHdrTme.WrapContents = False
         '
         'lblHdrTme - supplier heading
         '
         lblHdrTme.AutoSize = True
-        tlpMain.SetColumnSpan(lblHdrTme, 2)
         lblHdrTme.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold)
-        lblHdrTme.Margin = New Padding(3, 14, 3, 3)
+        lblHdrTme.Margin = New Padding(3, 6, 3, 0) ' lower, so the Get a key underline lines up with the bottom of the heading
         lblHdrTme.Name = "lblHdrTme"
         lblHdrTme.Text = "TME"
+        '
+        'lblPricesRule - grey line between the API keys and the Prices section
+        '
+        lblPricesRule.AutoSize = False
+        lblPricesRule.BorderStyle = BorderStyle.Fixed3D
+        tlpMain.SetColumnSpan(lblPricesRule, 3)
+        lblPricesRule.Dock = DockStyle.Fill
+        lblPricesRule.Margin = New Padding(3, 7, 3, 0)
+        lblPricesRule.Name = "lblPricesRule"
+        lblPricesRule.Size = New Size(100, 2)
+        '
+        'lblPricesRuleEnd - grey line under the Prices section
+        '
+        lblPricesRuleEnd.AutoSize = False
+        lblPricesRuleEnd.BorderStyle = BorderStyle.Fixed3D
+        tlpMain.SetColumnSpan(lblPricesRuleEnd, 3)
+        lblPricesRuleEnd.Dock = DockStyle.Fill
+        lblPricesRuleEnd.Margin = New Padding(3, 8, 3, 0)
+        lblPricesRuleEnd.Name = "lblPricesRuleEnd"
+        lblPricesRuleEnd.Size = New Size(100, 2)
+        '
+        'lblHdrPrices - heading for "Prices in GBP"
+        '
+        lblHdrPrices.AutoSize = True
+        tlpMain.SetColumnSpan(lblHdrPrices, 2)
+        lblHdrPrices.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold)
+        lblHdrPrices.Margin = New Padding(3, 10, 3, 3)
+        lblHdrPrices.Name = "lblHdrPrices"
+        lblHdrPrices.Text = "Prices - Single currency (if enabled)"
+        '
+        'lblConvert
+        '
+        lblConvert.Anchor = AnchorStyles.Left
+        lblConvert.AutoSize = True
+        lblConvert.Margin = New Padding(20, 3, 3, 3)
+        lblConvert.Name = "lblConvert"
+        lblConvert.Text = "Show prices in:"
+        '
+        'flpConvert
+        '
+        flpConvert.AutoSize = True
+        flpConvert.Controls.Add(cboConvertCurrency)
+        flpConvert.Controls.Add(lblRates)
+        flpConvert.Controls.Add(btnUpdateRates)
+        flpConvert.Controls.Add(lnkRates)
+        flpConvert.Margin = New Padding(0)
+        flpConvert.WrapContents = False
+        flpConvert.Name = "flpConvert"
+        flpConvert.TabIndex = 6
+        '
+        'cboConvertCurrency - filled from ExchangeRates.Currencies
+        '
+        cboConvertCurrency.DropDownStyle = ComboBoxStyle.DropDownList
+        cboConvertCurrency.MaxDropDownItems = 25
+        cboConvertCurrency.Name = "cboConvertCurrency"
+        cboConvertCurrency.Size = New Size(70, 23)
+        cboConvertCurrency.TabIndex = 0
+        '
+        'lblRates - "Rates: ECB rates of 23 Oct 2026 (fetched 25 Oct 10:02)"
+        '
+        lblRates.AutoSize = True
+        lblRates.Margin = New Padding(12, 7, 3, 0)
+        lblRates.Name = "lblRates"
+        lblRates.Text = "Rates:"
+        '
+        'btnUpdateRates
+        '
+        btnUpdateRates.Margin = New Padding(12, 1, 3, 3)
+        btnUpdateRates.Name = "btnUpdateRates"
+        btnUpdateRates.Size = New Size(95, 25)
+        btnUpdateRates.TabIndex = 1
+        btnUpdateRates.Text = "Update now"
+        btnUpdateRates.UseVisualStyleBackColor = True
+        '
+        'lnkRates - the exchange-rate source's own page
+        '
+        lnkRates.AutoSize = True
+        lnkRates.Margin = New Padding(12, 7, 3, 0)
+        lnkRates.Name = "lnkRates"
+        lnkRates.TabIndex = 2
+        lnkRates.TabStop = True
+        lnkRates.Tag = "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
+        lnkRates.Text = "ECB rates webpage"
         '
         'lblMouser
         '
@@ -188,6 +330,7 @@ Partial Class SettingsForm
         'txtMouserKey
         '
         txtMouserKey.Dock = DockStyle.Fill
+        tlpMain.SetColumnSpan(txtMouserKey, 2)
         txtMouserKey.Name = "txtMouserKey"
         txtMouserKey.TabIndex = 0
         txtMouserKey.UseSystemPasswordChar = True
@@ -196,6 +339,7 @@ Partial Class SettingsForm
         '
         lnkMouser.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom
         lnkMouser.AutoSize = True
+        lnkMouser.Margin = New Padding(10, 3, 3, 1)
         lnkMouser.Name = "lnkMouser"
         lnkMouser.TabStop = True
         lnkMouser.Tag = "https://www.mouser.co.uk/api-hub/"
@@ -212,6 +356,7 @@ Partial Class SettingsForm
         'txtDkClientId
         '
         txtDkClientId.Dock = DockStyle.Fill
+        tlpMain.SetColumnSpan(txtDkClientId, 2)
         txtDkClientId.Name = "txtDkClientId"
         txtDkClientId.TabIndex = 1
         txtDkClientId.UseSystemPasswordChar = True
@@ -220,6 +365,7 @@ Partial Class SettingsForm
         '
         lnkDigiKey.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom
         lnkDigiKey.AutoSize = True
+        lnkDigiKey.Margin = New Padding(10, 3, 3, 1)
         lnkDigiKey.Name = "lnkDigiKey"
         lnkDigiKey.TabStop = True
         lnkDigiKey.Tag = "https://developer.digikey.com/"
@@ -236,6 +382,7 @@ Partial Class SettingsForm
         'txtDkSecret
         '
         txtDkSecret.Dock = DockStyle.Fill
+        tlpMain.SetColumnSpan(txtDkSecret, 2)
         txtDkSecret.Name = "txtDkSecret"
         txtDkSecret.TabIndex = 2
         txtDkSecret.UseSystemPasswordChar = True
@@ -290,6 +437,7 @@ Partial Class SettingsForm
         'txtE14Key
         '
         txtE14Key.Anchor = AnchorStyles.Left Or AnchorStyles.Right
+        tlpMain.SetColumnSpan(txtE14Key, 2)
         txtE14Key.Name = "txtE14Key"
         txtE14Key.TabIndex = 4
         txtE14Key.UseSystemPasswordChar = True
@@ -298,6 +446,7 @@ Partial Class SettingsForm
         '
         lnkE14.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom
         lnkE14.AutoSize = True
+        lnkE14.Margin = New Padding(10, 3, 3, 1)
         lnkE14.Name = "lnkE14"
         lnkE14.TabStop = True
         lnkE14.Tag = "https://partner.element14.com/"
@@ -330,6 +479,7 @@ Partial Class SettingsForm
         'txtTmeToken
         '
         txtTmeToken.Dock = DockStyle.Fill
+        tlpMain.SetColumnSpan(txtTmeToken, 2)
         txtTmeToken.Name = "txtTmeToken"
         txtTmeToken.TabIndex = 4
         txtTmeToken.UseSystemPasswordChar = True
@@ -338,6 +488,7 @@ Partial Class SettingsForm
         '
         lnkTme.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom
         lnkTme.AutoSize = True
+        lnkTme.Margin = New Padding(10, 3, 3, 1)
         lnkTme.Name = "lnkTme"
         lnkTme.TabStop = True
         lnkTme.Tag = "https://developers.tme.eu/en"
@@ -354,6 +505,7 @@ Partial Class SettingsForm
         'txtTmeSecret
         '
         txtTmeSecret.Dock = DockStyle.Fill
+        tlpMain.SetColumnSpan(txtTmeSecret, 2)
         txtTmeSecret.Name = "txtTmeSecret"
         txtTmeSecret.TabIndex = 4
         txtTmeSecret.UseSystemPasswordChar = True
@@ -400,14 +552,15 @@ Partial Class SettingsForm
         '
         lblUrls.AutoSize = True
         tlpMain.SetColumnSpan(lblUrls, 2)
-        lblUrls.Margin = New Padding(3, 16, 3, 3)
+        lblUrls.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom ' just above the table, not level with the API Help button
+        lblUrls.Margin = New Padding(3, 16, 3, 1)
         lblUrls.Name = "lblUrls"
         lblUrls.Text = "Suppliers and website search URLs - {0} is replaced by the search text. Add your own suppliers here:"
         '
         'btnApiHelp - beside the key boxes: how to get each key
         '
-        btnApiHelp.Anchor = AnchorStyles.Right
-        btnApiHelp.Margin = New Padding(3, 12, 3, 3)
+        btnApiHelp.Anchor = AnchorStyles.Right Or AnchorStyles.Bottom
+        btnApiHelp.Margin = New Padding(3, 3, 3, 0)
         btnApiHelp.Name = "btnApiHelp"
         btnApiHelp.Size = New Size(85, 28)
         btnApiHelp.TabIndex = 5
@@ -558,6 +711,9 @@ Partial Class SettingsForm
         tipSettings.SetToolTip(cboDkSite, "Which DigiKey country site to price and stock from (UK = digikey.co.uk, NZ = digikey.co.nz ...)." & vbCrLf & "Pick one, or type any other DigiKey country code.")
         tipSettings.SetToolTip(cboDkCurrency, "Currency DigiKey prices are shown in. Pick one, or type another currency code.")
         tipSettings.SetToolTip(cboFarnellStore, "Which Farnell / element14 country store to use for the Farnell supplier: its stock, prices and currency." & vbCrLf & "The same element14 key works for every store. CPC (UK) and Newark (USA) aren't affected.")
+        tipSettings.SetToolTip(cboConvertCurrency, "The currency for the main window's ""Prices in"" tick box. Every price is converted into it using the" & vbCrLf & "European Central Bank's daily rates. Converted prices are shown in purple and are approximate.")
+        tipSettings.SetToolTip(lnkRates, "Opens the European Central Bank's euro exchange reference rates page - where the rates come from.")
+        tipSettings.SetToolTip(btnUpdateRates, "Fetch today's exchange rates now. (They're also fetched automatically when they're 12 hours old.)")
         tipSettings.SetToolTip(cboTmeCountry, "Country TME prices and stock are for (two-letter code, e.g. GB, IE, NZ). Pick one or type another.")
         tipSettings.SetToolTip(cboTmeCurrency, "Currency TME prices are shown in. TME's own currencies are EUR, USD and PLN; GBP also works.")
         tipSettings.SetToolTip(txtE14Key, "Your element14 Product Search API key. One key covers Farnell, CPC and Newark.")
@@ -583,12 +739,12 @@ Partial Class SettingsForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnCancel
-        ClientSize = New Size(900, 714)
+        ClientSize = New Size(900, 818)
         Controls.Add(tlpMain)
         Controls.Add(flpButtons)
         MaximizeBox = False
         MinimizeBox = False
-        MinimumSize = New Size(924, 714) ' wide enough that the bottom row of buttons stays on one line
+        MinimumSize = New Size(924, 818) ' wide enough that the bottom row of buttons stays on one line
         Name = "SettingsForm"
         ShowIcon = False
         ShowInTaskbar = False
@@ -600,6 +756,16 @@ Partial Class SettingsForm
         flpDkLocale.PerformLayout()
         flpTmeLocale.ResumeLayout(False)
         flpTmeLocale.PerformLayout()
+        flpHdrMouser.ResumeLayout(False)
+        flpHdrMouser.PerformLayout()
+        flpHdrDigiKey.ResumeLayout(False)
+        flpHdrDigiKey.PerformLayout()
+        flpHdrE14.ResumeLayout(False)
+        flpHdrE14.PerformLayout()
+        flpHdrTme.ResumeLayout(False)
+        flpHdrTme.PerformLayout()
+        flpConvert.ResumeLayout(False)
+        flpConvert.PerformLayout()
         CType(dgvUrls, System.ComponentModel.ISupportInitialize).EndInit()
         flpUrlButtons.ResumeLayout(False)
         flpButtons.ResumeLayout(False)
@@ -610,10 +776,23 @@ Partial Class SettingsForm
 
     Friend WithEvents tipSettings As ToolTip
     Friend WithEvents tlpMain As TableLayoutPanel
+    Friend WithEvents flpHdrMouser As FlowLayoutPanel
     Friend WithEvents lblHdrMouser As Label
+    Friend WithEvents flpHdrDigiKey As FlowLayoutPanel
     Friend WithEvents lblHdrDigiKey As Label
+    Friend WithEvents flpHdrE14 As FlowLayoutPanel
     Friend WithEvents lblHdrE14 As Label
+    Friend WithEvents flpHdrTme As FlowLayoutPanel
     Friend WithEvents lblHdrTme As Label
+    Friend WithEvents lblPricesRule As Label
+    Friend WithEvents lblPricesRuleEnd As Label
+    Friend WithEvents lblHdrPrices As Label
+    Friend WithEvents lblConvert As Label
+    Friend WithEvents flpConvert As FlowLayoutPanel
+    Friend WithEvents cboConvertCurrency As ComboBox
+    Friend WithEvents lblRates As Label
+    Friend WithEvents btnUpdateRates As Button
+    Friend WithEvents lnkRates As LinkLabel
     Friend WithEvents lblMouser As Label
     Friend WithEvents txtMouserKey As TextBox
     Friend WithEvents lnkMouser As LinkLabel

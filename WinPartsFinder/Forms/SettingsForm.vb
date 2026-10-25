@@ -40,6 +40,9 @@ Public Class SettingsForm
         cboTmeCurrency.Items.AddRange(TmeSupplier.Currencies)
         cboTmeCountry.Text = _settings.TmeCountry
         cboTmeCurrency.Text = _settings.TmeCurrency
+        cboConvertCurrency.Items.AddRange(ExchangeRates.Currencies)
+        cboConvertCurrency.SelectedItem = If(ExchangeRates.Currencies.Contains(_settings.ConvertCurrency), _settings.ConvertCurrency, "GBP")
+        ShowRatesInfo()
         chkShowThumbnails.Checked = _settings.ShowThumbnails
         chkDarkMode.Checked = _settings.DarkMode
         LoadUrls(Function(name) _settings.GetSearchUrl(name), _settings.CustomSuppliers)
@@ -156,6 +159,7 @@ Public Class SettingsForm
         _settings.TmeSecret = txtTmeSecret.Text.Trim()
         If cboTmeCountry.Text.Trim().Length > 0 Then _settings.TmeCountry = cboTmeCountry.Text.Trim().ToUpperInvariant()
         If cboTmeCurrency.Text.Trim().Length > 0 Then _settings.TmeCurrency = cboTmeCurrency.Text.Trim().ToUpperInvariant()
+        If cboConvertCurrency.SelectedItem IsNot Nothing Then _settings.ConvertCurrency = CStr(cboConvertCurrency.SelectedItem)
         _settings.ShowThumbnails = chkShowThumbnails.Checked
         _settings.DarkMode = chkDarkMode.Checked
 
@@ -177,6 +181,29 @@ Public Class SettingsForm
         ' Resets the built-in URLs only; your own suppliers are kept.
         dgvUrls.EndEdit()
         LoadUrls(Function(name) AppSettings.DefaultSearchUrl(name, SelectedFarnellStore()), CurrentCustoms())
+    End Sub
+
+    ''' <summary>"Rates: ECB rates of 23 Oct 2026 (fetched 25 Oct 10:02)" - or that there are none yet.</summary>
+    Private Sub ShowRatesInfo()
+        Dim r = _settings.Rates
+        lblRates.Text = If(r.HasRates AndAlso r.FetchedUtc.HasValue,
+                           $"{r.Describe()} (fetched {r.FetchedUtc.Value.ToLocalTime():d MMM HH:mm})",
+                           "No rates yet.")
+    End Sub
+
+    ' Rates are data, not a preference, so a successful update is kept even if Settings is then cancelled.
+    Private Async Sub btnUpdateRates_Click(sender As Object, e As EventArgs) Handles btnUpdateRates.Click
+        btnUpdateRates.Enabled = False
+        lblRates.Text = "Getting today's rates…"
+        Try
+            _settings.Rates = Await ExchangeRates.DownloadAsync(CancellationToken.None)
+            ShowRatesInfo()
+        Catch ex As Exception
+            ShowRatesInfo()
+            MessageBox.Show(Me, ex.Message & vbCrLf & "Check your internet connection and try again.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        Finally
+            btnUpdateRates.Enabled = True
+        End Try
     End Sub
 
     Private Function SelectedFarnellStore() As String
@@ -243,7 +270,7 @@ Public Class SettingsForm
     End Sub
 
     Private Sub KeyLink_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) _
-        Handles lnkMouser.LinkClicked, lnkDigiKey.LinkClicked, lnkE14.LinkClicked, lnkTme.LinkClicked
+        Handles lnkMouser.LinkClicked, lnkDigiKey.LinkClicked, lnkE14.LinkClicked, lnkTme.LinkClicked, lnkRates.LinkClicked
         WebHelper.OpenInBrowser(CStr(DirectCast(sender, LinkLabel).Tag))
     End Sub
 

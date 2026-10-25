@@ -2,6 +2,7 @@
 ' VS 2022 VB app for Win10/11
 
 
+Imports System.Globalization
 Imports System.IO
 Imports System.Reflection
 Imports System.Text
@@ -13,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.008"
+    Public Const AppVersion As String = "V1.009"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -64,6 +65,10 @@ Public Class MainForm
         cboMode.SelectedIndex = 0
         nudMax.Value = Math.Max(nudMax.Minimum, Math.Min(nudMax.Maximum, _settings.MaxResults))
         chkInStock.Checked = _settings.InStockOnly
+        _settingConvert = True ' (no fetching while the window is still being set up)
+        chkConvert.Checked = _settings.ConvertPrices
+        _settingConvert = False
+        UpdateConvertText()
 
         ConfigureGridColumns()
         _defaultColumns = CurrentColumnLayout()
@@ -85,6 +90,12 @@ Public Class MainForm
             SetStatus("Ready.")
         End If
         cboSearch.Select()
+        ' Prices in one currency: fetch new exchange rates in the background if the saved ones are 12+ hours old.
+        If chkConvert.Checked Then RefreshRatesInBackground()
+    End Sub
+
+    Private Async Sub RefreshRatesInBackground()
+        Await RefreshRatesAsync(showDone:=False)
     End Sub
 
     Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
@@ -170,6 +181,7 @@ Public Class MainForm
         _settings.ResultColumns = CurrentColumnLayout()
         _settings.MaxResults = CInt(nudMax.Value)
         _settings.InStockOnly = chkInStock.Checked
+        _settings.ConvertPrices = chkConvert.Checked
         For Each item As ListViewItem In lvSuppliers.Items
             _settings.EnabledSuppliers(DirectCast(item.Tag, Supplier).Name) = item.Checked
         Next
@@ -282,6 +294,13 @@ Public Class MainForm
         ' Row number shown in the # column. Given out when a search / Load more finishes and never changes,
         ' so a number written down still finds the same part after removing, filtering or sorting.
         t.Columns.Add("No", GetType(Integer))
+        ' "Prices in GBP": UnitPrice / Currency / PriceBreaks show converted prices; the supplier's own are kept here.
+        t.Columns.Add("OrigUnitPrice", GetType(Decimal))
+        t.Columns.Add("OrigCurrency", GetType(String))
+        t.Columns.Add("OrigBreaks", GetType(String))
+        t.Columns.Add("BreaksRaw", GetType(String))   ' "1:0.2;10:0.139" - the breaks as numbers, for converting
+        t.Columns.Add("Converted", GetType(Boolean))
+        t.Columns.Add("RateUsed", GetType(Decimal))
         Return t
     End Function
 
@@ -471,7 +490,15 @@ Public Class MainForm
             False,
             seq,
             _batch * OrderPerBatch + seq,  ' Order
-            DBNull.Value)                  ' No - given when the search / Load more finishes
+            DBNull.Value,                  ' No - given when the search / Load more finishes
+            If(p.UnitPrice.HasValue, CObj(p.UnitPrice.Value), DBNull.Value),
+            p.Currency,
+            p.PriceBreaksText(),
+            String.Join(";", p.PriceBreaks.OrderBy(Function(b) b.Quantity).
+                        Select(Function(b) b.Quantity.ToString(CultureInfo.InvariantCulture) & ":" & b.Price.ToString(CultureInfo.InvariantCulture))),
+            False,
+            DBNull.Value)
+        ConvertRow(row)
 
         Dim key = MpnKey(p.ManufacturerPartNumber)
         If p.ImageUrl.Length > 0 AndAlso key.Length > 0 AndAlso Not _imagesByMpn.ContainsKey(key) Then
@@ -802,14 +829,169 @@ Public Class MainForm
         Return $"Order code {code} is {mpn} ({foundAt}); the other suppliers were searched for {mpn}."
     End Function
 
-    ''' <summary>The Price column shows the price at the Advanced search quantity, when one is set.</summary>
+    ''' <summary>The Price column shows the price at the Advanced search quantity, when one is set,
+    ''' and the "Prices in" currency when that's ticked, e.g. "Price (100) GBP".</summary>
     Private Sub UpdatePriceHeader()
         Dim col = dgvResults.Columns("UnitPrice")
         Dim qty = If(_active Is Nothing, 0, _active.Quantity)
-        col.HeaderText = If(qty > 0, $"Price ({qty:#,##0})", "Price (1)")
+        col.HeaderText = If(qty > 0, $"Price ({qty:#,##0})", "Price (1)") & If(Converting, " " & _settings.ConvertCurrency, "")
         col.ToolTipText = If(qty > 0, $"Price each when buying {qty:#,##0} (from the price breaks).",
-                             "Price each at the lowest price break (usually qty 1).") & vbCrLf & "Click to sort."
+                             "Price each at the lowest price break (usually qty 1).") &
+                          If(Converting, vbCrLf & $"Shown in {_settings.ConvertCurrency} (purple = converted, approximate).", "") &
+                          vbCrLf & "Click to sort."
     End Sub
+
+#Region "Prices in one currency"
+
+    ' "Prices in GBP" (toolbar): every price is shown in the currency chosen in Settings, using ECB exchange rates.
+    ' Rates are saved in settings.json and only fetched again after 12 hours (see ExchangeRates).
+    Private _settingConvert As Boolean      ' True while the tick box is set from code (don't fetch)
+    Private _fetchingRates As Boolean
+
+    ''' <summary>True when prices are being shown converted (ticked, and rates are available).</summary>
+    Private ReadOnly Property Converting As Boolean
+        Get
+            Return chkConvert.Checked AndAlso _settings.Rates.HasRates
+        End Get
+    End Property
+
+    Private Sub UpdateConvertText()
+        chkConvert.Text = $"Prices in {_settings.ConvertCurrency}"
+    End Sub
+
+    Private Async Sub chkConvert_CheckedChanged(sender As Object, e As EventArgs) Handles chkConvert.CheckedChanged
+        If _settingConvert Then Return
+        _settings.ConvertPrices = chkConvert.Checked
+        If chkConvert.Checked AndAlso _settings.Rates.NeedsRefresh Then
+            Await RefreshRatesAsync(showDone:=True)
+        Else
+            ApplyConversion()
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Fetches new exchange rates if the saved ones are 12+ hours old (or there are none), then shows the prices.
+    ''' If the rates can't be fetched, the last saved ones are used; with none at all, the tick is taken off.
+    ''' </summary>
+    Private Async Function RefreshRatesAsync(showDone As Boolean) As Task
+        If _fetchingRates Then Return
+        If _settings.Rates.NeedsRefresh Then
+            _fetchingRates = True
+            Dim oldStatus = lblStatus.Text
+            SetStatus("Getting today's exchange rates…")
+            Try
+                _settings.Rates = Await ExchangeRates.DownloadAsync(CancellationToken.None)
+                Try
+                    _settings.Save() ' so a restart within 12 hours doesn't fetch again
+                Catch
+                    ' saved again on exit anyway
+                End Try
+            Catch ex As Exception
+                If Not _settings.Rates.HasRates Then
+                    _settingConvert = True
+                    chkConvert.Checked = False
+                    _settingConvert = False
+                    _settings.ConvertPrices = False
+                    SetStatus($"Prices in {_settings.ConvertCurrency} is off: {ex.Message} Check your internet connection and tick it again.")
+                    ApplyConversion(showStatus:=False)
+                    Return
+                End If
+                SetStatus($"Couldn't get new exchange rates ({ex.Message}) - using the saved {_settings.Rates.Describe()}.")
+                showDone = False
+            Finally
+                _fetchingRates = False
+            End Try
+            If Not showDone AndAlso lblStatus.Text.StartsWith("Getting today", StringComparison.Ordinal) Then SetStatus(oldStatus)
+        End If
+        ApplyConversion(showStatus:=showDone)
+    End Function
+
+    ''' <summary>Shows every row's prices converted, or back as the supplier gave them, to match the tick box.</summary>
+    Private Sub ApplyConversion(Optional showStatus As Boolean = True)
+        For Each r As DataRow In _table.Rows
+            ConvertRow(r)
+        Next
+        UpdatePriceHeader()
+        dgvResults.Invalidate()
+        If showStatus Then
+            If Converting Then
+                Dim missing = _table.Rows.Cast(Of DataRow)().
+                    Where(Function(r) Not CBool(r("LinkOnly")) AndAlso Not CBool(r("Converted")) AndAlso
+                                      Convert.ToString(r("OrigCurrency")).Length > 0 AndAlso
+                                      Not String.Equals(Convert.ToString(r("OrigCurrency")), _settings.ConvertCurrency, StringComparison.OrdinalIgnoreCase)).
+                    Select(Function(r) Convert.ToString(r("OrigCurrency")).ToUpperInvariant()).Distinct().ToList()
+                SetStatus($"Prices shown in {_settings.ConvertCurrency} (purple = converted) at {_settings.Rates.Describe()}." &
+                          If(_settings.Rates.AgeDays > 4, $" These rates are {_settings.Rates.AgeDays} days old.", "") &
+                          If(missing.Count > 0, $" No rate for {String.Join(", ", missing)}, so those are shown as the supplier gave them.", "") &
+                          " Converted prices are approximate.")
+            Else
+                SetStatus("Prices shown as each supplier gave them.")
+            End If
+        End If
+    End Sub
+
+    ''' <summary>Puts one row's converted prices (or the supplier's own) into the Price, Cur and Price breaks columns.</summary>
+    Private Sub ConvertRow(r As DataRow)
+        If CBool(r("LinkOnly")) Then Return
+        Dim origCur = Convert.ToString(r("OrigCurrency"))
+        Dim target = _settings.ConvertCurrency
+        Dim rate As Decimal? = Nothing
+        If Converting AndAlso Not String.Equals(origCur, target, StringComparison.OrdinalIgnoreCase) Then
+            rate = _settings.Rates.Rate(origCur, target)
+        End If
+        If rate.HasValue Then
+            r("UnitPrice") = If(r("OrigUnitPrice") Is DBNull.Value, CObj(DBNull.Value), CObj(Math.Round(CDec(r("OrigUnitPrice")) * rate.Value, 4)))
+            r("Currency") = target
+            r("PriceBreaks") = BreaksText(Convert.ToString(r("BreaksRaw")), rate.Value)
+            r("Converted") = True
+            r("RateUsed") = rate.Value
+        Else
+            r("UnitPrice") = r("OrigUnitPrice")
+            r("Currency") = origCur
+            r("PriceBreaks") = r("OrigBreaks")
+            r("Converted") = False
+            r("RateUsed") = DBNull.Value
+        End If
+    End Sub
+
+    ''' <summary>"1+ 0.20   10+ 0.139" from "1:0.2;10:0.139", with every price multiplied by the rate.</summary>
+    Private Shared Function BreaksText(raw As String, rate As Decimal) As String
+        Return String.Join("   ", raw.Split({";"c}, StringSplitOptions.RemoveEmptyEntries).
+            Select(Function(pair)
+                       Dim bits = pair.Split(":"c)
+                       Dim price = Math.Round(Decimal.Parse(bits(1), CultureInfo.InvariantCulture) * rate, 4)
+                       Return $"{bits(0)}+ {price:0.00##}"
+                   End Function))
+    End Function
+
+    ''' <summary>A price in the "Prices in" currency when converting (for Advanced search's Max price each).</summary>
+    Private Function PriceInShownCurrency(price As Decimal, currency As String) As Decimal
+        If Not Converting Then Return price
+        Dim rate = _settings.Rates.Rate(currency, _settings.ConvertCurrency)
+        Return If(rate.HasValue, price * rate.Value, price)
+    End Function
+
+    ' Hover over a converted price: what the supplier actually charges, and the rate used.
+    Private Sub dgvResults_CellToolTipTextNeeded(sender As Object, e As DataGridViewCellToolTipTextNeededEventArgs) Handles dgvResults.CellToolTipTextNeeded
+        If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then Return
+        Dim prop = dgvResults.Columns(e.ColumnIndex).DataPropertyName
+        If prop <> "UnitPrice" AndAlso prop <> "Currency" AndAlso prop <> "PriceBreaks" Then Return
+        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        If row Is Nothing OrElse CBool(row("LinkOnly")) OrElse Not chkConvert.Checked Then Return
+        Dim origCur = Field(row, "OrigCurrency")
+        If CBool(row("Converted")) Then
+            Dim orig = If(row("OrigUnitPrice") Is DBNull.Value, "", $"{CDec(row("OrigUnitPrice")):0.00##} {origCur}")
+            e.ToolTipText = $"{Field(row, "Supplier")} price: {orig}" & vbCrLf &
+                            $"Breaks: {Field(row, "OrigBreaks")}" & vbCrLf &
+                            $"Converted at 1 {origCur} = {CDec(row("RateUsed")):0.#####} {_settings.ConvertCurrency} ({_settings.Rates.Describe()})." & vbCrLf &
+                            "Approximate - the supplier's own rate, VAT and import charges will differ."
+        ElseIf Converting AndAlso origCur.Length > 0 AndAlso
+               Not String.Equals(origCur, _settings.ConvertCurrency, StringComparison.OrdinalIgnoreCase) Then
+            e.ToolTipText = $"No exchange rate for {origCur}, so this price is shown as {Field(row, "Supplier")} gave it."
+        End If
+    End Sub
+
+#End Region
 
     ''' <summary>Where a supplier's results got to, so Load more can fetch the next page.</summary>
     Private Class PagingState
@@ -913,7 +1095,7 @@ Public Class MainForm
                 ' Advanced search: price at the chosen quantity, then the "only show" filters.
                 If _active IsNot Nothing Then
                     If _active.Quantity > 0 Then p.UnitPrice = AdvancedSearchOptions.PriceAt(p, _active.Quantity)
-                    If Not _active.Matches(p) Then
+                    If Not _active.Matches(p, AddressOf PriceInShownCurrency) Then
                         st.Filtered += 1
                         _advancedHidden += 1
                         Continue For
@@ -1087,6 +1269,15 @@ Public Class MainForm
             e.CellStyle.ForeColor = Theme.MutedText
         ElseIf dgvResults.Columns(e.ColumnIndex).DataPropertyName = "Stock" Then
             e.CellStyle.ForeColor = Theme.GoodText
+        End If
+
+        ' Converted prices (Prices in GBP) in their own colour, so they read as estimates.
+        If Not CBool(row("LinkOnly")) AndAlso CBool(row("Converted")) Then
+            Select Case dgvResults.Columns(e.ColumnIndex).DataPropertyName
+                Case "UnitPrice", "Currency", "PriceBreaks"
+                    e.CellStyle.ForeColor = Theme.ConvertedText
+                    e.CellStyle.SelectionForeColor = Theme.ConvertedText
+            End Select
         End If
     End Sub
 
@@ -1320,8 +1511,12 @@ Public Class MainForm
 #Region "Settings / export"
 
     Private Sub btnSettings_Click(sender As Object, e As EventArgs) Handles btnSettings.Click
+        Dim ratesBefore = _settings.Rates
         Using f As New SettingsForm(_settings)
-            If f.ShowDialog(Me) = DialogResult.OK Then
+            Dim result = f.ShowDialog(Me)
+            ' "Update now" fetched new exchange rates: show them straight away, even if Settings was cancelled.
+            If result <> DialogResult.OK AndAlso _settings.Rates IsNot ratesBefore Then ApplyConversion(showStatus:=False)
+            If result = DialogResult.OK Then
                 If f.ResetWindowRequested Then ResetWindowLayout()
                 SaveUiSettings()
                 Theme.IsDark = _settings.DarkMode
@@ -1329,6 +1524,8 @@ Public Class MainForm
                 ApplyThumbnailSetting()
                 Theme.Apply(Me)
                 AlignToolbar() ' dark mode changes some control heights
+                UpdateConvertText()
+                ApplyConversion(showStatus:=False) ' the "Prices in" currency may have changed
                 SetStatus("Settings saved.")
             End If
         End Using
@@ -1372,7 +1569,11 @@ Public Class MainForm
             ' The Datasheet column is the URL itself; it goes at the end as "Datasheet URL" instead.
             Dim cols = VisibleColumns().Where(Function(c) c.Name <> "Datasheet").ToList()
             Dim names = cols.Select(Function(c) c.DataPropertyName).Concat({"ProductUrl", "DatasheetUrl"}).ToList()
-            Dim headers = cols.Select(Function(c) c.HeaderText).Concat({"Product URL", "Datasheet URL"})
+            Dim headers = cols.Select(Function(c) c.HeaderText).Concat({"Product URL", "Datasheet URL"}).ToList()
+            If Converting Then ' keep the supplier's own prices too
+                names.AddRange({"OrigUnitPrice", "OrigCurrency", "OrigBreaks"})
+                headers.AddRange({"Supplier's price", "Supplier's currency", "Supplier's price breaks"})
+            End If
             Dim sb As New StringBuilder()
             sb.AppendLine(String.Join(",", headers.Select(AddressOf CsvQuote)))
             For Each row As DataRowView In _table.DefaultView

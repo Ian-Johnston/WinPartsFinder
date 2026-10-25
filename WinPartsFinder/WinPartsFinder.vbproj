@@ -125,6 +125,7 @@
       <DependentUpon>ImagePopupForm.vb</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\AppSettings.vb" />
+    <Compile Include="Infrastructure\ExchangeRates.vb" />
     <Compile Include="Infrastructure\ImageCache.vb" />
     <Compile Include="Infrastructure\JsonHelpers.vb" />
     <Compile Include="Infrastructure\ParseHelpers.vb" />

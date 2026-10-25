@@ -64,6 +64,12 @@ Public Class AppSettings
     Public Property TmeCountry As String = "GB"
     Public Property TmeCurrency As String = "GBP"
 
+    ' ---- Show every price in one currency (toolbar "Prices in GBP") ----
+    Public Property ConvertPrices As Boolean = False
+    Public Property ConvertCurrency As String = ExchangeRates.DefaultCurrency()
+    ''' <summary>The last exchange rates fetched, and when - only fetched again after 12 hours.</summary>
+    Public Property Rates As New ExchangeRates
+
     ' ---- General ----
     Public Property MaxResults As Integer = 25
     Public Property InStockOnly As Boolean = False

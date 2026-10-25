@@ -35,6 +35,7 @@ Partial Class MainForm
         btnCancel = New Button()
         btnLoadMore = New Button()
         chkInStock = New CheckBox()
+        chkConvert = New CheckBox()
         btnTypes = New Button()
         flpFilter = New FlowLayoutPanel()
         lblFilter = New Label()
@@ -117,6 +118,7 @@ Partial Class MainForm
         flpTop.Controls.Add(btnCancel)
         flpTop.Controls.Add(btnLoadMore)
         flpTop.Controls.Add(chkInStock)
+        flpTop.Controls.Add(chkConvert)
         flpTop.Controls.Add(btnTypes)
         flpTop.Controls.Add(flpFilter)
         flpTop.Controls.Add(btnExport)
@@ -220,6 +222,16 @@ Partial Class MainForm
         chkInStock.TabIndex = 7
         chkInStock.Text = "In stock only"
         chkInStock.UseVisualStyleBackColor = True
+        '
+        'chkConvert - text set in code: "Prices in GBP" etc.
+        '
+        chkConvert.AutoSize = True
+        chkConvert.Margin = New Padding(9, 8, 3, 3)
+        chkConvert.Name = "chkConvert"
+        chkConvert.Size = New Size(95, 19)
+        chkConvert.TabIndex = 7
+        chkConvert.Text = "Prices in GBP"
+        chkConvert.UseVisualStyleBackColor = True
         '
         'btnTypes
         '
@@ -502,7 +514,7 @@ Partial Class MainForm
         tipMain.AutoPopDelay = 15000
         tipMain.InitialDelay = 500
         tipMain.ReshowDelay = 100
-        tipMain.SetToolTip(cboSearch, "Part number or keywords to search for, e.g. LM358 or 10uF 25V 0805. Press Enter to search." & vbCrLf & "Click the arrow to pick one of your last 30 searches; matching ones are also suggested as you type.")
+        tipMain.SetToolTip(cboSearch, "Part number or keywords to search for. Press Enter to search." & vbCrLf & "Click the arrow to pick one of your last 30 searches; matching ones are also suggested as you type.")
         tipMain.SetToolTip(cboMode, "Keyword: searches descriptions and part numbers." & vbCrLf & "Manufacturer part no.: looks for parts whose manufacturer part number starts with what you typed.")
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")
@@ -511,6 +523,7 @@ Partial Class MainForm
         tipMain.SetToolTip(btnCancel, "Stop any searches still running.")
         tipMain.SetToolTip(btnLoadMore, "Fetch the next batch (Max/supp.) from every ticked supplier that has more - see Hits, e.g. 50 / 312." & vbCrLf & "Uses one API call per supplier. New rows are added at the end and selected - click the Supplier header to group them." & vbCrLf & "Right-click a supplier to load more from just that one.")
         tipMain.SetToolTip(chkInStock, "Hide parts with no stock. Website-link rows always stay.")
+        tipMain.SetToolTip(chkConvert, "Show every price in one currency (choose it in Settings), using the European Central Bank's daily exchange rates." & vbCrLf & "Converted prices are purple - hover over one to see the supplier's own price. They're approximate." & vbCrLf & "Rates are fetched at most every 12 hours.")
         tipMain.SetToolTip(txtFilter, "Narrow the current results as you type." & vbCrLf & "Matches supplier, supplier part no., mfr part no., manufacturer and description.")
         tipMain.SetToolTip(btnExport, "Save the rows currently shown to a CSV file (opens in Excel).")
         tipMain.SetToolTip(btnSettings, "API keys, supplier search URLs, your own suppliers, photos, dark mode and window layout.")
@@ -561,6 +574,7 @@ Partial Class MainForm
     Friend WithEvents btnCancel As Button
     Friend WithEvents btnLoadMore As Button
     Friend WithEvents chkInStock As CheckBox
+    Friend WithEvents chkConvert As CheckBox
     Friend WithEvents btnTypes As Button
     Friend WithEvents flpFilter As FlowLayoutPanel
     Friend WithEvents lblFilter As Label

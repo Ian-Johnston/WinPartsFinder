@@ -15,10 +15,10 @@
     <ROW Property="ARPPRODUCTICON" Value="WinPartsFinder.exe" Type="8"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://www.ianjohnston.com"/>
     <ROW Property="Manufacturer" Value="IanJ"/>
-    <ROW Property="ProductCode" Value="2057:{AA055AFB-1C72-4DBC-930D-D22EDCC7399A} " Type="16"/>
+    <ROW Property="ProductCode" Value="2057:{62C217AF-D295-43C2-A1C3-DCD27CE231A3} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="WinPartsFinder"/>
-    <ROW Property="ProductVersion" Value="1.008"/>
+    <ROW Property="ProductVersion" Value="1.009"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{9C851997-4FF5-440C-8244-D852783A346D}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="AnyCPU_All:Windows 9x/ME" ValueLocId="-"/>

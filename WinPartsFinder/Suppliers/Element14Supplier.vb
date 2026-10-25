@@ -31,7 +31,8 @@ Public Class Element14Supplier
         End Function
     End Class
 
-    ''' <summary>The stores the Farnell supplier can use - each one tested live with a search and a photo (Oct 2026).</summary>
+    ''' <summary>The stores the Farnell supplier can use - each one tested live with a search and a photo (Oct 2026).
+    ''' Taiwan is left out (no ECB exchange rate for TWD), and Indonesia (the API rejects it).</summary>
     Public Shared ReadOnly FarnellStores As New List(Of Store) From {
         New Store("uk.farnell.com", "United Kingdom", "GBP"),
         New Store("ie.farnell.com", "Ireland", "EUR"),
@@ -68,7 +69,6 @@ Public Class Element14Supplier
         New Store("in.element14.com", "India", "INR"),
         New Store("cn.element14.com", "China", "CNY"),
         New Store("hk.element14.com", "Hong Kong", "HKD"),
-        New Store("tw.element14.com", "Taiwan", "TWD"),
         New Store("kr.element14.com", "South Korea", "KRW"),
         New Store("th.element14.com", "Thailand", "THB"),
         New Store("ph.element14.com", "Philippines", "PHP"),

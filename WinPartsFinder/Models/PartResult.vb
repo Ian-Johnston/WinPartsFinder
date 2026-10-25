@@ -134,7 +134,9 @@ Public Class AdvancedSearchOptions
     End Property
 
     ''' <summary>App-side filters. Website-link rows always pass.</summary>
-    Public Function Matches(p As PartResult) As Boolean
+    ''' <param name="toShownCurrency">When prices are shown in one currency, converts a price so Max price each
+    ''' is compared in that currency. Nothing = compare in the supplier's own currency.</param>
+    Public Function Matches(p As PartResult, Optional toShownCurrency As Func(Of Decimal, String, Decimal) = Nothing) As Boolean
         If p.IsLinkOnly Then Return True
         If ActiveOnly AndAlso IsNotActive(p.Status) Then Return False
         If ManufacturerContains.Trim().Length > 0 AndAlso
@@ -149,6 +151,7 @@ Public Class AdvancedSearchOptions
         If MaxUnitPrice.HasValue Then
             ' No price listed counts as "not under the limit" - those usually can't be bought anyway.
             Dim price = PriceAt(p, Math.Max(1, Quantity))
+            If price.HasValue AndAlso toShownCurrency IsNot Nothing Then price = toShownCurrency(price.Value, p.Currency)
             If Not price.HasValue OrElse price.Value > MaxUnitPrice.Value Then Return False
         End If
         Return True

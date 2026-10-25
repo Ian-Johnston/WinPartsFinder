@@ -47,6 +47,13 @@ Public Module Theme
         End Get
     End Property
 
+    ''' <summary>Prices converted to the "Prices in" currency, so they stand out as estimates.</summary>
+    Public ReadOnly Property ConvertedText As Color
+        Get
+            Return If(IsDark, Color.FromArgb(205, 150, 255), Color.FromArgb(128, 0, 170))
+        End Get
+    End Property
+
     Public ReadOnly Property HeaderBack As Color
         Get
             Return If(IsDark, DarkHeader, SystemColors.Control)
