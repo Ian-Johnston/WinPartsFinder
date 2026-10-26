@@ -7,6 +7,8 @@ Public Class PartResult
     Public Property Description As String = ""
     ''' <summary>Kind of part, e.g. "Analog to Digital Converters - ADC" - the supplier's own category wording.</summary>
     Public Property Category As String = ""
+    ''' <summary>Package / case, e.g. "8-SOIC", "TSSOP", "SO8" - in the supplier's own wording; blank when it isn't given.</summary>
+    Public Property Package As String = ""
 
     ''' <summary>Quantity in stock, or Nothing when the supplier didn't say.</summary>
     Public Property Stock As Long?

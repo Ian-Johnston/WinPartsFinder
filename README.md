@@ -38,9 +38,9 @@ A *website link* row opens that supplier's own search results in your browser wi
 - **Recent searches** — click the arrow on the Search box to pick from your last 30 searches; matching ones are also suggested as you type.
 - **Load more** — fetch the next batch from suppliers that have more (e.g. *50 / 312*).
 - **Part photos** — thumbnails, click for a bigger view.
-- **Type** and **Datasheet** columns — the kind of part in each supplier's own words, and a one-click link to the datasheet when the supplier provides one.
+- **Type**, **Package** and **Datasheet** columns — the kind of part in each supplier's own words, its package (8-SOIC, TSSOP, TO-92, 0805…) where the supplier gives it, and a one-click link to the datasheet.
 - **Click the supplier part number** to open the product page; right-click to copy part numbers.
-- **Sort, filter and tidy** — sort by any column, *In stock only*, a live text filter, remove rows you don't want, untick a supplier to hide its results (tick one after a search and it's searched straight away).
+- **Sort, filter and tidy** — sort by any column, or several at once (Shift+click or right-click a header), *In stock only*, a live text filter, remove rows you don't want, untick a supplier to hide its results (tick one after a search and it's searched straight away).
 - **Row numbers** (#) that stay put, so you can note a part and find it again.
 - **Export to CSV** for Excel.
 - **Four colour themes** (Light, Soft grey, Dark grey and Dark), remembered window and column layout, tooltips on everything, built-in Help — plus a separate **API Help** in Settings that stays open while you paste in your keys.

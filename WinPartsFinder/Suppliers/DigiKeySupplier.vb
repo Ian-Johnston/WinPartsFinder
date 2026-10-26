@@ -151,6 +151,7 @@ Public Class DigiKeySupplier
                 .Manufacturer = p.GetStr("Manufacturer", "Name"),
                 .Description = p.GetStr("Description", "ProductDescription"),
                 .Category = DeepestCategory(p.GetPath("Category")),
+                .Package = PackageOf(p),
                 .Stock = ToNullableLong(p.GetNum("QuantityAvailable")),
                 .Currency = _currency,
                 .MinOrderQty = ToNullableInt(variation.GetNum("MinimumOrderQuantity")),
@@ -176,6 +177,17 @@ Public Class DigiKeySupplier
             results.Add(r)
         Next
         Return results
+    End Function
+
+    ''' <summary>"8-SOIC" from the part's parameters ("Supplier Device Package", else "Package / Case").</summary>
+    Private Shared Function PackageOf(p As JToken) As String
+        Dim params = p.GetArr("Parameters")
+        For Each paramName In {"Supplier Device Package", "Package / Case"}
+            Dim hit = params.FirstOrDefault(Function(x) String.Equals(x.GetStr("ParameterText"), paramName, StringComparison.OrdinalIgnoreCase))
+            Dim v = If(hit Is Nothing, "", hit.GetStr("ValueText"))
+            If v.Length > 0 AndAlso v <> "-" Then Return v
+        Next
+        Return ""
     End Function
 
     ''' <summary>

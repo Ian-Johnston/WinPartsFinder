@@ -181,6 +181,7 @@ Public Class Element14Supplier
                 .Manufacturer = If(p.GetStr("brandName").Length > 0, p.GetStr("brandName"), p.GetStr("vendorName")),
                 .Description = p.GetStr("displayName"),
                 .Category = TypeFromName(p.GetStr("displayName")),
+                .Package = PackageOf(p),
                 .Stock = stock,
                 .StockInfo = If(lead.Length > 0 AndAlso lead <> "0", $"Lead {lead} days", ""),
                 .Currency = _currency,
@@ -208,6 +209,21 @@ Public Class Element14Supplier
             results.Add(r)
         Next
         Return New SearchPage(results, ToNullableInt(wrapper.GetNum("numberOfResults")))
+    End Function
+
+    ''' <summary>
+    ''' The package from the part's attributes: "IC Case / Package" (e.g. TSSOP) if there is one, else any other
+    ''' "... Case Style" / "... Case / Package" attribute (transistors, diodes, capacitors...). Not "Packaging" (reels).
+    ''' </summary>
+    Private Shared Function PackageOf(p As JToken) As String
+        Dim attrs = p.GetArr("attributes").
+            Select(Function(a) (Label:=a.GetStr("attributeLabel"), Value:=a.GetStr("attributeValue"))).
+            Where(Function(a) a.Value.Length > 0 AndAlso a.Value <> "-").ToList()
+        Dim ic = attrs.FirstOrDefault(Function(a) String.Equals(a.Label, "IC Case / Package", StringComparison.OrdinalIgnoreCase))
+        If ic.Value IsNot Nothing Then Return ic.Value
+        Dim other = attrs.FirstOrDefault(Function(a) a.Label.IndexOf("Case Style", StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                                                     a.Label.IndexOf("Case / Package", StringComparison.OrdinalIgnoreCase) >= 0)
+        Return If(other.Value, "")
     End Function
 
     ''' <summary>

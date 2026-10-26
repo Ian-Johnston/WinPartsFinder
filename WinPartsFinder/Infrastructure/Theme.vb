@@ -18,7 +18,7 @@ Public Module Theme
     ''' <summary>One theme's colours.</summary>
     Private Class Palette
         Public Back, Surface, Input, Header, Border, Text, Selection, RowSelection, RowSelectionText As Color
-        Public Muted, Link, Good, Converted As Color
+        Public Muted, Link, Good, Converted, Borrowed As Color
         ''' <summary>Dark title bar and scroll bars.</summary>
         Public DarkChrome As Boolean
     End Class
@@ -28,7 +28,7 @@ Public Module Theme
         .Header = Color.FromArgb(56, 56, 56), .Border = Color.FromArgb(78, 78, 78), .Text = Color.FromArgb(232, 232, 232),
         .Selection = Color.FromArgb(0, 92, 160), .RowSelection = Color.FromArgb(72, 72, 72), .RowSelectionText = Color.White,
         .Muted = Color.FromArgb(150, 150, 150), .Link = Color.FromArgb(110, 175, 255), .Good = Color.FromArgb(110, 205, 120),
-        .Converted = Color.FromArgb(205, 150, 255), .DarkChrome = True}
+        .Converted = Color.FromArgb(205, 150, 255), .Borrowed = Color.FromArgb(255, 170, 70), .DarkChrome = True}
 
     ' Slate rather than black: less contrast, easier on the eyes at night.
     Private ReadOnly DarkGreyPalette As New Palette With {
@@ -36,7 +36,7 @@ Public Module Theme
         .Header = Color.FromArgb(66, 72, 83), .Border = Color.FromArgb(92, 100, 114), .Text = Color.FromArgb(222, 226, 232),
         .Selection = Color.FromArgb(52, 104, 170), .RowSelection = Color.FromArgb(80, 88, 102), .RowSelectionText = Color.White,
         .Muted = Color.FromArgb(150, 157, 168), .Link = Color.FromArgb(125, 182, 255), .Good = Color.FromArgb(125, 212, 135),
-        .Converted = Color.FromArgb(212, 165, 255), .DarkChrome = True}
+        .Converted = Color.FromArgb(212, 165, 255), .Borrowed = Color.FromArgb(255, 178, 85), .DarkChrome = True}
 
     ' Light greys instead of bright white; text and colours a touch darker so they still stand out.
     Private ReadOnly SoftGreyPalette As New Palette With {
@@ -44,7 +44,7 @@ Public Module Theme
         .Header = Color.FromArgb(200, 200, 200), .Border = Color.FromArgb(158, 158, 158), .Text = Color.FromArgb(24, 24, 24),
         .Selection = Color.FromArgb(168, 190, 218), .RowSelection = Color.FromArgb(194, 194, 194), .RowSelectionText = Color.Black,
         .Muted = Color.FromArgb(105, 105, 105), .Link = Color.FromArgb(28, 78, 190), .Good = Color.FromArgb(0, 105, 0),
-        .Converted = Color.FromArgb(118, 0, 160), .DarkChrome = False}
+        .Converted = Color.FromArgb(118, 0, 160), .Borrowed = Color.FromArgb(170, 85, 0), .DarkChrome = False}
 
     ' Selected grid rows are grey, not the usual blue, so blue link text (supplier part no.) stays readable.
     Private ReadOnly LightRowSelection As Color = Color.FromArgb(218, 218, 218)
@@ -110,6 +110,13 @@ Public Module Theme
     Public ReadOnly Property ConvertedText As Color
         Get
             Return If(IsCustom, P.Converted, Color.FromArgb(128, 0, 170))
+        End Get
+    End Property
+
+    ''' <summary>A package borrowed from another supplier's listing of the same part (Mouser doesn't give one).</summary>
+    Public ReadOnly Property BorrowedText As Color
+        Get
+            Return If(IsCustom, P.Borrowed, Color.FromArgb(190, 95, 0))
         End Get
     End Property
 
@@ -267,6 +274,11 @@ Public Module Theme
             col.LinkColor = LinkText
             col.ActiveLinkColor = LinkText
         Next
+    End Sub
+
+    ''' <summary>For a menu that isn't attached to a control (so Apply doesn't reach it), e.g. the grid's header menu.</summary>
+    Public Sub StyleMenu(menu As ToolStrip)
+        StyleToolStrip(menu)
     End Sub
 
     Private Sub StyleToolStrip(ts As ToolStrip)

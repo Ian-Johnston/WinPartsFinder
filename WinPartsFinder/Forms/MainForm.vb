@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.011"
+    Public Const AppVersion As String = "V1.012"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -27,6 +27,8 @@ Public Class MainForm
     Private WithEvents _images As New ImageCache()
     ' First photo seen for each manufacturer part no., so suppliers without photos (Mouser) can borrow one.
     Private ReadOnly _imagesByMpn As New Dictionary(Of String, (Thumb As String, Large As String))
+    ' Package by manufacturer part no., so rows without one (Mouser's search never gives it) can borrow it.
+    Private ReadOnly _packagesByMpn As New Dictionary(Of String, (Package As String, Supplier As String))
     Private colThumb As DataGridViewImageColumn
     Private colSupplierPartLink As DataGridViewLinkColumn
     Private colDatasheetLink As DataGridViewLinkColumn
@@ -301,6 +303,11 @@ Public Class MainForm
         t.Columns.Add("BreaksRaw", GetType(String))   ' "1:0.2;10:0.139" - the breaks as numbers, for converting
         t.Columns.Add("Converted", GetType(Boolean))
         t.Columns.Add("RateUsed", GetType(Decimal))
+        t.Columns.Add("Package", GetType(String))
+        t.Columns.Add("PackageFrom", GetType(String)) ' supplier the package was borrowed from; "" = the row's own
+        ' The supplier's place in the supplier list (Seq without the row number), so "Supplier, then Price" sorts
+        ' the prices within each supplier.
+        t.Columns.Add("SupplierRank", GetType(Integer))
         Return t
     End Function
 
@@ -346,6 +353,7 @@ Public Class MainForm
         AddTextColumn("Manufacturer", "Manufacturer", 110)
         AddTextColumn("Type", "Type", 160)
         AddTextColumn("Description", "Description", 280)
+        AddTextColumn("Package", "Package", 80)
         Dim stock = AddTextColumn("Stock", "Stock", 42)
         stock.DefaultCellStyle.Format = "#,##0"
         stock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
@@ -377,6 +385,8 @@ Public Class MainForm
             {"Manufacturer", "Who makes the part."},
             {"Type", "Kind of part, in the supplier's own words (its category). Use Types… to hide whole types." & vbCrLf & "Blank for website links, and for the odd part a supplier hasn't categorised."},
             {"Description", "Supplier's description of the part."},
+            {"Package", "Package / case, e.g. 8-SOIC, TSSOP, SO8 - in the supplier's own wording." & vbCrLf & "From DigiKey, Farnell, CPC, Newark and TME (from its description). Mouser's search doesn't give it," & vbCrLf &
+             "so Mouser rows borrow it (in orange) from another supplier's listing of exactly the same manufacturer part number."},
             {"Stock", "Quantity in stock now. Green = in stock, grey row = none."},
             {"UnitPrice", "Price each at the lowest price break (usually qty 1)."},
             {"Currency", "Currency of the prices in this row."},
@@ -387,7 +397,11 @@ Public Class MainForm
             {"Datasheet", "Click to open the datasheet. Blank when the supplier didn't give one (TME and website links never do)."}
         }
         For Each kv In tips
-            dgvResults.Columns(kv.Key).ToolTipText = kv.Value & vbCrLf & "Click to sort."
+            dgvResults.Columns(kv.Key).ToolTipText = kv.Value & vbCrLf & SortHint
+        Next
+        ' Header clicks are handled here (ColumnHeaderMouseClick), so several columns can be sorted at once.
+        For Each col As DataGridViewColumn In dgvResults.Columns
+            If col.SortMode <> DataGridViewColumnSortMode.NotSortable Then col.SortMode = DataGridViewColumnSortMode.Programmatic
         Next
     End Sub
 
@@ -497,15 +511,37 @@ Public Class MainForm
             String.Join(";", p.PriceBreaks.OrderBy(Function(b) b.Quantity).
                         Select(Function(b) b.Quantity.ToString(CultureInfo.InvariantCulture) & ":" & b.Price.ToString(CultureInfo.InvariantCulture))),
             False,
-            DBNull.Value)
+            DBNull.Value,
+            p.Package,
+            "",
+            seq \ SeqPerSupplier)
         ConvertRow(row)
 
         Dim key = MpnKey(p.ManufacturerPartNumber)
         If p.ImageUrl.Length > 0 AndAlso key.Length > 0 AndAlso Not _imagesByMpn.ContainsKey(key) Then
             _imagesByMpn(key) = (p.ImageUrl, If(p.LargeImageUrl.Length > 0, p.LargeImageUrl, p.ImageUrl))
         End If
+        If p.Package.Length > 0 AndAlso key.Length > 0 AndAlso Not _packagesByMpn.ContainsKey(key) Then
+            _packagesByMpn(key) = (p.Package, p.Supplier)
+        End If
         Return row
     End Function
+
+    ''' <summary>
+    ''' Rows with no package (Mouser's search never gives one) take it from another supplier's row with exactly the
+    ''' same manufacturer part number. Kept in the table, so sorting and Filter include it; shown in its own colour.
+    ''' </summary>
+    Private Sub BorrowPackages()
+        For Each r As DataRow In _table.Rows
+            If CBool(r("LinkOnly")) OrElse Convert.ToString(r("Package")).Length > 0 Then Continue For
+            Dim found As (Package As String, Supplier As String) = Nothing
+            If _packagesByMpn.TryGetValue(MpnKey(Convert.ToString(r("MfrPartNo"))), found) AndAlso
+               found.Supplier <> Convert.ToString(r("Supplier")) Then
+                r("Package") = found.Package
+                r("PackageFrom") = found.Supplier
+            End If
+        Next
+    End Sub
 
     Private _nextRowNo As Integer = 1
     ' 0 = the search itself, 1 = first Load more, ... Each batch's rows sort after the previous batch's.
@@ -545,7 +581,7 @@ Public Class MainForm
         Dim f = txtFilter.Text.Trim()
         If f.Length > 0 Then
             Dim pat = EscapeLike(f)
-            parts.Add($"(LinkOnly = true OR MfrPartNo LIKE '%{pat}%' OR Description LIKE '%{pat}%' OR Type LIKE '%{pat}%' " &
+            parts.Add($"(LinkOnly = true OR MfrPartNo LIKE '%{pat}%' OR Description LIKE '%{pat}%' OR Type LIKE '%{pat}%' OR Package LIKE '%{pat}%' " &
                       $"OR Manufacturer LIKE '%{pat}%' OR Supplier LIKE '%{pat}%' OR SupplierPartNo LIKE '%{pat}%')")
         End If
         _table.DefaultView.RowFilter = String.Join(" AND ", parts)
@@ -838,7 +874,8 @@ Public Class MainForm
         col.ToolTipText = If(qty > 0, $"Price each when buying {qty:#,##0} (from the price breaks).",
                              "Price each at the lowest price break (usually qty 1).") &
                           If(Converting, vbCrLf & $"Shown in {_settings.ConvertCurrency} (purple = converted, approximate).", "") &
-                          vbCrLf & "Click to sort."
+                          vbCrLf & SortHint
+        RefreshSortHeaders()
     End Sub
 
 #Region "Prices in one currency"
@@ -975,6 +1012,14 @@ Public Class MainForm
     Private Sub dgvResults_CellToolTipTextNeeded(sender As Object, e As DataGridViewCellToolTipTextNeededEventArgs) Handles dgvResults.CellToolTipTextNeeded
         If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then Return
         Dim prop = dgvResults.Columns(e.ColumnIndex).DataPropertyName
+        If prop = "Package" Then
+            Dim r = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+            If r IsNot Nothing AndAlso Field(r, "PackageFrom").Length > 0 Then
+                e.ToolTipText = $"{Field(r, "Supplier")} doesn't give the package - this is {Field(r, "PackageFrom")}'s, " &
+                                $"for the same manufacturer part number ({Field(r, "MfrPartNo")})."
+            End If
+            Return
+        End If
         If prop <> "UnitPrice" AndAlso prop <> "Currency" AndAlso prop <> "PriceBreaks" Then Return
         Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
         If row Is Nothing OrElse CBool(row("LinkOnly")) OrElse Not chkConvert.Checked Then Return
@@ -1105,8 +1150,9 @@ Public Class MainForm
                 added.Add(AddResult(p, SeqFor(s, st.RowCount)))
             Next
             _table.EndLoadData()
-            ' Earlier rows (e.g. Mouser) may now be able to borrow a photo from these.
+            ' Earlier rows (e.g. Mouser) may now be able to borrow a photo, and a package, from these.
             If colThumb.Visible Then dgvResults.InvalidateColumn(colThumb.Index)
+            BorrowPackages()
             item.SubItems(SubStatus).Text = If(st.RowCount = 0, "No matches", "OK")
             item.ToolTipText = $"{s.Name}: {st.RowCount} result(s)" &
                                If(st.Total.HasValue, $" of {st.Total} found.", ".") &
@@ -1277,6 +1323,12 @@ Public Class MainForm
             e.CellStyle.ForeColor = Theme.GoodText
         End If
 
+        ' A package borrowed from another supplier's listing of the same part, in its own colour.
+        If dgvResults.Columns(e.ColumnIndex).DataPropertyName = "Package" AndAlso Field(row, "PackageFrom").Length > 0 Then
+            e.CellStyle.ForeColor = Theme.BorrowedText
+            e.CellStyle.SelectionForeColor = Theme.BorrowedText
+        End If
+
         ' Converted prices (Prices in GBP) in their own colour, so they read as estimates.
         If Not CBool(row("LinkOnly")) AndAlso CBool(row("Converted")) Then
             Select Case dgvResults.Columns(e.ColumnIndex).DataPropertyName
@@ -1287,13 +1339,100 @@ Public Class MainForm
         End If
     End Sub
 
+#Region "Sorting by one or more columns"
+
+    Private Const SortHint As String = "Click to sort; Shift+click to sort by this as well; right-click for more."
+
+    ' The columns sorted by, in order (first = main sort). Empty = arrival order.
+    Private ReadOnly _sortKeys As New List(Of (Column As String, Descending As Boolean))
+    Private _headerMenu As ContextMenuStrip
+    Private _headerMenuColumn As String
+
+    ''' <summary>What a column sorts on: Supplier by its place in the supplier list, Datasheet by its link, the rest by their own values.</summary>
+    Private Function SortField(columnName As String) As String
+        Select Case columnName
+            Case "Supplier" : Return "SupplierRank"
+            Case Else : Return dgvResults.Columns(columnName).DataPropertyName
+        End Select
+    End Function
+
     Private Sub dgvResults_ColumnHeaderMouseClick(sender As Object, e As DataGridViewCellMouseEventArgs) Handles dgvResults.ColumnHeaderMouseClick
         Dim col = dgvResults.Columns(e.ColumnIndex)
-        If col.Name <> "Supplier" OrElse e.Button <> MouseButtons.Left Then Return
-        Dim descending = col.HeaderCell.SortGlyphDirection = SortOrder.Ascending
-        _table.DefaultView.Sort = If(descending, "Seq DESC", "Seq")
-        col.HeaderCell.SortGlyphDirection = If(descending, SortOrder.Descending, SortOrder.Ascending)
+        If col.SortMode = DataGridViewColumnSortMode.NotSortable Then Return
+        If e.Button = MouseButtons.Right Then
+            ShowHeaderMenu(col.Name)
+        ElseIf e.Button = MouseButtons.Left Then
+            If (ModifierKeys And Keys.Shift) = Keys.Shift Then ThenSortBy(col.Name) Else SortBy(col.Name)
+        End If
     End Sub
+
+    ''' <summary>Sort by just this column; if it's already the only sort, reverse it.</summary>
+    Private Sub SortBy(columnName As String)
+        Dim reverse = _sortKeys.Count = 1 AndAlso _sortKeys(0).Column = columnName AndAlso Not _sortKeys(0).Descending
+        _sortKeys.Clear()
+        _sortKeys.Add((columnName, reverse))
+        ApplySort()
+    End Sub
+
+    ''' <summary>Add this column as the next sort level; if it's already one, reverse that level.</summary>
+    Private Sub ThenSortBy(columnName As String)
+        Dim i = _sortKeys.FindIndex(Function(k) k.Column = columnName)
+        If i >= 0 Then
+            _sortKeys(i) = (columnName, Not _sortKeys(i).Descending)
+        Else
+            _sortKeys.Add((columnName, False))
+        End If
+        ApplySort()
+    End Sub
+
+    Private Sub ClearSorting()
+        _sortKeys.Clear()
+        ApplySort()
+    End Sub
+
+    ''' <summary>Sorts the rows by every level in turn, then arrival order for anything still equal.</summary>
+    Private Sub ApplySort()
+        Dim parts = _sortKeys.Select(Function(k) SortField(k.Column) & If(k.Descending, " DESC", "")).ToList()
+        parts.Add("Order")
+        _table.DefaultView.Sort = String.Join(", ", parts)
+        RefreshSortHeaders()
+    End Sub
+
+    ' Small level numbers added to header text when sorting by more than one column.
+    Private Const LevelDigits As String = "¹²³⁴⁵⁶⁷⁸⁹"
+
+    ''' <summary>Arrows on the sorted columns, and a level number on each when there's more than one.</summary>
+    Private Sub RefreshSortHeaders()
+        For Each col As DataGridViewColumn In dgvResults.Columns
+            Dim text = col.HeaderText.TrimEnd(LevelDigits.ToCharArray()).TrimEnd()
+            Dim i = _sortKeys.FindIndex(Function(k) k.Column = col.Name)
+            If i >= 0 AndAlso _sortKeys.Count > 1 AndAlso i < LevelDigits.Length Then text &= " " & LevelDigits(i)
+            If col.HeaderText <> text Then col.HeaderText = text
+            col.HeaderCell.SortGlyphDirection =
+                If(i < 0, SortOrder.None, If(_sortKeys(i).Descending, SortOrder.Descending, SortOrder.Ascending))
+        Next
+    End Sub
+
+    Private Sub ShowHeaderMenu(columnName As String)
+        If _headerMenu Is Nothing Then
+            _headerMenu = New ContextMenuStrip()
+            _headerMenu.Items.Add("Sort by this", Nothing, Sub() SortBy(_headerMenuColumn))
+            _headerMenu.Items.Add("Next sort by this", Nothing, Sub() ThenSortBy(_headerMenuColumn))
+            _headerMenu.Items.Add(New ToolStripSeparator())
+            _headerMenu.Items.Add("Clear sorting", Nothing, Sub() ClearSorting())
+        End If
+        _headerMenuColumn = columnName
+        Dim header = dgvResults.Columns(columnName).HeaderText.TrimEnd(LevelDigits.ToCharArray()).TrimEnd()
+        Dim level = _sortKeys.FindIndex(Function(k) k.Column = columnName)
+        _headerMenu.Items(0).Text = $"Sort by {header}"
+        _headerMenu.Items(1).Text = If(level >= 0, $"Reverse {header} (sort level {level + 1})", $"Next sort by {header}")
+        _headerMenu.Items(1).Enabled = _sortKeys.Count > 0
+        _headerMenu.Items(3).Enabled = _sortKeys.Count > 0
+        Theme.StyleMenu(_headerMenu)
+        _headerMenu.Show(Cursor.Position)
+    End Sub
+
+#End Region
 
     Private Sub dgvResults_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellDoubleClick
         ' The photo and link cells already act on a single click.

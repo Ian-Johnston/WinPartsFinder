@@ -133,6 +133,7 @@ Public Class TmeSupplier
                 .Manufacturer = p.GetStr("manufacturer", "name"),
                 .Description = p.GetStr("description"),
                 .Category = CategoryOf(p),
+                .Package = PackageFromDescription(p.GetStr("description")),
                 .Currency = _currency,
                 .MinOrderQty = ToNullableInt(p.GetNum("minimal_amount")),
                 .Status = FirstText(p.GetPath("product_status")),
@@ -202,6 +203,21 @@ Public Class TmeSupplier
         If c.Length = 0 Then c = p.GetStr("category_name")
         If c.Length = 0 Then c = p.GetStr("description").Split(";"c)(0).Trim()
         Return c
+    End Function
+
+    ' Package names as TME writes them in descriptions, e.g. "SO8", "TSSOP14", "DIP8", "SOT23-5", "TO92".
+    Private Shared ReadOnly PackageWord As New Text.RegularExpressions.Regex(
+        "^(SO|SOIC|SOP|SSOP|TSSOP|MSOP|VSSOP|QSOP|HTSSOP|DIP|PDIP|SDIP|QFN|DFN|VQFN|WQFN|TQFP|LQFP|QFP|PLCC|BGA|LGA|WLCSP|" &
+        "SOT|SC|TO|DO|SMA|SMB|SMC|SOD|DPAK|D2PAK|MELF|MINIMELF)[\d\-]*[A-Z\d]*$",
+        Text.RegularExpressions.RegexOptions.IgnoreCase)
+
+    ''' <summary>TME has no package field in its search, but descriptions read e.g. "IC: operational amplifier; 1MHz; SO8; ..."</summary>
+    Private Shared Function PackageFromDescription(description As String) As String
+        For Each bit In description.Split(";"c)
+            Dim word = bit.Trim()
+            If word.Length >= 2 AndAlso word.Length <= 14 AndAlso PackageWord.IsMatch(word) Then Return word
+        Next
+        Return ""
     End Function
 
     Private Shared Function FirstText(t As JToken) As String
