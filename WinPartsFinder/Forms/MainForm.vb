@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.012"
+    Public Const AppVersion As String = "V1.013"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -76,7 +76,7 @@ Public Class MainForm
         _defaultColumns = CurrentColumnLayout()
         ApplyColumnLayout(_settings.ResultColumns)
         ApplyThumbnailSetting()
-        _table.DefaultView.Sort = "Order" ' arrival order until the user sorts by a column
+        _table.DefaultView.Sort = "LinkOnly DESC, Order" ' website links first, then arrival order until the user sorts
         dgvResults.DataSource = _table.DefaultView
         _linkFont = New Font(dgvResults.Font, FontStyle.Italic)
 
@@ -455,9 +455,29 @@ Public Class MainForm
         colThumb.Visible = show
         Dim h = If(show, ThumbRowHeight, dgvResults.Font.Height + 9)
         dgvResults.RowTemplate.Height = h
-        For Each r As DataGridViewRow In dgvResults.Rows
-            r.Height = h
+        SizeRows()
+    End Sub
+
+    ''' <summary>Website-link rows are half height (no photo, one line of text); never smaller than a plain text row.</summary>
+    Private Sub SizeRows(Optional first As Integer = 0, Optional count As Integer = -1)
+        Dim normal = dgvResults.RowTemplate.Height
+        Dim linkHeight = Math.Max(dgvResults.Font.Height + 9, normal \ 2)
+        Dim last = If(count < 0, dgvResults.Rows.Count - 1, Math.Min(dgvResults.Rows.Count - 1, first + count - 1))
+        For i = first To last
+            Dim r = dgvResults.Rows(i)
+            Dim v = TryCast(r.DataBoundItem, DataRowView)
+            Dim want = If(v IsNot Nothing AndAlso CBool(v("LinkOnly")), linkHeight, normal)
+            If r.Height <> want Then r.Height = want
         Next
+    End Sub
+
+    ' Rows are re-created when the grid is sorted or filtered, and added as results arrive - size them each time.
+    Private Sub dgvResults_DataBindingComplete(sender As Object, e As DataGridViewBindingCompleteEventArgs) Handles dgvResults.DataBindingComplete
+        SizeRows()
+    End Sub
+
+    Private Sub dgvResults_RowsAdded(sender As Object, e As DataGridViewRowsAddedEventArgs) Handles dgvResults.RowsAdded
+        SizeRows(e.RowIndex, e.RowCount)
     End Sub
 
     Private Shared Function MpnKey(mpn As String) As String
@@ -1288,7 +1308,8 @@ Public Class MainForm
         If row Is Nothing Then Return
 
         If e.ColumnIndex = colThumb.Index Then
-            e.Value = _images.GetThumbnail(ImageUrlsFor(row).Thumb)
+            ' Website-link rows have no part, so no photo (not even the "no photo" box).
+            e.Value = If(CBool(row("LinkOnly")), Nothing, _images.GetThumbnail(ImageUrlsFor(row).Thumb))
             e.FormattingApplied = True
             Return
         End If
@@ -1392,7 +1413,9 @@ Public Class MainForm
 
     ''' <summary>Sorts the rows by every level in turn, then arrival order for anything still equal.</summary>
     Private Sub ApplySort()
-        Dim parts = _sortKeys.Select(Function(k) SortField(k.Column) & If(k.Descending, " DESC", "")).ToList()
+        ' Website-link rows always stay at the top, whatever is sorted.
+        Dim parts As New List(Of String) From {"LinkOnly DESC"}
+        parts.AddRange(_sortKeys.Select(Function(k) SortField(k.Column) & If(k.Descending, " DESC", "")))
         parts.Add("Order")
         _table.DefaultView.Sort = String.Join(", ", parts)
         RefreshSortHeaders()
