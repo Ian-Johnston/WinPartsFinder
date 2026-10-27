@@ -73,12 +73,11 @@ Public Class AdvancedSearchOptions
     Public Property Mode As SearchMode = SearchMode.Keyword
     Public Property MaxResults As Integer = 25
 
-    ' Applied by the suppliers
+    ' Applied by the suppliers. (Active parts only is on the main window's left panel, applied live to the grid.)
     Public Property InStockOnly As Boolean
     Public Property RohsOnly As Boolean
 
     ' Applied by the app to what comes back
-    Public Property ActiveOnly As Boolean
     Public Property ManufacturerContains As String = ""
     ''' <summary>Only parts whose manufacturer part number contains this (case and spaces ignored), e.g. 931G.</summary>
     Public Property PartNoContains As String = ""
@@ -111,7 +110,6 @@ Public Class AdvancedSearchOptions
         End Select
         If InStockOnly Then bits.Add("in stock")
         If RohsOnly Then bits.Add("RoHS")
-        If ActiveOnly Then bits.Add("active only")
         If ManufacturerContains.Trim().Length > 0 Then bits.Add($"maker ""{ManufacturerContains.Trim()}""")
         If PartNoContains.Trim().Length > 0 Then bits.Add($"part no. contains ""{PartNoContains.Trim()}""")
         If WordsToCheck.Length > 0 Then bits.Add($"contains ""{WordsToCheck}""")
@@ -130,7 +128,7 @@ Public Class AdvancedSearchOptions
     ''' <summary>True if any of the app-side filters are set.</summary>
     Public ReadOnly Property HasAppFilters As Boolean
         Get
-            Return ActiveOnly OrElse ManufacturerContains.Trim().Length > 0 OrElse PartNoContains.Trim().Length > 0 OrElse WordsToCheck.Length > 0 OrElse
+            Return ManufacturerContains.Trim().Length > 0 OrElse PartNoContains.Trim().Length > 0 OrElse WordsToCheck.Length > 0 OrElse
                    Quantity > 0 OrElse MaxUnitPrice.HasValue
         End Get
     End Property
@@ -140,7 +138,6 @@ Public Class AdvancedSearchOptions
     ''' is compared in that currency. Nothing = compare in the supplier's own currency.</param>
     Public Function Matches(p As PartResult, Optional toShownCurrency As Func(Of Decimal, String, Decimal) = Nothing) As Boolean
         If p.IsLinkOnly Then Return True
-        If ActiveOnly AndAlso IsNotActive(p.Status) Then Return False
         If ManufacturerContains.Trim().Length > 0 AndAlso
            p.Manufacturer.IndexOf(ManufacturerContains.Trim(), StringComparison.OrdinalIgnoreCase) < 0 Then Return False
         If PartNoContains.Trim().Length > 0 AndAlso
@@ -172,14 +169,5 @@ Public Class AdvancedSearchOptions
 
     Private Shared Function NoSpaces(s As String) As String
         Return If(s, "").Replace(" ", "")
-    End Function
-
-    Private Shared Function IsNotActive(status As String) As Boolean
-        If String.IsNullOrWhiteSpace(status) Then Return False ' unknown - keep it
-        For Each word In {"obsolete", "discontinued", "not recommended", "nrnd", "end of life", "eol",
-                          "last time", "no longer", "not for new"}
-            If status.IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0 Then Return True
-        Next
-        Return False
     End Function
 End Class

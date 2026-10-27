@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.013"
+    Public Const AppVersion As String = "V1.014"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -39,6 +39,7 @@ Public Class MainForm
     ' Designer layout, for Settings > Reset window layout.
     Private _defaultSize As Size
     Private _defaultSplitter As Integer
+    Private _defaultLeftSplitter As Integer
     Private _defaultColumns As Dictionary(Of String, ColumnLayout)
 
     ' Supplier list sub-item indexes
@@ -57,6 +58,7 @@ Public Class MainForm
         lvSuppliers.OwnerDraw = True ' only so the column headers can be drawn dark
         _defaultSize = Size
         _defaultSplitter = splitMain.SplitterDistance
+        _defaultLeftSplitter = splitLeft.SplitterDistance
         ' Can't be made smaller than the default (reset) size - unless the screen itself is smaller.
         Dim area = Screen.FromControl(Me).WorkingArea
         MinimumSize = New Size(Math.Min(_defaultSize.Width, area.Width), Math.Min(_defaultSize.Height, area.Height))
@@ -67,6 +69,8 @@ Public Class MainForm
         cboMode.SelectedIndex = 0
         nudMax.Value = Math.Max(nudMax.Minimum, Math.Min(nudMax.Maximum, _settings.MaxResults))
         chkInStock.Checked = _settings.InStockOnly
+        chkActive.Checked = _settings.ActiveOnly
+        BuildStatusFilterRows()
         _settingConvert = True ' (no fetching while the window is still being set up)
         chkConvert.Checked = _settings.ConvertPrices
         _settingConvert = False
@@ -84,6 +88,7 @@ Public Class MainForm
         RefreshAutoComplete()
         ApplyFilter()
         Theme.Apply(Me)
+        MatchFiltersToSupplierList()
         AlignToolbar()
 
         If Not _suppliers.Any(Function(s) s.IsConfigured) Then
@@ -157,6 +162,9 @@ Public Class MainForm
         If p.SplitterDistance > 0 Then
             splitMain.SplitterDistance = Math.Min(p.SplitterDistance, Math.Max(splitMain.Panel1MinSize, splitMain.Width - 200))
         End If
+        If p.LeftSplitterDistance > 0 Then
+            splitLeft.SplitterDistance = Math.Min(p.LeftSplitterDistance, Math.Max(splitLeft.Panel1MinSize, splitLeft.Height - 60))
+        End If
     End Sub
 
     Private Function CurrentWindowPlacement() As WindowPlacement
@@ -165,7 +173,8 @@ Public Class MainForm
         Return New WindowPlacement With {
             .X = b.X, .Y = b.Y, .Width = b.Width, .Height = b.Height,
             .Maximized = WindowState = FormWindowState.Maximized,
-            .SplitterDistance = splitMain.SplitterDistance
+            .SplitterDistance = splitMain.SplitterDistance,
+            .LeftSplitterDistance = splitLeft.SplitterDistance
         }
     End Function
 
@@ -175,6 +184,7 @@ Public Class MainForm
         Dim area = Screen.FromControl(Me).WorkingArea
         Location = New Point(area.Left + (area.Width - Width) \ 2, area.Top + (area.Height - Height) \ 2)
         splitMain.SplitterDistance = _defaultSplitter
+        splitLeft.SplitterDistance = _defaultLeftSplitter
         ApplyColumnLayout(_defaultColumns)
     End Sub
 
@@ -183,6 +193,8 @@ Public Class MainForm
         _settings.ResultColumns = CurrentColumnLayout()
         _settings.MaxResults = CInt(nudMax.Value)
         _settings.InStockOnly = chkInStock.Checked
+        _settings.ActiveOnly = chkActive.Checked
+        _settings.StatusFilters = _statusRows.Select(Function(r) New StatusFilter With {.Term = r.Box.Text, .Hide = r.Check.Checked}).ToList()
         _settings.ConvertPrices = chkConvert.Checked
         For Each item As ListViewItem In lvSuppliers.Items
             _settings.EnabledSuppliers(DirectCast(item.Tag, Supplier).Name) = item.Checked
@@ -593,6 +605,11 @@ Public Class MainForm
             Select(Function(i) "'" & DirectCast(i.Tag, Supplier).Name.Replace("'", "''") & "'").ToList()
         If hidden.Count > 0 Then parts.Add($"Supplier NOT IN ({String.Join(", ", hidden)})")
         If chkInStock.Checked Then parts.Add("(LinkOnly = true OR Stock > 0)")
+        ' Active parts only / the ticked status rows. LIKE ignores case (the table isn't CaseSensitive);
+        ' parts with no status always stay.
+        If chkActive.Checked Then parts.Add(StatusNotLike(NotActiveWords))
+        Dim terms = HiddenStatusTerms()
+        If terms.Count > 0 Then parts.Add(StatusNotLike(terms))
         ' Types unticked in the Types… window (blank type = "(no type)"). Website-link rows always stay.
         If _hiddenTypes.Count > 0 Then
             parts.Add("(LinkOnly = true OR ISNULL(Type, '') NOT IN (" &
@@ -607,6 +624,22 @@ Public Class MainForm
         _table.DefaultView.RowFilter = String.Join(" AND ", parts)
         UpdateCountStatus()
     End Sub
+
+    ''' <summary>Status words that mean a part isn't active, for Active parts only.</summary>
+    Private Shared ReadOnly NotActiveWords As String() = {"obsolete", "discontinued", "not recommended", "nrnd", "end of life", "eol",
+                                                          "last time", "no longer", "not for new"}
+
+    ''' <summary>Row filter keeping website links and parts whose Status contains none of <paramref name="words"/>.</summary>
+    Private Shared Function StatusNotLike(words As IEnumerable(Of String)) As String
+        Return "(LinkOnly = true OR NOT (" &
+               String.Join(" OR ", words.Select(Function(w) $"ISNULL(Status, '') LIKE '%{EscapeLike(w)}%'")) & "))"
+    End Function
+
+    ''' <summary>The text of every ticked status row that has some.</summary>
+    Private Function HiddenStatusTerms() As List(Of String)
+        Return _statusRows.Where(Function(r) r.Check.Checked).Select(Function(r) r.Box.Text.Trim()).
+            Where(Function(t) t.Length > 0).ToList()
+    End Function
 
     Private Shared Function EscapeLike(s As String) As String
         Dim sb As New StringBuilder()
@@ -654,6 +687,7 @@ Public Class MainForm
     End Sub
 
     Private Sub UpdateCountStatus()
+        UpdateStatusTicks()
         UpdateTypesButton()
         UpdateTotalParts()
         Dim shown = _table.DefaultView.Count
@@ -845,6 +879,8 @@ Public Class MainForm
         If found = 0 OrElse showing > 0 Then Return ""
         Dim why As New List(Of String)
         If chkInStock.Checked Then why.Add("In stock only (none are in stock)")
+        If chkActive.Checked Then why.Add("Active parts only")
+        If HiddenStatusTerms().Count > 0 Then why.Add("the ticked Status filters")
         If txtFilter.Text.Trim().Length > 0 Then why.Add("the Filter box")
         If _hiddenTypes.Count > 0 Then why.Add("hidden Types")
         If lvSuppliers.Items.Cast(Of ListViewItem)().Any(Function(i) Not i.Checked) Then why.Add("unticked suppliers")
@@ -1294,8 +1330,79 @@ Public Class MainForm
 
 #Region "Grid events"
 
-    Private Sub chkInStock_CheckedChanged(sender As Object, e As EventArgs) Handles chkInStock.CheckedChanged
+    Private Sub chkInStock_CheckedChanged(sender As Object, e As EventArgs) Handles chkInStock.CheckedChanged, chkActive.CheckedChanged
         ApplyFilter()
+    End Sub
+
+    ' The left panel's status rows: tick box + the Status text to hide. Made in code - there are StatusFilterCount of them.
+    Private ReadOnly _statusRows As New List(Of (Check As CheckBox, Box As TextBox, Tick As Label))
+    Private Const StatusBoxWidth As Integer = 290 ' at 100% scaling
+
+    ''' <summary>The filters under the supplier list share its background, in every theme - the text boxes' outlines
+    ''' mark the rows. (The tick boxes and labels are see-through, so they pick it up too.)</summary>
+    Private Sub MatchFiltersToSupplierList()
+        pnlFilters.BackColor = lvSuppliers.BackColor
+        pnlFilters.ForeColor = lvSuppliers.ForeColor
+        UpdateStatusTicks() ' the ✓ colour follows the theme
+    End Sub
+
+    Private Sub BuildStatusFilterRows()
+        tlpFilters.SuspendLayout()
+        For Each f In _settings.StatusFilters
+            Dim term = If(f.Term, "")
+            Dim hasText = term.Trim().Length > 0
+            Dim chk As New CheckBox With {.AutoSize = True, .Checked = f.Hide AndAlso hasText, .Enabled = hasText,
+                                          .Margin = New Padding(3, 5, 0, 2)}
+            ' Fixed width (not stretched with the panel), scaled for the Windows display scaling.
+            Dim box As New TextBox With {.Text = term, .Anchor = AnchorStyles.Left, .Margin = New Padding(3, 2, 3, 2),
+                                         .Width = CInt(StatusBoxWidth * DeviceDpi / 96.0)}
+            Theme.SetCueBanner(box, "Status text to hide…")
+            tipMain.SetToolTip(chk, "Tick to hide parts whose Status contains the text beside it.")
+            tipMain.SetToolTip(box, "Type it as it appears in the Status column (capitals don't matter)." & vbCrLf &
+                                    "Parts whose Status contains this are hidden while the box beside it is ticked.")
+            Dim rowIndex = tlpFilters.RowCount
+            tlpFilters.RowCount += 1
+            tlpFilters.RowStyles.Add(New RowStyle())
+            tlpFilters.Controls.Add(chk, 0, rowIndex)
+            tlpFilters.Controls.Add(box, 1, rowIndex)
+            Dim tick As New Label With {.AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 5, 3, 2)}
+            tlpFilters.Controls.Add(tick, 2, rowIndex)
+            AddHandler chk.CheckedChanged, Sub() ApplyFilter()
+            AddHandler box.TextChanged, Sub() StatusBoxChanged(chk, box)
+            AddHandler box.Leave, Sub() StatusBoxLeft(chk, box)
+            _statusRows.Add((chk, box, tick))
+        Next
+        tlpFilters.ResumeLayout()
+    End Sub
+
+    ''' <summary>Puts a green ✓ beside each ticked status row that is hiding at least one part of the current
+    ''' results; hovering over it says how many.</summary>
+    Private Sub UpdateStatusTicks()
+        If _statusRows.Count = 0 Then Return
+        Dim statuses = _table.Rows.Cast(Of DataRow)().
+            Where(Function(r) Not CBool(r("LinkOnly")) AndAlso Not CBool(r("Removed"))).
+            Select(Function(r) Convert.ToString(r("Status"))).ToList()
+        For Each r In _statusRows
+            Dim term = r.Box.Text.Trim()
+            Dim hiding = If(r.Check.Checked AndAlso term.Length > 0,
+                            statuses.Where(Function(s) s.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0).Count(), 0)
+            r.Tick.Text = If(hiding > 0, "✓", "")
+            r.Tick.ForeColor = Theme.GoodText
+            tipMain.SetToolTip(r.Tick, If(hiding > 0, $"Hiding {hiding} part(s) whose Status contains ""{term}"".", Nothing))
+        Next
+    End Sub
+
+    ''' <summary>Typing in a status box re-filters straight away when its row is ticked. Clearing it only
+    ''' unticks and greys the tick box once the user leaves the box.</summary>
+    Private Sub StatusBoxChanged(chk As CheckBox, box As TextBox)
+        If box.Text.Trim().Length > 0 Then chk.Enabled = True
+        If chk.Checked Then ApplyFilter()
+    End Sub
+
+    Private Sub StatusBoxLeft(chk As CheckBox, box As TextBox)
+        If box.Text.Trim().Length > 0 Then Return
+        chk.Checked = False
+        chk.Enabled = False
     End Sub
 
     Private Sub txtFilter_TextChanged(sender As Object, e As EventArgs) Handles txtFilter.TextChanged
@@ -1528,6 +1635,35 @@ Public Class MainForm
         mnuRemoveRows.Text = If(selectedCount > 1, $"Remove {selectedCount} rows from results", "Remove from results")
         mnuRestoreRows.Enabled = removed > 0
         mnuRestoreRows.Text = If(removed > 0, $"Restore removed rows ({removed})", "Restore removed rows")
+
+        ' Right-click on a Status cell that has some text: offer to hide every part with that status.
+        _menuStatus = ""
+        If hit.Type = DataGridViewHitTestType.Cell AndAlso dgvResults.Columns(hit.ColumnIndex).DataPropertyName = "Status" Then
+            _menuStatus = Field(TryCast(dgvResults.Rows(hit.RowIndex).DataBoundItem, DataRowView), "Status").Trim()
+        End If
+        mnuSep3.Visible = _menuStatus.Length > 0
+        mnuHideStatus.Visible = _menuStatus.Length > 0
+        Dim shown = If(_menuStatus.Length > 40, _menuStatus.Substring(0, 40) & "…", _menuStatus)
+        mnuHideStatus.Text = $"Hide parts with Status ""{shown.Replace("&", "&&")}"""
+    End Sub
+
+    ' The Status cell right-clicked, for Hide parts with this Status ("" = not a Status cell).
+    Private _menuStatus As String = ""
+
+    ''' <summary>Ticks the left-panel row holding this status, or puts it in the first empty row and ticks that.</summary>
+    Private Sub mnuHideStatus_Click(sender As Object, e As EventArgs) Handles mnuHideStatus.Click
+        If _menuStatus.Length = 0 Then Return
+        Dim target = _statusRows.FirstOrDefault(Function(r) String.Equals(r.Box.Text.Trim(), _menuStatus, StringComparison.OrdinalIgnoreCase))
+        If target.Box Is Nothing Then target = _statusRows.FirstOrDefault(Function(r) r.Box.Text.Trim().Length = 0)
+        If target.Box Is Nothing Then
+            MessageBox.Show(Me, $"All {_statusRows.Count} Status rows under the supplier list are in use." & vbCrLf &
+                            "Clear one (or change its text), then try again.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Return
+        End If
+        If target.Box.Text.Trim().Length = 0 Then target.Box.Text = _menuStatus
+        target.Check.Enabled = True
+        target.Check.Checked = True
+        pnlFilters.ScrollControlIntoView(target.Box)
     End Sub
 
     Private Sub mnuOpenProduct_Click(sender As Object, e As EventArgs) Handles mnuOpenProduct.Click
@@ -1691,6 +1827,7 @@ Public Class MainForm
                 RebuildSuppliers()
                 ApplyThumbnailSetting()
                 Theme.Apply(Me)
+                MatchFiltersToSupplierList()
                 AlignToolbar() ' dark mode changes some control heights
                 UpdateConvertText()
                 ApplyConversion(showStatus:=False) ' the "Prices in" currency may have changed

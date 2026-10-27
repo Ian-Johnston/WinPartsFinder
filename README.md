@@ -32,7 +32,8 @@ A *website link* row opens that supplier's own search results in your browser wi
 ## Features
 
 - **One search, every supplier** — results arrive as each supplier answers.
-- **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS / active only, manufacturer name, **part of a part number** (only remember "931G" and that it's a switch? it'll find KSC931G), description words (with or without a search term), quantity pricing and max price.
+- **Advanced search** (Ctrl+F) — exact part number, look up a supplier order code across every supplier, in stock / RoHS only, manufacturer name, **part of a part number** (only remember "931G" and that it's a switch? it'll find KSC931G), description words (with or without a search term), quantity pricing and max price.
+- **Status filters** — under the supplier list: *In stock only*, *Active parts only*, and 20 rows where you type any lifecycle status to hide (e.g. *Obsolete*, *NO_LONGER_STOCKED*, *Last Time Buy*). Tick a row and matching parts disappear instantly; your rows are remembered.
 - **Types filtering** — after a search, click **Types…** to see every kind of part found (e.g. *Analogue to Digital Converter*, *Evaluation Kit*, *Flip-Flops*) with how many came from each supplier. Untick the ones you don't need and they disappear from the results instantly.
 - **Prices in one currency** — tick *Prices in GBP* (or NZD, EUR, USD…) to see every supplier's price converted at the European Central Bank's daily rates, so you can compare and sort properly. Converted prices are shown in purple; hover for the supplier's own price.
 - **Recent searches** — click the arrow on the Search box to pick from your last 30 searches; matching ones are also suggested as you type.

@@ -490,8 +490,9 @@ Public Module Theme
 
     Private Sub SetDarkScrollbars(c As Control)
         If Not c.IsHandleCreated Then Return
+        ' (A scrolling panel too, e.g. the filters under the supplier list.)
         If Not (TypeOf c Is DataGridView OrElse TypeOf c Is ListView OrElse TypeOf c Is ScrollBar OrElse
-                TypeOf c Is TextBoxBase) Then Return
+                TypeOf c Is TextBoxBase OrElse (TypeOf c Is Panel AndAlso DirectCast(c, Panel).AutoScroll)) Then Return
         Try
             SetWindowTheme(c.Handle, If(IsDark, "DarkMode_Explorer", "Explorer"), Nothing)
         Catch

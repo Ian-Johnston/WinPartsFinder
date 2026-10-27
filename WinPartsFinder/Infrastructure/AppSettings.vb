@@ -73,6 +73,10 @@ Public Class AppSettings
     ' ---- General ----
     Public Property MaxResults As Integer = 25
     Public Property InStockOnly As Boolean = False
+    ''' <summary>Left panel "Active parts only": hide parts whose status says obsolete, discontinued etc.</summary>
+    Public Property ActiveOnly As Boolean = False
+    ''' <summary>Left panel: hide parts whose Status contains one of these (case ignored). Always <see cref="StatusFilterCount"/> long.</summary>
+    Public Property StatusFilters As List(Of StatusFilter) = DefaultStatusFilters()
     Public Property ShowThumbnails As Boolean = True
     ''' <summary>Older settings files only have this (ticked = Dark); kept so they still load the right theme.</summary>
     Public Property DarkMode As Boolean = False
@@ -124,6 +128,19 @@ Public Class AppSettings
         End Try
     End Sub
 
+    Public Const StatusFilterCount As Integer = 20
+
+    ''' <summary>The status words offered at first - all unticked - then blank rows for the user's own.</summary>
+    Public Shared Function DefaultStatusFilters() As List(Of StatusFilter)
+        Dim terms = {"Obsolete", "NO_LONGER_MANUFACTURED", "NO_LONGER_STOCKED", "End of Life", "BLOCKED_FOR_ZBL_BACKORDERS",
+                     "Not For New Designs", "MOQ_VALID_WHILE_STOCKS_LAST", "Last Time Buy"}
+        Dim list = terms.Select(Function(t) New StatusFilter With {.Term = t}).ToList()
+        While list.Count < StatusFilterCount
+            list.Add(New StatusFilter())
+        End While
+        Return list
+    End Function
+
     Public Function GetSearchUrl(supplierName As String) As String
         Dim url As String = Nothing
         If SearchUrls.TryGetValue(supplierName, url) AndAlso Not String.IsNullOrWhiteSpace(url) Then Return url
@@ -162,6 +179,11 @@ Public Class AppSettings
                             "WinPartsFinder", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
         If s Is Nothing Then s = New AppSettings()
+        If s.StatusFilters Is Nothing Then s.StatusFilters = DefaultStatusFilters()
+        While s.StatusFilters.Count < StatusFilterCount
+            s.StatusFilters.Add(New StatusFilter())
+        End While
+        If s.StatusFilters.Count > StatusFilterCount Then s.StatusFilters.RemoveRange(StatusFilterCount, s.StatusFilters.Count - StatusFilterCount)
         s.MouserApiKey = Unprotect(s.MouserApiKeyEnc)
         s.DigiKeyClientId = Unprotect(s.DigiKeyClientIdEnc)
         s.DigiKeyClientSecret = Unprotect(s.DigiKeyClientSecretEnc)
@@ -208,6 +230,14 @@ Public Class WindowPlacement
     Public Property Height As Integer
     Public Property Maximized As Boolean
     Public Property SplitterDistance As Integer
+    ''' <summary>Left panel: height of the supplier list above the filters. 0 = designer default.</summary>
+    Public Property LeftSplitterDistance As Integer
+End Class
+
+''' <summary>One left-panel row: hide parts whose Status contains Term (case ignored) while Hide is ticked.</summary>
+Public Class StatusFilter
+    Public Property Term As String = ""
+    Public Property Hide As Boolean
 End Class
 
 Public Class ColumnLayout

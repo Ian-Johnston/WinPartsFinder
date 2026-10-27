@@ -29,15 +29,15 @@ Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs, and e
 # ADVANCED SEARCH
 Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder is open, the window remembers your choices from last time; each time you start the app it begins fresh. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
 - **Search type:** **Keyword**; **Manufacturer part no. (starts with)**; **Exact manufacturer part no.** (only parts whose number matches exactly, ignoring spaces); or **Supplier order code**, e.g. a Farnell 3117070 or Mouser 595-LM358DR. A code belongs to one supplier: WinPartsFinder finds it there, reads the manufacturer part number, then searches every other ticked supplier for that exact part.
-- **In stock only** and **RoHS only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box.
-- **Active parts only** hides parts marked obsolete, discontinued, end of life or not recommended for new designs. Parts with no status shown are kept.
+- **In stock only** and **RoHS compliant only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box. (**In stock only** on the main window is different: it only hides out-of-stock rows already found.)
+- **Active parts only** is under the supplier list on the main window (see **The filters under the supplier list**).
 - **Manufacturer name contains**, e.g. Texas, keeps only that maker's parts. It's the maker's name, not the part number.
 - **Manufacturer part no. contains** keeps parts whose manufacturer part number contains what you type anywhere in it, e.g. **931G** keeps KSC931G LFS. If you only remember part of a number, leave **Search for** blank, put the fragment here and what the part is in **Description contains** (e.g. 931G and switch) - they're searched for together. DigiKey and Mouser can find part of a number; Farnell, CPC and Newark only match whole part numbers or numbers from the start, so search those once you know the full number.
 - **Description contains** keeps parts whose description or part number has every word you type. Suppliers word things differently - DigiKey says 2 CIRCUIT rather than dual, for example. Leave **Search for** blank to search for these words (plus any manufacturer part no. fragment) instead, as a Keyword search, e.g. 20-Bit ADC. The suppliers then match the words their own way (DigiKey finds 20-Bit as 20BIT), so they aren't also checked letter-for-letter in the description.
 - **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
 - **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency - or in your chosen currency when **Prices in** is ticked.
 - **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
-- The options from **Active parts only** down are applied by WinPartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
+- The options from **Manufacturer name contains** down are applied by WinPartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
 - **Clear** resets everything except the search text. **Cancel** closes the window without searching.
 
 # THE SUPPLIER LIST
@@ -49,6 +49,18 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 - **Hits** like **50 / 312** means 50 shown out of 312 the supplier has, so Load more is available. Once everything has been fetched it shows just the count, which can be a little under the supplier's total: suppliers sometimes send the same part twice, and repeats are skipped (hover over the supplier to see how many).
 - **Not searched yet** means the supplier was ticked while a search was running. Press **Search** again to include it.
 - Double-click a supplier, or right-click it, to open the same search on that supplier's website.
+
+# THE FILTERS UNDER THE SUPPLIER LIST
+These hide rows in the current results straight away - no new search is needed - and every setting is remembered. Drag the divider above them to give the supplier list or the filters more room. Website-link rows always stay.
+- **In stock only** hides parts with no stock.
+- **Prices in GBP** (or your chosen currency) is here too - it changes how prices are shown rather than hiding rows; see **Filtering and export**.
+- **Active parts only** hides parts whose **Status** says obsolete, discontinued, not recommended, NRND, end of life, EOL, last time, no longer or not for new. Parts with no status are kept.
+- **Hide parts whose Status contains:** 20 rows, each a tick box and a box for some text. Tick a row to hide every part whose **Status** contains that text anywhere in it. Capitals don't matter, but otherwise type it exactly as it appears in the Status column - suppliers word the same thing in different ways, even within one supplier (e.g. NO_LONGER_STOCKED and No Longer Stocked are different), so add a row for each wording you see.
+- The easy way to add one: **right-click a Status cell** in the results and choose **Hide parts with Status ""…""**. Its exact text goes into the first empty row, ticked (or, if a row already has it, that row is ticked).
+- The first 8 rows start filled in with common wordings (Obsolete, NO_LONGER_MANUFACTURED, End of Life and so on), all unticked. Change them or fill in the empty rows with your own.
+- A green **✓** beside a ticked row means it is hiding at least one part in the current results - hover over it to see how many. (A part can match more than one row, so the numbers can add up to more than are hidden.)
+- Editing the text of a ticked row re-filters as you type. A row with no text can't be ticked; clearing a ticked row's text unticks it when you move to another box.
+- Parts with no status are never hidden by these rows. Only API suppliers (Mouser, DigiKey, Farnell, CPC, Newark, TME) send a status.
 
 # THE RESULTS
 - **#** numbers each row so you can note a part and find it again. Numbers are given when a search finishes and never change - removing, filtering or sorting rows leaves them as they are. Click **#** to sort by it. A new search starts again from 1; Load more carries on from the last number. Website-link rows aren't parts, so they have no number - the last # always matches **Total parts** in the bottom-right corner.
@@ -65,7 +77,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 - Search results are grouped by supplier, in supplier-list order; rows from **Load more** are added at the end. Click a header such as **Price (1)** to sort by it (click again to reverse), **Supplier** to put each supplier's rows together, or **#** to go back to the original order.
 - **Sorting by more than one column:** click the first column, then **Shift+click** the next, e.g. click **Supplier** then Shift+click **Price (1)** for each supplier's parts cheapest first. Each sorted header shows its level, e.g. **Supplier ¹** and **Price (1) ²**; Shift+click a sorted column again to reverse just that level. A plain click goes back to sorting by one column.
 - **Right-click a header** for **Sort by …**, **Next sort by …** (the same as Shift+click) and **Clear sorting**, which puts the rows back in the order they arrived.
-- Drag a column edge to resize it, or drag a header to move the column (**#** always stays first). Column layout, window size and position, and the divider beside the supplier list are all remembered. The window can't be made smaller than its starting size.
+- Drag a column edge to resize it, or drag a header to move the column (**#** always stays first). Column layout, window size and position, and the dividers beside and below the supplier list are all remembered. The window can't be made smaller than its starting size.
 
 # LOAD MORE
 When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 312** and **Load more** becomes available.
@@ -82,13 +94,14 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **Copy manufacturer / supplier part no.** copies just that number. **Copy row** copies the selected rows, including their **#**, ready to paste into Excel.
 - **Remove from results** (or the **Delete** key) hides parts you don't want. Select several with **Ctrl**-click or **Shift**-click, or all with **Ctrl+A**.
 - **Restore removed rows** brings them all back. Removed rows stay removed if you untick and re-tick their supplier. A new search always starts with nothing removed.
+- **Hide parts with Status ""…""** (right-click a **Status** cell) adds that status to the Status filters under the supplier list and ticks it, so every part with it is hidden.
 
 # FILTERING AND EXPORT
-- **In stock only** hides parts with no stock.
-- **Prices in GBP** (the currency is chosen in Settings) shows every price in one currency, so you can compare suppliers and sort by price properly. It uses the European Central Bank's daily exchange rates, fetched when you tick it and then at most every 12 hours - the last rates are saved, so it still works offline. Converted prices are **purple** and the Price column says e.g. **Price (1) GBP**; prices already in your currency stay as they are. Hover over a purple price to see the supplier's own price and the rate used. Converted prices are approximate - the supplier's own rate, VAT and import charges will differ. Export CSV also saves the supplier's own prices.
+- **In stock only**, **Active parts only** and the **Status** filters are under the supplier list - see **The filters under the supplier list**.
+- **Prices in GBP** (under the supplier list; the currency is chosen in Settings) shows every price in one currency, so you can compare suppliers and sort by price properly. It uses the European Central Bank's daily exchange rates, fetched when you tick it and then at most every 12 hours - the last rates are saved, so it still works offline. Converted prices are **purple** and the Price column says e.g. **Price (1) GBP**; prices already in your currency stay as they are. Hover over a purple price to see the supplier's own price and the rate used. Converted prices are approximate - the supplier's own rate, VAT and import charges will differ. Export CSV also saves the supplier's own prices.
 - **Types…** lists every type of part in the results (e.g. Analogue to Digital Converter, Evaluation Kit, Flip-Flops) with how many parts and which suppliers. Untick the ones you don't want and click **OK** to hide them; tick them again to bring them back. The button shows how many types are hidden, and a new search shows every type again. Each supplier words types its own way (Farnell: Analogue to Digital Converter, Mouser: Analog to Digital Converters - ADC), so similar ones appear separately - click **Type** in the window to sort them together.
 - **Filter** narrows the current results as you type. It matches the supplier, both part numbers, manufacturer, type, package and description. It is not case sensitive.
-- **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, In stock only, Types…, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
+- **Total parts = …** in the bottom-right corner counts every part found in this search (website-link rows aren't counted). When Filter, the filters under the supplier list, Types…, removed rows or unticked suppliers hide some, it adds **(showing …)** for how many you can see.
 - If parts were found but **all** of them are hidden, the status line at the bottom says what's hiding them, e.g. *All 5 are hidden by In stock only (none are in stock)*.
 - **Export CSV…** saves the rows currently shown, including their **#**, product and datasheet links, to a file that opens in Excel.
 
@@ -99,7 +112,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **Search URLs** are used for website links. {0} is replaced by your search text. **Reset URLs** puts the built-in ones back.
 - **Add supplier** adds your own supplier as a website link: give it a name and its search URL with {0} where the search text goes, e.g. https://cpc.farnell.com/search?st={0}. **Delete supplier** removes it.
 - **Show part photos** turns the photo column on or off. **Theme** sets the colours for the whole app: **Light** (normal Windows), **Soft grey** (light, with less glare), **Dark grey** (a softer slate-grey dark) or **Dark**. It previews in Settings straight away and applies everywhere when you click OK.
-- **Reset main window layout** puts the main window's size and position, the divider, and the results column widths and order back to how they started. Like everything in Settings, it happens when you click **OK**; **Cancel** changes nothing.
+- **Reset main window layout** puts the main window's size and position, the dividers, and the results column widths and order back to how they started. Like everything in Settings, it happens when you click **OK**; **Cancel** changes nothing.
 - Saving settings keeps your current results, supplier statuses and Load more position.
 
 # SUPPLIER NOTES
@@ -116,7 +129,7 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - **HTTP 403** - the key isn't active yet, or (DigiKey) ProductInformation V4 isn't selected on your app.
 - **Timeout** - the supplier was slow to answer. Search again.
 - **Prices in GBP unticks itself, or says it couldn't get exchange rates** - check your internet connection. When new rates can't be fetched, the last saved ones are used (the status line says how old they are); the box only unticks if no rates have ever been saved. Tick it again, or use **Settings > Update now**.
-- **Parts found but the grid is empty** - something is hiding them, usually **In stock only** for an old part. The status line says which; **Total parts = 5 (showing 0)** in the corner is the clue.
+- **Parts found but the grid is empty** - something is hiding them, usually **In stock only**, **Active parts only** or a ticked **Status** filter for an old part. The status line says which; **Total parts = 5 (showing 0)** in the corner is the clue.
 - **Advanced search finds nothing** - check each box holds the right thing: **Manufacturer name contains** is the maker (e.g. C&K), not the part number or what the part is.
 - If the main window ends up off-screen or a mess, use **Settings > Reset main window layout**.
 - Prices and stock come from the suppliers and can change quickly. Always check on the supplier's website before ordering.

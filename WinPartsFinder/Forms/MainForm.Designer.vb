@@ -34,7 +34,6 @@ Partial Class MainForm
         btnAdvanced = New Button()
         btnCancel = New Button()
         btnLoadMore = New Button()
-        chkInStock = New CheckBox()
         chkConvert = New CheckBox()
         btnTypes = New Button()
         flpFilter = New FlowLayoutPanel()
@@ -46,6 +45,12 @@ Partial Class MainForm
         btnHelp = New Button()
         tipMain = New ToolTip(components)
         splitMain = New SplitContainer()
+        splitLeft = New SplitContainer()
+        pnlFilters = New Panel()
+        tlpFilters = New TableLayoutPanel()
+        chkInStock = New CheckBox()
+        chkActive = New CheckBox()
+        lblStatusFilters = New Label()
         lvSuppliers = New ListView()
         colSupplier = New ColumnHeader()
         colMode = New ColumnHeader()
@@ -68,6 +73,8 @@ Partial Class MainForm
         mnuSep2 = New ToolStripSeparator()
         mnuRemoveRows = New ToolStripMenuItem()
         mnuRestoreRows = New ToolStripMenuItem()
+        mnuSep3 = New ToolStripSeparator()
+        mnuHideStatus = New ToolStripMenuItem()
         ssMain = New StatusStrip()
         lblStatus = New ToolStripStatusLabel()
         lblTotal = New ToolStripStatusLabel()
@@ -79,6 +86,12 @@ Partial Class MainForm
         splitMain.Panel1.SuspendLayout()
         splitMain.Panel2.SuspendLayout()
         splitMain.SuspendLayout()
+        CType(splitLeft, System.ComponentModel.ISupportInitialize).BeginInit()
+        splitLeft.Panel1.SuspendLayout()
+        splitLeft.Panel2.SuspendLayout()
+        splitLeft.SuspendLayout()
+        pnlFilters.SuspendLayout()
+        tlpFilters.SuspendLayout()
         cmsSuppliers.SuspendLayout()
         CType(dgvResults, System.ComponentModel.ISupportInitialize).BeginInit()
         cmsResults.SuspendLayout()
@@ -117,8 +130,6 @@ Partial Class MainForm
         flpTop.Controls.Add(btnAdvanced)
         flpTop.Controls.Add(btnCancel)
         flpTop.Controls.Add(btnLoadMore)
-        flpTop.Controls.Add(chkInStock)
-        flpTop.Controls.Add(chkConvert)
         flpTop.Controls.Add(btnTypes)
         flpTop.Controls.Add(flpFilter)
         flpTop.Controls.Add(btnExport)
@@ -213,23 +224,13 @@ Partial Class MainForm
         btnLoadMore.Text = "Load &more"
         btnLoadMore.UseVisualStyleBackColor = True
         '
-        'chkInStock
-        '
-        chkInStock.AutoSize = True
-        chkInStock.Margin = New Padding(12, 8, 3, 3)
-        chkInStock.Name = "chkInStock"
-        chkInStock.Size = New Size(95, 19)
-        chkInStock.TabIndex = 7
-        chkInStock.Text = "In stock only"
-        chkInStock.UseVisualStyleBackColor = True
-        '
         'chkConvert - text set in code: "Prices in GBP" etc.
         '
         chkConvert.AutoSize = True
-        chkConvert.Margin = New Padding(9, 8, 3, 3)
+        chkConvert.Margin = New Padding(3, 3, 3, 3)
         chkConvert.Name = "chkConvert"
         chkConvert.Size = New Size(95, 19)
-        chkConvert.TabIndex = 7
+        chkConvert.TabIndex = 1
         chkConvert.Text = "Prices in GBP"
         chkConvert.UseVisualStyleBackColor = True
         '
@@ -317,7 +318,7 @@ Partial Class MainForm
         '
         'splitMain.Panel1
         '
-        splitMain.Panel1.Controls.Add(lvSuppliers)
+        splitMain.Panel1.Controls.Add(splitLeft)
         '
         'splitMain.Panel2
         '
@@ -325,6 +326,91 @@ Partial Class MainForm
         splitMain.Size = New Size(1264, 616)
         splitMain.SplitterDistance = 440
         splitMain.TabIndex = 1
+        '
+        'splitLeft - supplier list on top, the show/hide filters below
+        '
+        splitLeft.Dock = DockStyle.Fill
+        splitLeft.Location = New Point(0, 0)
+        splitLeft.Name = "splitLeft"
+        splitLeft.Orientation = Orientation.Horizontal
+        '
+        'splitLeft.Panel1
+        '
+        splitLeft.Panel1.Controls.Add(lvSuppliers)
+        '
+        'splitLeft.Panel2
+        '
+        splitLeft.Panel2.Controls.Add(pnlFilters)
+        splitLeft.Size = New Size(440, 616)
+        splitLeft.SplitterDistance = 300
+        splitLeft.TabIndex = 0
+        '
+        'pnlFilters - scrolls when the filter rows don't all fit
+        '
+        pnlFilters.AutoScroll = True
+        pnlFilters.Controls.Add(tlpFilters)
+        pnlFilters.Dock = DockStyle.Fill
+        pnlFilters.Location = New Point(0, 0)
+        pnlFilters.Name = "pnlFilters"
+        pnlFilters.Size = New Size(440, 312)
+        pnlFilters.TabIndex = 0
+        '
+        'tlpFilters - the status filter rows (tick box + text box) are added in code
+        '
+        tlpFilters.AutoSize = True
+        tlpFilters.AutoSizeMode = AutoSizeMode.GrowAndShrink
+        tlpFilters.ColumnCount = 3
+        tlpFilters.ColumnStyles.Add(New ColumnStyle())
+        tlpFilters.ColumnStyles.Add(New ColumnStyle())
+        tlpFilters.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100.0F))
+        tlpFilters.Controls.Add(chkInStock, 0, 0)
+        tlpFilters.Controls.Add(chkConvert, 0, 1)
+        tlpFilters.Controls.Add(chkActive, 0, 2)
+        tlpFilters.Controls.Add(lblStatusFilters, 0, 3)
+        tlpFilters.SetColumnSpan(chkInStock, 3)
+        tlpFilters.SetColumnSpan(chkActive, 3)
+        tlpFilters.SetColumnSpan(chkConvert, 3)
+        tlpFilters.SetColumnSpan(lblStatusFilters, 3)
+        tlpFilters.Dock = DockStyle.Top
+        tlpFilters.Location = New Point(0, 0)
+        tlpFilters.Name = "tlpFilters" ' columns: tick box, text box, ✓ when that row is hiding parts
+        tlpFilters.Padding = New Padding(4, 4, 4, 4)
+        tlpFilters.RowCount = 4
+        tlpFilters.RowStyles.Add(New RowStyle())
+        tlpFilters.RowStyles.Add(New RowStyle())
+        tlpFilters.RowStyles.Add(New RowStyle())
+        tlpFilters.RowStyles.Add(New RowStyle())
+        tlpFilters.Size = New Size(440, 80)
+        tlpFilters.TabIndex = 0
+        '
+        'chkInStock
+        '
+        chkInStock.AutoSize = True
+        chkInStock.Margin = New Padding(3, 3, 3, 3)
+        chkInStock.Name = "chkInStock"
+        chkInStock.Size = New Size(95, 19)
+        chkInStock.TabIndex = 0
+        chkInStock.Text = "In stock only"
+        chkInStock.UseVisualStyleBackColor = True
+        '
+        'chkActive
+        '
+        chkActive.AutoSize = True
+        chkActive.Margin = New Padding(3, 3, 3, 3)
+        chkActive.Name = "chkActive"
+        chkActive.Size = New Size(120, 19)
+        chkActive.TabIndex = 2
+        chkActive.Text = "Active parts only"
+        chkActive.UseVisualStyleBackColor = True
+        '
+        'lblStatusFilters
+        '
+        lblStatusFilters.AutoSize = True
+        lblStatusFilters.Margin = New Padding(0, 9, 3, 3) ' (text lines up with the tick boxes above)
+        lblStatusFilters.Name = "lblStatusFilters"
+        lblStatusFilters.Size = New Size(190, 15)
+        lblStatusFilters.TabIndex = 3
+        lblStatusFilters.Text = "Hide parts whose Status contains:"
         '
         'lvSuppliers
         '
@@ -337,7 +423,7 @@ Partial Class MainForm
         lvSuppliers.MultiSelect = False
         lvSuppliers.Name = "lvSuppliers"
         lvSuppliers.ShowItemToolTips = True
-        lvSuppliers.Size = New Size(440, 616)
+        lvSuppliers.Size = New Size(440, 300)
         lvSuppliers.TabIndex = 0
         lvSuppliers.UseCompatibleStateImageBehavior = False
         lvSuppliers.View = View.Details
@@ -422,7 +508,7 @@ Partial Class MainForm
         '
         'cmsResults
         '
-        cmsResults.Items.AddRange(New ToolStripItem() {mnuOpenProduct, mnuOpenDatasheet, mnuSep1, mnuCopyMpn, mnuCopySupplierPart, mnuCopyRow, mnuSep2, mnuRemoveRows, mnuRestoreRows})
+        cmsResults.Items.AddRange(New ToolStripItem() {mnuOpenProduct, mnuOpenDatasheet, mnuSep1, mnuCopyMpn, mnuCopySupplierPart, mnuCopyRow, mnuSep2, mnuRemoveRows, mnuRestoreRows, mnuSep3, mnuHideStatus})
         cmsResults.Name = "cmsResults"
         cmsResults.ShowItemToolTips = True
         cmsResults.Size = New Size(250, 170)
@@ -484,6 +570,18 @@ Partial Class MainForm
         mnuRestoreRows.Text = "Restore removed rows"
         mnuRestoreRows.ToolTipText = "Bring back every row you removed from this search."
         '
+        'mnuSep3
+        '
+        mnuSep3.Name = "mnuSep3"
+        mnuSep3.Size = New Size(246, 6)
+        '
+        'mnuHideStatus - text set in code, e.g. Hide parts with Status "Obsolete"
+        '
+        mnuHideStatus.Name = "mnuHideStatus"
+        mnuHideStatus.Size = New Size(249, 22)
+        mnuHideStatus.Text = "Hide parts with this Status"
+        mnuHideStatus.ToolTipText = "Put this part's exact Status in the next empty row under the supplier list, and tick it." & vbCrLf & "If a row already has it, that row is just ticked."
+        '
         'ssMain
         '
         ssMain.Items.AddRange(New ToolStripItem() {lblStatus, lblTotal})
@@ -507,7 +605,7 @@ Partial Class MainForm
         lblTotal.Margin = New Padding(12, 3, 4, 2)
         lblTotal.Name = "lblTotal"
         lblTotal.Text = "Total parts = 0"
-        lblTotal.ToolTipText = "Parts found so far in this search (not counting website-link rows)." & vbCrLf & "'showing' appears when Filter, In stock only or removed rows hide some of them."
+        lblTotal.ToolTipText = "Parts found so far in this search (not counting website-link rows)." & vbCrLf & "'showing' appears when Filter, the filters on the left or removed rows hide some of them."
         '
         'tipMain
         '
@@ -518,11 +616,13 @@ Partial Class MainForm
         tipMain.SetToolTip(cboMode, "Keyword: searches descriptions and part numbers." & vbCrLf & "Manufacturer part no.: looks for parts whose manufacturer part number starts with what you typed.")
         tipMain.SetToolTip(nudMax, "How many results to fetch from each supplier per search, and per Load more (up to 50)." & vbCrLf & "Fewer is faster. Each search or Load more uses one call of each supplier's daily API allowance.")
         tipMain.SetToolTip(btnSearch, "Search every ticked supplier at once (Enter).")
-        tipMain.SetToolTip(btnAdvanced, "Advanced search (Ctrl+F): exact part number, supplier order code," & vbCrLf & "RoHS, active parts, maker, quantity pricing, max price…")
+        tipMain.SetToolTip(btnAdvanced, "Advanced search (Ctrl+F): exact part number, supplier order code," & vbCrLf & "RoHS, maker, part of a part no., quantity pricing, max price…")
         tipMain.SetToolTip(btnTypes, "After a search: tick or untick part types (categories) to show or hide them," & vbCrLf & "e.g. hide Evaluation Kit and Flip-Flops. A new search shows every type again.")
         tipMain.SetToolTip(btnCancel, "Stop any searches still running.")
         tipMain.SetToolTip(btnLoadMore, "Fetch the next batch (Max/supp.) from every ticked supplier that has more - see Hits, e.g. 50 / 312." & vbCrLf & "Uses one API call per supplier. New rows are added at the end and selected - click the Supplier header to group them." & vbCrLf & "Right-click a supplier to load more from just that one.")
         tipMain.SetToolTip(chkInStock, "Hide parts with no stock. Website-link rows always stay.")
+        tipMain.SetToolTip(chkActive, "Hide parts whose Status says obsolete, discontinued, not recommended for new designs," & vbCrLf & "end of life, last time buy or no longer… Parts with no Status stay.")
+        tipMain.SetToolTip(lblStatusFilters, "Tick a row to hide every part whose Status contains that text (capitals don't matter)." & vbCrLf & "Type it as the supplier writes it - e.g. NO_LONGER_STOCKED and No Longer Stocked are different." & vbCrLf & "Parts with no Status, and website-link rows, always stay.")
         tipMain.SetToolTip(chkConvert, "Show every price in one currency (choose it in Settings), using the European Central Bank's daily exchange rates." & vbCrLf & "Converted prices are purple - hover over one to see the supplier's own price. They're approximate." & vbCrLf & "Rates are fetched at most every 12 hours.")
         tipMain.SetToolTip(txtFilter, "Narrow the current results as you type." & vbCrLf & "Matches supplier, supplier part no., mfr part no., manufacturer and description.")
         tipMain.SetToolTip(btnExport, "Save the rows currently shown to a CSV file (opens in Excel).")
@@ -553,6 +653,14 @@ Partial Class MainForm
         splitMain.Panel2.ResumeLayout(False)
         CType(splitMain, System.ComponentModel.ISupportInitialize).EndInit()
         splitMain.ResumeLayout(False)
+        tlpFilters.ResumeLayout(False)
+        tlpFilters.PerformLayout()
+        pnlFilters.ResumeLayout(False)
+        pnlFilters.PerformLayout()
+        splitLeft.Panel1.ResumeLayout(False)
+        splitLeft.Panel2.ResumeLayout(False)
+        CType(splitLeft, System.ComponentModel.ISupportInitialize).EndInit()
+        splitLeft.ResumeLayout(False)
         cmsSuppliers.ResumeLayout(False)
         CType(dgvResults, System.ComponentModel.ISupportInitialize).EndInit()
         cmsResults.ResumeLayout(False)
@@ -585,6 +693,11 @@ Partial Class MainForm
     Friend WithEvents btnHelp As Button
     Friend WithEvents tipMain As ToolTip
     Friend WithEvents splitMain As SplitContainer
+    Friend WithEvents splitLeft As SplitContainer
+    Friend WithEvents pnlFilters As Panel
+    Friend WithEvents tlpFilters As TableLayoutPanel
+    Friend WithEvents chkActive As CheckBox
+    Friend WithEvents lblStatusFilters As Label
     Friend WithEvents lvSuppliers As ListView
     Friend WithEvents colSupplier As ColumnHeader
     Friend WithEvents colMode As ColumnHeader
@@ -607,6 +720,8 @@ Partial Class MainForm
     Friend WithEvents mnuSep2 As ToolStripSeparator
     Friend WithEvents mnuRemoveRows As ToolStripMenuItem
     Friend WithEvents mnuRestoreRows As ToolStripMenuItem
+    Friend WithEvents mnuSep3 As ToolStripSeparator
+    Friend WithEvents mnuHideStatus As ToolStripMenuItem
     Friend WithEvents ssMain As StatusStrip
     Friend WithEvents lblStatus As ToolStripStatusLabel
     Friend WithEvents lblTotal As ToolStripStatusLabel

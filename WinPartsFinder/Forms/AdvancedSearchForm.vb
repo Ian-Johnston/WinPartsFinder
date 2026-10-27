@@ -44,7 +44,6 @@ Public Class AdvancedSearchForm
         cboMode.SelectedIndex = CInt(o.Mode)
         chkInStock.Checked = o.InStockOnly
         chkRohs.Checked = o.RohsOnly
-        chkActive.Checked = o.ActiveOnly
         txtMaker.Text = o.ManufacturerContains
         txtPartNo.Text = o.PartNoContains
         txtContains.Text = o.MustContain
@@ -101,7 +100,6 @@ Public Class AdvancedSearchForm
             .MaxResults = CInt(nudMax.Value),
             .InStockOnly = chkInStock.Checked,
             .RohsOnly = chkRohs.Checked,
-            .ActiveOnly = chkActive.Checked,
             .ManufacturerContains = txtMaker.Text.Trim(),
             .PartNoContains = partNo,
             .MustContain = mustContain,

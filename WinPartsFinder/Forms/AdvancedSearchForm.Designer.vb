@@ -33,8 +33,6 @@ Partial Class AdvancedSearchForm
         flpSupplierSide = New FlowLayoutPanel()
         chkInStock = New CheckBox()
         chkRohs = New CheckBox()
-        lblAppSide = New Label()
-        chkActive = New CheckBox()
         lblMaker = New Label()
         txtMaker = New TextBox()
         lblPartNo = New Label()
@@ -74,27 +72,24 @@ Partial Class AdvancedSearchForm
         tlpMain.Controls.Add(cboMode, 1, 1)
         tlpMain.Controls.Add(lblSupplierSide, 0, 2)
         tlpMain.Controls.Add(flpSupplierSide, 1, 2)
-        tlpMain.Controls.Add(lblAppSide, 0, 3)
-        tlpMain.Controls.Add(chkActive, 1, 3)
-        tlpMain.Controls.Add(lblMaker, 0, 4)
-        tlpMain.Controls.Add(txtMaker, 1, 4)
-        tlpMain.Controls.Add(lblPartNo, 0, 5)
-        tlpMain.Controls.Add(txtPartNo, 1, 5)
-        tlpMain.Controls.Add(lblContains, 0, 6)
-        tlpMain.Controls.Add(txtContains, 1, 6)
-        tlpMain.Controls.Add(lblQty, 0, 7)
-        tlpMain.Controls.Add(flpQty, 1, 7)
-        tlpMain.Controls.Add(lblMax, 0, 8)
-        tlpMain.Controls.Add(nudMax, 1, 8)
-        tlpMain.Controls.Add(lblSuppliers, 0, 9)
-        tlpMain.Controls.Add(clbSuppliers, 1, 9)
-        tlpMain.Controls.Add(lblHint, 0, 10)
+        tlpMain.Controls.Add(lblMaker, 0, 3)
+        tlpMain.Controls.Add(txtMaker, 1, 3)
+        tlpMain.Controls.Add(lblPartNo, 0, 4)
+        tlpMain.Controls.Add(txtPartNo, 1, 4)
+        tlpMain.Controls.Add(lblContains, 0, 5)
+        tlpMain.Controls.Add(txtContains, 1, 5)
+        tlpMain.Controls.Add(lblQty, 0, 6)
+        tlpMain.Controls.Add(flpQty, 1, 6)
+        tlpMain.Controls.Add(lblMax, 0, 7)
+        tlpMain.Controls.Add(nudMax, 1, 7)
+        tlpMain.Controls.Add(lblSuppliers, 0, 8)
+        tlpMain.Controls.Add(clbSuppliers, 1, 8)
+        tlpMain.Controls.Add(lblHint, 0, 9)
         tlpMain.Dock = DockStyle.Fill
         tlpMain.Location = New Point(0, 0)
         tlpMain.Name = "tlpMain"
         tlpMain.Padding = New Padding(10)
-        tlpMain.RowCount = 11
-        tlpMain.RowStyles.Add(New RowStyle())
+        tlpMain.RowCount = 10
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
         tlpMain.RowStyles.Add(New RowStyle())
@@ -170,23 +165,6 @@ Partial Class AdvancedSearchForm
         chkRohs.TabIndex = 1
         chkRohs.Text = "RoHS compliant only"
         chkRohs.UseVisualStyleBackColor = True
-        '
-        'lblAppSide
-        '
-        lblAppSide.Anchor = AnchorStyles.Left
-        lblAppSide.AutoSize = True
-        lblAppSide.Margin = New Padding(3, 12, 3, 3)
-        lblAppSide.Name = "lblAppSide"
-        lblAppSide.Text = "Then only show:"
-        '
-        'chkActive
-        '
-        chkActive.AutoSize = True
-        chkActive.Margin = New Padding(3, 12, 3, 3)
-        chkActive.Name = "chkActive"
-        chkActive.TabIndex = 3
-        chkActive.Text = "Active parts (hide obsolete / not recommended)"
-        chkActive.UseVisualStyleBackColor = True
         '
         'lblMaker
         '
@@ -307,7 +285,7 @@ Partial Class AdvancedSearchForm
         lblHint.MaximumSize = New Size(530, 0)
         lblHint.Margin = New Padding(3, 9, 3, 3)
         lblHint.Name = "lblHint"
-        lblHint.Text = "In stock / RoHS are applied by the suppliers themselves (TME has no RoHS option). The ""Then only show"" filters, quantity and price are applied to what comes back. Leave anything blank or 0 to ignore it."
+        lblHint.Text = "In stock / RoHS are applied by the suppliers themselves (TME has no RoHS option). Manufacturer, part no., description, quantity and price are applied to what comes back. Active parts only is under the supplier list on the main window. Leave anything blank or 0 to ignore it."
         '
         'flpButtons
         '
@@ -353,9 +331,8 @@ Partial Class AdvancedSearchForm
         tipAdv.InitialDelay = 500
         tipAdv.SetToolTip(txtQuery, "Part number, keywords or a supplier order code (2-40 characters for TME)." & vbCrLf & "Leave blank to search for the Manufacturer part no. contains and Description contains text instead.")
         tipAdv.SetToolTip(cboMode, "Keyword: descriptions and part numbers." & vbCrLf & "Manufacturer part no.: starts with what you typed." & vbCrLf & "Exact: only that exact manufacturer part number." & vbCrLf & "Supplier order code: e.g. a Farnell, CPC, Mouser, DigiKey or TME number - finds that part, then searches every other supplier for the same part.")
-        tipAdv.SetToolTip(chkInStock, "The suppliers send only parts they have in stock, so you get a full page of in-stock parts.")
+        tipAdv.SetToolTip(chkInStock, "The suppliers send only parts they have in stock, so you get a full page of in-stock parts." & vbCrLf & "(In stock only on the main window just hides out-of-stock rows already found.)")
         tipAdv.SetToolTip(chkRohs, "The suppliers send only RoHS compliant parts (Mouser, DigiKey, Farnell, CPC, Newark - TME has no RoHS search option).")
-        tipAdv.SetToolTip(chkActive, "Leave out parts whose status says obsolete, discontinued, not recommended for new designs, end of life etc.")
         tipAdv.SetToolTip(txtMaker, "Only parts whose manufacturer (the maker's name) contains this, e.g. Texas or Analog. Not the part number.")
         tipAdv.SetToolTip(txtPartNo, "Only parts whose manufacturer part number contains this, anywhere in it, e.g. 931G finds KSC931G LFS." & vbCrLf & "Tip: leave Search for blank and put what the part is in Description contains, e.g. switch -" & vbCrLf & "the two are then searched for together. DigiKey and Mouser match part of a number; Farnell, CPC and Newark don't.")
         tipAdv.SetToolTip(txtContains, "Only parts whose description (or part number) contains all of these words, e.g. SOIC or 0603 X7R." & vbCrLf & "With Search for blank, these words become the search instead (matched the suppliers' own way).")
@@ -405,8 +382,6 @@ Partial Class AdvancedSearchForm
     Friend WithEvents flpSupplierSide As FlowLayoutPanel
     Friend WithEvents chkInStock As CheckBox
     Friend WithEvents chkRohs As CheckBox
-    Friend WithEvents lblAppSide As Label
-    Friend WithEvents chkActive As CheckBox
     Friend WithEvents lblMaker As Label
     Friend WithEvents txtMaker As TextBox
     Friend WithEvents lblPartNo As Label
