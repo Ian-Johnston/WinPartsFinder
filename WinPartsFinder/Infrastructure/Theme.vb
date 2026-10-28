@@ -462,6 +462,8 @@ Public Module Theme
     End Function
 
     Private Const DWMWA_USE_IMMERSIVE_DARK_MODE As Integer = 20
+    Private Const DWMWA_CAPTION_COLOR As Integer = 35
+    Private Const DWMWA_COLOR_DEFAULT As Integer = &HFFFFFFFF
 
     <DllImport("user32.dll", CharSet:=CharSet.Unicode)>
     Private Function SendMessage(hwnd As IntPtr, msg As Integer, wParam As IntPtr, lParam As String) As IntPtr
@@ -485,6 +487,14 @@ Public Module Theme
             DwmSetWindowAttribute(form.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, value, 4)
         Catch
             ' older Windows: title bar just stays light
+        End Try
+        ' Dark mode's title bar is near-black; Dark Grey gets its own slate instead (Windows 11 only -
+        ' Windows 10 ignores it and keeps the black one). Other themes go back to the Windows colour.
+        Dim caption = DWMWA_COLOR_DEFAULT
+        If Current = ThemeKind.DarkGrey Then caption = ColorTranslator.ToWin32(P.Back)
+        Try
+            DwmSetWindowAttribute(form.Handle, DWMWA_CAPTION_COLOR, caption, 4)
+        Catch
         End Try
     End Sub
 
