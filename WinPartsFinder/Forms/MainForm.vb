@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.015"
+    Public Const AppVersion As String = "V1.016"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -484,8 +484,11 @@ Public Class MainForm
     End Sub
 
     ' Rows are re-created when the grid is sorted or filtered, and added as results arrive - size them each time.
+    ' The grid also clears every header's sort arrow when it reloads (it doesn't know about our own sorting),
+    ' so put the arrows and level numbers back.
     Private Sub dgvResults_DataBindingComplete(sender As Object, e As DataGridViewBindingCompleteEventArgs) Handles dgvResults.DataBindingComplete
         SizeRows()
+        RefreshSortHeaders()
     End Sub
 
     Private Sub dgvResults_RowsAdded(sender As Object, e As DataGridViewRowsAddedEventArgs) Handles dgvResults.RowsAdded
