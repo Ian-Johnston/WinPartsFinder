@@ -126,6 +126,13 @@ Public Module Theme
         End Get
     End Property
 
+    ''' <summary>The supplier list's hover band in the dark themes - a lighter blue than Windows' selected row.</summary>
+    Public ReadOnly Property RowHoverBack As Color
+        Get
+            Return Color.FromArgb(62, 102, 142)
+        End Get
+    End Property
+
     Public ReadOnly Property BorderColor As Color
         Get
             Return If(IsCustom, P.Border, SystemColors.ControlDark)
@@ -224,6 +231,8 @@ Public Module Theme
     End Sub
 
     Private Sub StyleButton(b As Button)
+        RemoveHandler b.Paint, AddressOf PaintDisabledButton
+        AddHandler b.Paint, AddressOf PaintDisabledButton
         If IsCustom Then
             b.FlatStyle = FlatStyle.Flat
             b.FlatAppearance.BorderColor = P.Border
@@ -235,6 +244,20 @@ Public Module Theme
             b.ResetForeColor()
             b.UseVisualStyleBackColor = True
         End If
+    End Sub
+
+    ' A disabled button always gets Windows' own grey text, which almost vanishes on the dark button colours,
+    ' so in the custom themes its text is drawn again in the muted colour.
+    Private Sub PaintDisabledButton(sender As Object, e As PaintEventArgs)
+        Dim b = DirectCast(sender, Button)
+        If b.Enabled OrElse Not IsCustom Then Return
+        Dim inside = Rectangle.Inflate(b.ClientRectangle, -1, -1) ' keep the border
+        Using brush As New SolidBrush(b.BackColor)
+            e.Graphics.FillRectangle(brush, inside)
+        End Using
+        TextRenderer.DrawText(e.Graphics, b.Text, b.Font, inside, P.Muted,
+                              TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis Or
+                              TextFormatFlags.HidePrefix)
     End Sub
 
     Private Sub StyleGrid(g As DataGridView)

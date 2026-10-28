@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.017"
+    Public Const AppVersion As String = "V1.018"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -47,6 +47,7 @@ Public Class MainForm
     Private Const SubStatus As Integer = 2
     Private Const SubHits As Integer = 3
     Private Const SubTime As Integer = 4
+    Private _supplierHover As DarkListHover
 
 #Region "Startup / shutdown"
 
@@ -56,6 +57,7 @@ Public Class MainForm
         Icon = Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ' WinPartsFinder.ico, via <ApplicationIcon>
         Theme.Current = _settings.AppTheme
         lvSuppliers.OwnerDraw = True ' only so the column headers can be drawn dark
+        _supplierHover = New DarkListHover(lvSuppliers)
         _defaultSize = Size
         _defaultSplitter = splitMain.SplitterDistance
         _defaultLeftSplitter = splitLeft.SplitterDistance
@@ -1830,6 +1832,137 @@ Public Class MainForm
     Private Sub lvSuppliers_DrawSubItem(sender As Object, e As DrawListViewSubItemEventArgs) Handles lvSuppliers.DrawSubItem
         e.DrawDefault = True
     End Sub
+
+    ''' <summary>
+    ''' In the dark themes Windows draws the row under the mouse in its own hover style - black text, ignoring the
+    ''' list's colours - and the selected row with a dark border while the mouse is over it. This makes the list
+    ''' forget the row under the mouse each time it moves, and gives that row its own lighter blue band instead.
+    ''' </summary>
+    Private NotInheritable Class DarkListHover
+        Inherits NativeWindow ' on the list itself, for its mouse moves
+
+        Private Const WM_MOUSEMOVE As Integer = &H200
+        Private Const WM_MOUSELEAVE As Integer = &H2A3
+        Private Const WM_NOTIFY As Integer = &H4E
+        Private Const NM_CUSTOMDRAW As Integer = -12
+        Private Const CDDS_ITEMPREPAINT As Integer = &H10001
+        Private Const CDDS_SUBITEM As Integer = &H20000
+        Private Const CDRF_NEWFONT As Integer = &H2
+        Private Const WM_LBUTTONDOWN As Integer = &H201
+        Private Const WM_LBUTTONUP As Integer = &H202
+
+        <Runtime.InteropServices.DllImport("user32.dll")>
+        Private Shared Function SendMessage(hwnd As IntPtr, msg As Integer, wParam As IntPtr, lParam As IntPtr) As IntPtr
+        End Function
+
+        <Runtime.InteropServices.StructLayout(Runtime.InteropServices.LayoutKind.Sequential)>
+        Private Structure NMHDR
+            Public hwndFrom As IntPtr
+            Public idFrom As IntPtr
+            Public code As Integer
+        End Structure
+
+        ' (NMHDR is kept as its own structure: on 64-bit Windows it's padded, so dwDrawStage starts 8 bytes on.)
+        <Runtime.InteropServices.StructLayout(Runtime.InteropServices.LayoutKind.Sequential)>
+        Private Structure NMLVCUSTOMDRAW
+            Public hdr As NMHDR
+            Public dwDrawStage As Integer
+            Public hdc As IntPtr
+            Public left, top, right, bottom As Integer
+            Public dwItemSpec As IntPtr
+            Public uItemState As Integer
+            Public lItemlParam As IntPtr
+            Public clrText As Integer
+            Public clrTextBk As Integer
+        End Structure
+
+        Private Shared ReadOnly TextOffset As Integer =
+            Runtime.InteropServices.Marshal.OffsetOf(GetType(NMLVCUSTOMDRAW), "clrText").ToInt32()
+        Private Shared ReadOnly BackOffset As Integer =
+            Runtime.InteropServices.Marshal.OffsetOf(GetType(NMLVCUSTOMDRAW), "clrTextBk").ToInt32()
+
+        Private ReadOnly _list As ListView
+        Private ReadOnly _parentHook As ParentHook
+        Private _hovered As Integer = -1 ' row with our own hover band
+        Private _sendingLeave As Boolean
+
+        Public Sub New(lv As ListView)
+            _list = lv
+            AddHandler lv.HandleCreated, Sub() AssignHandle(lv.Handle)
+            AddHandler lv.HandleDestroyed, Sub() ReleaseHandle()
+            If lv.IsHandleCreated Then AssignHandle(lv.Handle)
+            ' The list tells its parent when it draws each row, so the band's colour is set there.
+            _parentHook = New ParentHook(Me)
+            Dim parent = lv.Parent
+            AddHandler parent.HandleCreated, Sub() _parentHook.AssignHandle(parent.Handle)
+            AddHandler parent.HandleDestroyed, Sub() _parentHook.ReleaseHandle()
+            If parent.IsHandleCreated Then _parentHook.AssignHandle(parent.Handle)
+        End Sub
+
+        Protected Overrides Sub WndProc(ByRef m As Message)
+            If m.Msg = WM_MOUSELEAVE AndAlso Not _sendingLeave Then SetHovered(-1) ' the mouse really has left
+            MyBase.WndProc(m)
+            If Not Theme.IsDark OrElse Handle = IntPtr.Zero Then Return
+            If m.Msg = WM_MOUSEMOVE Then
+                Dim item = _list.GetItemAt(CShort(m.LParam.ToInt64() And &HFFFF), CShort((m.LParam.ToInt64() >> 16) And &HFFFF))
+                SetHovered(If(item Is Nothing, -1, item.Index))
+            End If
+            ' After a move or a click (which can leave the clicked row marked as hovered, with no move since),
+            ' telling the list the mouse has left makes it forget the row under the mouse (LVM_SETHOTITEM -1 doesn't).
+            If m.Msg = WM_MOUSEMOVE OrElse m.Msg = WM_LBUTTONDOWN OrElse m.Msg = WM_LBUTTONUP Then
+                _sendingLeave = True
+                SendMessage(Handle, WM_MOUSELEAVE, IntPtr.Zero, IntPtr.Zero)
+                _sendingLeave = False
+            End If
+        End Sub
+
+        ''' <summary>Moves the hover band to another row (-1 for none), redrawing both rows.</summary>
+        Private Sub SetHovered(index As Integer)
+            If index = _hovered Then Return
+            Dim old = _hovered
+            _hovered = index
+            For Each i In {old, index}
+                If i >= 0 AndAlso i < _list.Items.Count Then _list.Invalidate(_list.Items(i).Bounds)
+            Next
+        End Sub
+
+        ''' <summary>
+        ''' After the list has set a row's colours: the selected row gets its own text colour back (the list leaves
+        ''' black for Windows' selection, which shows it on the dark blue), and the hovered row gets the band.
+        ''' </summary>
+        Private Sub AfterParentNotify(ByRef m As Message)
+            If Not Theme.IsDark Then Return
+            Dim cd = DirectCast(Runtime.InteropServices.Marshal.PtrToStructure(m.LParam, GetType(NMLVCUSTOMDRAW)), NMLVCUSTOMDRAW)
+            If cd.hdr.hwndFrom <> Handle OrElse cd.hdr.code <> NM_CUSTOMDRAW OrElse
+               (cd.dwDrawStage And Not CDDS_SUBITEM) <> CDDS_ITEMPREPAINT Then Return
+            Dim index = cd.dwItemSpec.ToInt32()
+            If index < 0 OrElse index >= _list.Items.Count Then Return
+            Dim item = _list.Items(index)
+            If item.Selected Then
+                Runtime.InteropServices.Marshal.WriteInt32(m.LParam, TextOffset, ColorTranslator.ToWin32(item.ForeColor))
+            ElseIf index = _hovered Then
+                Runtime.InteropServices.Marshal.WriteInt32(m.LParam, BackOffset, ColorTranslator.ToWin32(Theme.RowHoverBack))
+            Else
+                Return
+            End If
+            m.Result = New IntPtr(m.Result.ToInt64() Or CDRF_NEWFONT) ' (use the colours we just set)
+        End Sub
+
+        Private NotInheritable Class ParentHook
+            Inherits NativeWindow
+
+            Private ReadOnly _owner As DarkListHover
+
+            Public Sub New(owner As DarkListHover)
+                _owner = owner
+            End Sub
+
+            Protected Overrides Sub WndProc(ByRef m As Message)
+                MyBase.WndProc(m)
+                If m.Msg = WM_NOTIFY Then _owner.AfterParentNotify(m)
+            End Sub
+        End Class
+    End Class
 
     ' Stretch the last column to the edge, so no light-coloured header strip is left over.
     Private Sub lvSuppliers_Resize(sender As Object, e As EventArgs) Handles lvSuppliers.Resize
