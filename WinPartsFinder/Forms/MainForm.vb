@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.014"
+    Public Const AppVersion As String = "V1.015"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -477,7 +477,7 @@ Public Class MainForm
         Dim last = If(count < 0, dgvResults.Rows.Count - 1, Math.Min(dgvResults.Rows.Count - 1, first + count - 1))
         For i = first To last
             Dim r = dgvResults.Rows(i)
-            Dim v = TryCast(r.DataBoundItem, DataRowView)
+            Dim v = RowView(r.Index)
             Dim want = If(v IsNot Nothing AndAlso CBool(v("LinkOnly")), linkHeight, normal)
             If r.Height <> want Then r.Height = want
         Next
@@ -622,6 +622,7 @@ Public Class MainForm
                       $"OR Manufacturer LIKE '%{pat}%' OR Supplier LIKE '%{pat}%' OR SupplierPartNo LIKE '%{pat}%')")
         End If
         _table.DefaultView.RowFilter = String.Join(" AND ", parts)
+        ResyncGrid()
         UpdateCountStatus()
     End Sub
 
@@ -714,7 +715,7 @@ Public Class MainForm
     Private Sub RemoveSelectedRows()
         ' Collect first: each change re-filters the view, which shifts the grid's rows.
         Dim rows = dgvResults.SelectedRows.Cast(Of DataGridViewRow)().
-            Select(Function(r) TryCast(r.DataBoundItem, DataRowView)).
+            Select(Function(r) RowView(r.Index)).
             Where(Function(v) v IsNot Nothing).Select(Function(v) v.Row).ToList()
         If rows.Count = 0 Then Return
         For Each r In rows
@@ -730,9 +731,33 @@ Public Class MainForm
         UpdateCountStatus()
     End Sub
 
+    ''' <summary>The part behind grid row <paramref name="index"/>, or Nothing. The grid can briefly have more rows
+    ''' than the filtered view (it missed a re-filter), and asking it for one of those throws - see ResyncGrid.</summary>
+    Private Function RowView(index As Integer) As DataRowView
+        If index < 0 OrElse index >= _table.DefaultView.Count OrElse index >= dgvResults.Rows.Count Then Return Nothing
+        Return TryCast(dgvResults.Rows(index).DataBoundItem, DataRowView)
+    End Function
+
+    ''' <summary>
+    ''' Makes the grid rebuild its rows if it's out of step with the filtered view. Seen once after ticking
+    ''' In stock only: the grid kept its old rows, painted ones that were gone, and crashed ("Index 16 does
+    ''' not have a value"). The cause wasn't found, so this puts it right whenever it happens.
+    ''' </summary>
+    Private Sub ResyncGrid()
+        If dgvResults.Rows.Count = _table.DefaultView.Count Then Return
+        DirectCast(dgvResults.BindingContext(_table.DefaultView), CurrencyManager).Refresh()
+    End Sub
+
+    ' A row the grid can't find in the view: rebuild the grid (once it has finished painting) instead of
+    ' showing the grid's error box.
+    Private Sub dgvResults_DataError(sender As Object, e As DataGridViewDataErrorEventArgs) Handles dgvResults.DataError
+        e.ThrowException = False
+        BeginInvoke(New Action(AddressOf ResyncGrid))
+    End Sub
+
     Private Function CurrentRow() As DataRowView
         If dgvResults.CurrentRow Is Nothing Then Return Nothing
-        Return TryCast(dgvResults.CurrentRow.DataBoundItem, DataRowView)
+        Return RowView(dgvResults.CurrentRow.Index)
     End Function
 
     Private Shared Function Field(row As DataRowView, name As String) As String
@@ -1069,7 +1094,7 @@ Public Class MainForm
         If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then Return
         Dim prop = dgvResults.Columns(e.ColumnIndex).DataPropertyName
         If prop = "Package" Then
-            Dim r = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+            Dim r = RowView(e.RowIndex)
             If r IsNot Nothing AndAlso Field(r, "PackageFrom").Length > 0 Then
                 e.ToolTipText = $"{Field(r, "Supplier")} doesn't give the package - this is {Field(r, "PackageFrom")}'s, " &
                                 $"for the same manufacturer part number ({Field(r, "MfrPartNo")})."
@@ -1077,7 +1102,7 @@ Public Class MainForm
             Return
         End If
         If prop <> "UnitPrice" AndAlso prop <> "Currency" AndAlso prop <> "PriceBreaks" Then Return
-        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        Dim row = RowView(e.RowIndex)
         If row Is Nothing OrElse CBool(row("LinkOnly")) OrElse Not chkConvert.Checked Then Return
         Dim origCur = Field(row, "OrigCurrency")
         If CBool(row("Converted")) Then
@@ -1291,7 +1316,7 @@ Public Class MainForm
         dgvResults.ClearSelection()
         Dim first = -1
         For Each r As DataGridViewRow In dgvResults.Rows
-            Dim v = TryCast(r.DataBoundItem, DataRowView)
+            Dim v = RowView(r.Index)
             If v IsNot Nothing AndAlso wanted.Contains(v.Row) Then
                 r.Selected = True
                 If first < 0 Then first = r.Index
@@ -1411,7 +1436,7 @@ Public Class MainForm
 
     Private Sub dgvResults_CellFormatting(sender As Object, e As DataGridViewCellFormattingEventArgs) Handles dgvResults.CellFormatting
         If e.RowIndex < 0 OrElse e.CellStyle Is Nothing Then Return
-        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        Dim row = RowView(e.RowIndex)
         If row Is Nothing Then Return
 
         If e.ColumnIndex = colThumb.Index Then
@@ -1573,7 +1598,7 @@ Public Class MainForm
 
     Private Sub dgvResults_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellContentClick
         If e.RowIndex < 0 Then Return
-        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        Dim row = RowView(e.RowIndex)
         If e.ColumnIndex = colSupplierPartLink.Index Then
             OpenUrl(Field(row, "ProductUrl"))
         ElseIf e.ColumnIndex = colDatasheetLink.Index Then
@@ -1584,7 +1609,7 @@ Public Class MainForm
 
     Private Sub dgvResults_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResults.CellClick
         If e.RowIndex < 0 OrElse e.ColumnIndex <> colThumb.Index Then Return
-        Dim row = TryCast(dgvResults.Rows(e.RowIndex).DataBoundItem, DataRowView)
+        Dim row = RowView(e.RowIndex)
         If row Is Nothing Then Return
         Dim urls = ImageUrlsFor(row)
         If urls.Thumb.Length = 0 OrElse _images.HasFailed(urls.Thumb) Then Return ' nothing to enlarge
@@ -1639,7 +1664,7 @@ Public Class MainForm
         ' Right-click on a Status cell that has some text: offer to hide every part with that status.
         _menuStatus = ""
         If hit.Type = DataGridViewHitTestType.Cell AndAlso dgvResults.Columns(hit.ColumnIndex).DataPropertyName = "Status" Then
-            _menuStatus = Field(TryCast(dgvResults.Rows(hit.RowIndex).DataBoundItem, DataRowView), "Status").Trim()
+            _menuStatus = Field(RowView(hit.RowIndex), "Status").Trim()
         End If
         mnuSep3.Visible = _menuStatus.Length > 0
         mnuHideStatus.Visible = _menuStatus.Length > 0
@@ -1688,7 +1713,7 @@ Public Class MainForm
         ' One tab-separated line per selected row, in grid order - pastes straight into Excel.
         Dim cols = VisibleColumns()
         Dim lines = dgvResults.SelectedRows.Cast(Of DataGridViewRow)().OrderBy(Function(r) r.Index).
-            Select(Function(r) TryCast(r.DataBoundItem, DataRowView)).Where(Function(v) v IsNot Nothing).
+            Select(Function(r) RowView(r.Index)).Where(Function(v) v IsNot Nothing).
             Select(Function(v) String.Join(vbTab, cols.Select(Function(c) Field(v, c.DataPropertyName))))
         CopyText(String.Join(vbCrLf, lines))
     End Sub
