@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.018"
+    Public Const AppVersion As String = "V1.019"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -125,8 +125,13 @@ Public Class MainForm
         btnTypes.AutoSize = False
         btnTypes.MinimumSize = Size.Empty
         UpdateTypesButton()
+        ' Buttons are a little taller than the boxes: at the boxes' height the flat (custom theme) buttons
+        ' cut off the bottoms of letters like y, p and g.
+        Dim buttonHeight = rowHeight + CInt(4 * DeviceDpi / 96.0)
+        ' Export CSV… is the longest fixed label: wide enough for its text, never narrower than the others.
+        btnExport.Width = Math.Max(btnSearch.Width, TextRenderer.MeasureText(btnExport.Text, btnExport.Font).Width + 20)
         For Each b In {btnSearch, btnAdvanced, btnCancel, btnLoadMore, btnTypes, btnExport, btnSettings, btnHelp, btnAbout}
-            b.Height = rowHeight
+            b.Height = buttonHeight
         Next
 
         ' Everything else (labels, tick box, number box) is centred on the same middle line.
