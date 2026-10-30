@@ -124,6 +124,12 @@
     <Compile Include="Forms\ImagePopupForm.Designer.vb">
       <DependentUpon>ImagePopupForm.vb</DependentUpon>
     </Compile>
+    <Compile Include="Forms\BomForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BomForm.Designer.vb">
+      <DependentUpon>BomForm.vb</DependentUpon>
+    </Compile>
     <Compile Include="Infrastructure\AppSettings.vb" />
     <Compile Include="Infrastructure\ExchangeRates.vb" />
     <Compile Include="Infrastructure\ImageCache.vb" />
@@ -131,6 +137,7 @@
     <Compile Include="Infrastructure\ParseHelpers.vb" />
     <Compile Include="Infrastructure\Theme.vb" />
     <Compile Include="Infrastructure\WebHelper.vb" />
+    <Compile Include="Models\Bom.vb" />
     <Compile Include="Models\PartResult.vb" />
     <Compile Include="Suppliers\Supplier.vb" />
     <Compile Include="Suppliers\MouserSupplier.vb" />

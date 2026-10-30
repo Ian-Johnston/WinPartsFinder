@@ -40,6 +40,8 @@ Partial Class MainForm
         lblFilter = New Label()
         txtFilter = New TextBox()
         btnExport = New Button()
+        btnAddToBom = New Button()
+        btnBom = New Button()
         btnSettings = New Button()
         btnAbout = New Button()
         btnHelp = New Button()
@@ -64,6 +66,8 @@ Partial Class MainForm
         mnuLoadMoreSupplier = New ToolStripMenuItem()
         dgvResults = New DataGridView()
         cmsResults = New ContextMenuStrip(components)
+        mnuAddToBom = New ToolStripMenuItem()
+        mnuSepBom = New ToolStripSeparator()
         mnuOpenProduct = New ToolStripMenuItem()
         mnuOpenDatasheet = New ToolStripMenuItem()
         mnuSep1 = New ToolStripSeparator()
@@ -133,6 +137,8 @@ Partial Class MainForm
         flpTop.Controls.Add(btnTypes)
         flpTop.Controls.Add(flpFilter)
         flpTop.Controls.Add(btnExport)
+        flpTop.Controls.Add(btnAddToBom)
+        flpTop.Controls.Add(btnBom)
         flpTop.Controls.Add(btnSettings)
         flpTop.Dock = DockStyle.Fill
         flpTop.Location = New Point(0, 0)
@@ -280,6 +286,23 @@ Partial Class MainForm
         btnExport.TabIndex = 10
         btnExport.Text = "&Export CSV…"
         btnExport.UseVisualStyleBackColor = True
+        '
+        'btnAddToBom
+        '
+        btnAddToBom.Enabled = False
+        btnAddToBom.Name = "btnAddToBom"
+        btnAddToBom.Size = New Size(85, 28)
+        btnAddToBom.TabIndex = 14
+        btnAddToBom.Text = "Add to &BOM"
+        btnAddToBom.UseVisualStyleBackColor = True
+        '
+        'btnBom
+        '
+        btnBom.Name = "btnBom"
+        btnBom.Size = New Size(85, 28)
+        btnBom.TabIndex = 15
+        btnBom.Text = "B&OM (0)…"
+        btnBom.UseVisualStyleBackColor = True
         '
         'btnSettings
         '
@@ -508,10 +531,21 @@ Partial Class MainForm
         '
         'cmsResults
         '
-        cmsResults.Items.AddRange(New ToolStripItem() {mnuOpenProduct, mnuOpenDatasheet, mnuSep1, mnuCopyMpn, mnuCopySupplierPart, mnuCopyRow, mnuSep2, mnuRemoveRows, mnuRestoreRows, mnuSep3, mnuHideStatus})
+        cmsResults.Items.AddRange(New ToolStripItem() {mnuAddToBom, mnuSepBom, mnuOpenProduct, mnuOpenDatasheet, mnuSep1, mnuCopyMpn, mnuCopySupplierPart, mnuCopyRow, mnuSep2, mnuRemoveRows, mnuRestoreRows, mnuSep3, mnuHideStatus})
         cmsResults.Name = "cmsResults"
         cmsResults.ShowItemToolTips = True
         cmsResults.Size = New Size(250, 170)
+        '
+        'mnuAddToBom
+        '
+        mnuAddToBom.Name = "mnuAddToBom"
+        mnuAddToBom.Size = New Size(229, 22)
+        mnuAddToBom.Text = "Add to BOM"
+        '
+        'mnuSepBom
+        '
+        mnuSepBom.Name = "mnuSepBom"
+        mnuSepBom.Size = New Size(226, 6)
         '
         'mnuOpenProduct
         '
@@ -626,6 +660,8 @@ Partial Class MainForm
         tipMain.SetToolTip(chkConvert, "Show every price in one currency (choose it in Settings), using the European Central Bank's daily exchange rates." & vbCrLf & "Converted prices are purple - hover over one to see the supplier's own price. They're approximate." & vbCrLf & "Rates are fetched at most every 12 hours.")
         tipMain.SetToolTip(txtFilter, "Narrow the current results as you type." & vbCrLf & "Matches supplier, supplier part no., mfr part no., manufacturer and description.")
         tipMain.SetToolTip(btnExport, "Save the rows currently shown to a CSV file (opens in Excel).")
+        tipMain.SetToolTip(btnAddToBom, "Add the selected parts to the BOM (or right-click them > Add to BOM).")
+        tipMain.SetToolTip(btnBom, "Show the BOM: the parts you've added, with quantities, totals and links for buying.")
         tipMain.SetToolTip(btnSettings, "API keys, supplier search URLs, your own suppliers, photos, dark mode and window layout.")
         tipMain.SetToolTip(btnHelp, "How to use WinPartsFinder.")
         tipMain.SetToolTip(btnAbout, "Version, credits, licence and donate.")        '
@@ -688,6 +724,8 @@ Partial Class MainForm
     Friend WithEvents lblFilter As Label
     Friend WithEvents txtFilter As TextBox
     Friend WithEvents btnExport As Button
+    Friend WithEvents btnAddToBom As Button
+    Friend WithEvents btnBom As Button
     Friend WithEvents btnSettings As Button
     Friend WithEvents btnAbout As Button
     Friend WithEvents btnHelp As Button
@@ -711,6 +749,8 @@ Partial Class MainForm
     Friend WithEvents mnuLoadMoreSupplier As ToolStripMenuItem
     Friend WithEvents dgvResults As DataGridView
     Friend WithEvents cmsResults As ContextMenuStrip
+    Friend WithEvents mnuAddToBom As ToolStripMenuItem
+    Friend WithEvents mnuSepBom As ToolStripSeparator
     Friend WithEvents mnuOpenProduct As ToolStripMenuItem
     Friend WithEvents mnuOpenDatasheet As ToolStripMenuItem
     Friend WithEvents mnuSep1 As ToolStripSeparator

@@ -96,6 +96,10 @@ Public Class AppSettings
     Public Property CustomSuppliers As New List(Of CustomSupplier)
     ''' <summary>Main window size/position from last time; Nothing = designer default.</summary>
     Public Property MainWindow As WindowPlacement
+    ''' <summary>BOM window size/position from last time; Nothing = centred on the main window.</summary>
+    Public Property BomWindow As WindowPlacement
+    ''' <summary>Folder the last BOM was saved to or loaded from - where Load, Save As and Open Folder start.</summary>
+    Public Property BomFolder As String = ""
     ''' <summary>Results grid column widths and order, keyed by column name.</summary>
     Public Property ResultColumns As New Dictionary(Of String, ColumnLayout)
     Public Property EnabledSuppliers As New Dictionary(Of String, Boolean)

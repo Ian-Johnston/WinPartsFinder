@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.019"
+    Public Const AppVersion As String = "V1.020"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -48,6 +48,7 @@ Public Class MainForm
     Private Const SubHits As Integer = 3
     Private Const SubTime As Integer = 4
     Private _supplierHover As DarkListHover
+    Private WithEvents _bomForm As BomForm
 
 #Region "Startup / shutdown"
 
@@ -91,6 +92,7 @@ Public Class MainForm
         ApplyFilter()
         Theme.Apply(Me)
         MatchFiltersToSupplierList()
+        CreateBomForm()
         AlignToolbar()
 
         If Not _suppliers.Any(Function(s) s.IsConfigured) Then
@@ -108,7 +110,16 @@ Public Class MainForm
     End Sub
 
     Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Unsaved BOM changes: Save / Don't Save / Cancel (Cancel keeps the app open).
+        If e.CloseReason = CloseReason.UserClosing AndAlso _bomForm IsNot Nothing AndAlso _bomForm.HasUnsavedChanges Then
+            ShowBomWindow()
+            If Not _bomForm.ConfirmDiscard() Then
+                e.Cancel = True
+                Return
+            End If
+        End If
         _cts?.Cancel()
+        SaveBomSettings()
         SaveUiSettings()
     End Sub
 
@@ -130,7 +141,8 @@ Public Class MainForm
         Dim buttonHeight = rowHeight + CInt(4 * DeviceDpi / 96.0)
         ' Export CSV… is the longest fixed label: wide enough for its text, never narrower than the others.
         btnExport.Width = Math.Max(btnSearch.Width, TextRenderer.MeasureText(btnExport.Text, btnExport.Font).Width + 20)
-        For Each b In {btnSearch, btnAdvanced, btnCancel, btnLoadMore, btnTypes, btnExport, btnSettings, btnHelp, btnAbout}
+        UpdateBomButtons()
+        For Each b In {btnSearch, btnAdvanced, btnCancel, btnLoadMore, btnTypes, btnExport, btnAddToBom, btnBom, btnSettings, btnHelp, btnAbout}
             b.Height = buttonHeight
         Next
 
@@ -1041,6 +1053,7 @@ Public Class MainForm
         Next
         UpdatePriceHeader()
         dgvResults.Invalidate()
+        SetBomCurrency()
         If showStatus Then
             If Converting Then
                 Dim missing = _table.Rows.Cast(Of DataRow)().
@@ -1660,6 +1673,9 @@ Public Class MainForm
             Return
         End If
         Dim selectedCount = dgvResults.SelectedRows.Count
+        Dim bomCount = SelectedPartRows().Count
+        mnuAddToBom.Enabled = bomCount > 0
+        mnuAddToBom.Text = If(bomCount > 1, $"Add {bomCount} rows to BOM", "Add to BOM")
         mnuOpenProduct.Enabled = Field(row, "ProductUrl").Length > 0
         mnuOpenDatasheet.Enabled = Field(row, "DatasheetUrl").Length > 0
         mnuCopyMpn.Enabled = Field(row, "MfrPartNo").Length > 0
@@ -1978,6 +1994,122 @@ Public Class MainForm
 
 #End Region
 
+#Region "BOM"
+
+    ''' <summary>Every run starts with an empty BOM; saved ones are opened with Load in the BOM window.</summary>
+    Private Sub CreateBomForm()
+        _bomForm = New BomForm With {.LastFolder = _settings.BomFolder}
+        SetBomCurrency()
+    End Sub
+
+    ''' <summary>Remembers the BOM window's place and the last BOM folder (not the BOM itself).</summary>
+    Private Sub SaveBomSettings()
+        If _bomForm Is Nothing Then Return
+        If _bomForm.IsHandleCreated Then _settings.BomWindow = PlacementOf(_bomForm)
+        _settings.BomFolder = _bomForm.LastFolder
+    End Sub
+
+    Private Shared Function PlacementOf(f As Form) As WindowPlacement
+        Dim r = If(f.WindowState = FormWindowState.Normal, f.Bounds, f.RestoreBounds)
+        Return New WindowPlacement With {.X = r.X, .Y = r.Y, .Width = r.Width, .Height = r.Height}
+    End Function
+
+    Private Sub SetBomCurrency()
+        _bomForm?.SetCurrency(If(Converting, _settings.ConvertCurrency, Nothing), _settings.Rates)
+    End Sub
+
+    ''' <summary>Selected result rows that are real parts (website-link rows can't go in a BOM), top to bottom.</summary>
+    Private Function SelectedPartRows() As List(Of DataRowView)
+        Return dgvResults.SelectedRows.Cast(Of DataGridViewRow)().OrderBy(Function(r) r.Index).
+            Select(Function(r) RowView(r.Index)).
+            Where(Function(v) v IsNot Nothing AndAlso Not CBool(v("LinkOnly"))).ToList()
+    End Function
+
+    Private Sub UpdateBomButtons()
+        btnAddToBom.Enabled = SelectedPartRows().Count > 0
+        btnBom.Text = $"B&OM ({If(_bomForm Is Nothing, 0, _bomForm.Bom.Lines.Count)})…"
+        ' Wide enough for their text, never narrower than the other buttons.
+        btnAddToBom.Width = Math.Max(btnSearch.Width, TextRenderer.MeasureText(btnAddToBom.Text, btnAddToBom.Font).Width + 20)
+        btnBom.Width = Math.Max(btnSearch.Width, TextRenderer.MeasureText(btnBom.Text, btnBom.Font).Width + 20)
+    End Sub
+
+    Private Sub dgvResults_SelectionChanged(sender As Object, e As EventArgs) Handles dgvResults.SelectionChanged
+        btnAddToBom.Enabled = SelectedPartRows().Count > 0
+    End Sub
+
+    Private Sub _bomForm_BomChanged(sender As Object, e As EventArgs) Handles _bomForm.BomChanged
+        UpdateBomButtons()
+    End Sub
+
+    Private Sub AddToBom_Click(sender As Object, e As EventArgs) Handles btnAddToBom.Click, mnuAddToBom.Click
+        Dim rows = SelectedPartRows()
+        If rows.Count = 0 Then Return
+        Dim lines = rows.Select(AddressOf ToBomLine).ToList()
+        Dim added = _bomForm.AddLines(lines)
+        Dim more = lines.Count - added
+        Dim total = _bomForm.Bom.Lines.Count
+        If lines.Count = 1 AndAlso more = 1 Then
+            Dim l = _bomForm.Bom.Lines.First(Function(x) x.SamePart(lines(0)))
+            SetStatus($"{lines(0).SupplierPartNumber} was already in the BOM - quantity now {l.Qty}.")
+        Else
+            SetStatus($"Added to the BOM: {added} new line{If(added = 1, "", "s")}" &
+                      If(more > 0, $", {more} already there (quantity increased)", "") &
+                      $". The BOM has {total} line{If(total = 1, "", "s")}.")
+        End If
+    End Sub
+
+    ''' <summary>A BOM line from a result row, with the supplier's own price (not the converted one).
+    ''' Quantity: the Advanced search quantity if one is set, but never less than the minimum order.</summary>
+    Private Function ToBomLine(row As DataRowView) As BomLine
+        Dim qty = If(_active IsNot Nothing AndAlso _active.Quantity > 0, _active.Quantity, 1)
+        If row("MOQ") IsNot DBNull.Value Then qty = Math.Max(qty, CInt(row("MOQ")))
+        Return New BomLine With {
+            .Qty = qty,
+            .Supplier = Field(row, "Supplier"),
+            .SupplierPartNumber = Field(row, "SupplierPartNo"),
+            .ManufacturerPartNumber = Field(row, "MfrPartNo"),
+            .Manufacturer = Field(row, "Manufacturer"),
+            .Description = Field(row, "Description"),
+            .Footprint = Field(row, "Package"),
+            .UnitPrice = If(row("OrigUnitPrice") Is DBNull.Value, Nothing, CType(CDec(row("OrigUnitPrice")), Decimal?)),
+            .Currency = Field(row, "OrigCurrency"),
+            .PriceBreaks = BomLine.ParseBreaks(Field(row, "BreaksRaw")),
+            .ProductUrl = Field(row, "ProductUrl"),
+            .Stock = If(row("Stock") Is DBNull.Value, Nothing, CType(CLng(row("Stock")), Long?)),
+            .DateAdded = DateTime.Today}
+    End Function
+
+    ' The BOM window opens where it was last time (if that's still on a screen), else over the middle of this one.
+    Private Sub btnBom_Click(sender As Object, e As EventArgs) Handles btnBom.Click
+        ShowBomWindow()
+    End Sub
+
+    Private Sub ShowBomWindow()
+        If _bomForm.Visible Then
+            If _bomForm.WindowState = FormWindowState.Minimized Then _bomForm.WindowState = FormWindowState.Normal
+            _bomForm.Activate()
+            Return
+        End If
+        If Not _bomForm.IsHandleCreated Then
+            _bomForm.StartPosition = FormStartPosition.Manual
+            Dim p = _settings.BomWindow
+            Dim bounds = If(p Is Nothing, Rectangle.Empty, New Rectangle(p.X, p.Y, p.Width, p.Height))
+            Dim onScreen = p IsNot Nothing AndAlso p.Width >= _bomForm.MinimumSize.Width AndAlso p.Height >= _bomForm.MinimumSize.Height AndAlso
+                           Screen.AllScreens.Any(Function(s)
+                                                     Dim overlap = Rectangle.Intersect(s.WorkingArea, bounds)
+                                                     Return overlap.Width >= 200 AndAlso overlap.Height >= 100
+                                                 End Function)
+            If onScreen Then
+                _bomForm.Bounds = bounds
+            Else
+                _bomForm.Location = New Point(Left + (Width - _bomForm.Width) \ 2, Top + (Height - _bomForm.Height) \ 2)
+            End If
+        End If
+        _bomForm.Show(Me)
+    End Sub
+
+#End Region
+
 #Region "Settings / export"
 
     Private Sub btnSettings_Click(sender As Object, e As EventArgs) Handles btnSettings.Click
@@ -1993,6 +2125,7 @@ Public Class MainForm
                 RebuildSuppliers()
                 ApplyThumbnailSetting()
                 Theme.Apply(Me)
+                If _bomForm.IsHandleCreated Then _bomForm.ApplyTheme()
                 MatchFiltersToSupplierList()
                 AlignToolbar() ' dark mode changes some control heights
                 UpdateConvertText()

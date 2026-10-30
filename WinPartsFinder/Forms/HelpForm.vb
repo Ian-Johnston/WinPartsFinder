@@ -105,6 +105,20 @@ When a supplier has more matches than it sent, its **Hits** shows e.g. **50 / 31
 - If parts were found but **all** of them are hidden, the status line at the bottom says what's hiding them, e.g. *All 5 are hidden by In stock only (none are in stock)*.
 - **Export CSV…** saves the rows currently shown, including their **#**, product and datasheet links, to a file that opens in Excel.
 
+# BOM (BILL OF MATERIALS)
+Build up a shopping list across as many searches as you like, then work down it to buy each part on the supplier's website.
+- **Adding parts:** select one or more results and click **Add to BOM** on the toolbar, or right-click them and choose **Add to BOM**. Website-link rows can't be added. Adding a part that's already in the BOM adds to its quantity instead. The quantity starts at 1 - or at the Advanced search **Quantity needed** if one is set - and never below the part's minimum order.
+- **BOM (5)…** on the toolbar shows how many lines the BOM has and opens it. The BOM window can stay open while you search; closing it just hides it.
+- Each line shows the supplier, the **Supplier Part No.** (their order code) and the **Mfr Part No.**, the description, quantity, prices and a link. Each supplier's parts are kept together, so you can buy from one supplier at a time. Click **Open** (or double-click a line) to open the part's page on the supplier's website. Right-click a line to copy its supplier or manufacturer part number.
+- **Qty:** click the number and type a new one, or select lines and use **Qty −** / **Qty +**. The price each follows the supplier's price breaks for that quantity. Setting it to 0 asks whether to remove the line.
+- **The tick box** at the left of each line counts it in the totals. Untick a line to grey it out and leave it out of the totals (**Space** ticks or unticks the selected lines).
+- **Removing lines:** click the red **✕** at the right of a line, or select lines and click **Remove** (or press **Delete**). **Ctrl+Z** puts them back.
+- **Totals:** under the list are each supplier's subtotal and the **Grand total**, for ticked lines. Prices are the supplier's own from when the part was added; with **Prices in GBP** ticked they're converted (purple) and the grand total is in one currency. Otherwise each currency is totalled separately. Hover over a price to see the price breaks.
+- **BOM name** and **Notes** are saved with the BOM. The title bar shows the name, with a ***** when there are unsaved changes.
+- **New** starts an empty BOM, **Load…** opens a saved one in its place (asking first if there are unsaved changes), **Save** saves to the same file and **Save As…** to a new one. An unnamed BOM takes the name of the file you save it as. **Open Folder** opens the folder the BOM is saved in. **Export TXT…** saves an easy-to-read text copy: the parts in lined-up columns, grouped by supplier with subtotals and the grand total.
+- BOM files are CSV and open in Excel. The BOM name and notes are at the bottom of the file. Unticked lines are saved as **DNP**.
+- WinPartsFinder always starts with an empty BOM - use **Load…** to carry on with a saved one. If the BOM has unsaved changes when you close WinPartsFinder, it asks whether to save them first.
+
 # SETTINGS
 - Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, **API Help** explains how to get each key, and **Show keys** shows them as text instead of dots.
 - **Prices - Single currency (if enabled):** choose the currency for the main window's **Prices in** tick box. The date of the saved exchange rates is shown next to it; **Update now** fetches today's, and **ECB rates webpage** opens the European Central Bank's exchange-rate page where they come from.
