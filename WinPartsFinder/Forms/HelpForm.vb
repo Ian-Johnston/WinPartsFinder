@@ -47,6 +47,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 - **Mode** shows how each supplier is searched: **API** (live data), **API (no key)** (add a key in Settings), or **Web link**.
 - **Status**, **Hits** and **Time** show how each search went. If it says **Error**, hover over the supplier to see why.
 - **Hits** like **50 / 312** means 50 shown out of 312 the supplier has, so Load more is available. Once everything has been fetched it shows just the count, which can be a little under the supplier's total: suppliers sometimes send the same part twice, and repeats are skipped (hover over the supplier to see how many).
+- **Hover over a supplier** for a breakdown of its Hits: how many parts match at that supplier, how many have been fetched so far, how many are shown, how many the Advanced search filters left out, and how many are still to fetch with **Load more**. With Advanced filters a low number like **0 / 347** usually just means none of the batches fetched so far passed them - **No more** in the Status column means the last Load more added nothing new, not that the supplier has run out.
 - **Not searched yet** means the supplier was ticked while a search was running. Press **Search** again to include it.
 - Double-click a supplier, or right-click it, to open the same search on that supplier's website.
 

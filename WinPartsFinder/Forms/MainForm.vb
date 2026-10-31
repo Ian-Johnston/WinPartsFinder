@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.020"
+    Public Const AppVersion As String = "V1.021"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -1153,6 +1153,10 @@ Public Class MainForm
         Public LastPageFull As Boolean    ' fallback when no total is given
         Public RowCount As Integer        ' rows added to the grid (after removing duplicates)
         Public Duplicates As Integer      ' repeats the supplier sent that were skipped
+        Public Fetched As Integer         ' parts the supplier has sent so far (before duplicates and filters)
+        Public Batches As Integer         ' pages fetched: the search, then each Load more
+        Public PageSize As Integer        ' Max/supp. for this search
+        Public LastAddedNothing As Boolean ' the last Load more added no new rows
         Public ReadOnly Seen As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
 
         Public ReadOnly Property HasMore As Boolean
@@ -1228,6 +1232,9 @@ Public Class MainForm
         Try
             Dim page = Await s.SearchAsync(st.Query, st.Mode, pageSize, st.NextOffset, st.Filters, ct)
             st.NextOffset += pageSize
+            st.PageSize = pageSize
+            st.Batches += 1
+            st.Fetched += page.Parts.Count
             st.Total = page.TotalAvailable
             st.LastPageFull = page.Parts.Count >= pageSize
             Dim before = st.RowCount
@@ -1258,12 +1265,9 @@ Public Class MainForm
             If colThumb.Visible Then dgvResults.InvalidateColumn(colThumb.Index)
             BorrowPackages()
             item.SubItems(SubStatus).Text = If(st.RowCount = 0, "No matches", "OK")
-            item.ToolTipText = $"{s.Name}: {st.RowCount} result(s)" &
-                               If(st.Total.HasValue, $" of {st.Total} found.", ".") &
-                               If(st.Duplicates > 0, $" {st.Duplicates} repeated by {s.Name} and skipped.", "") &
-                               If(st.Filtered > 0, $" {st.Filtered} left out by the Advanced search filters.", "") &
-                               If(HasMore(s), " Right-click > Load more for the next batch.", "")
-            If Not firstPage AndAlso st.RowCount = before Then item.SubItems(SubStatus).Text = "No more"
+            st.LastAddedNothing = Not firstPage AndAlso st.RowCount = before
+            If st.LastAddedNothing Then item.SubItems(SubStatus).Text = "No more"
+            item.ToolTipText = HitsToolTip(s, st)
         Catch ex As OperationCanceledException When ct.IsCancellationRequested
             item.SubItems(SubStatus).Text = "Cancelled"
         Catch ex As Exception
@@ -1283,6 +1287,38 @@ Public Class MainForm
     Private Function HitsText(s As Supplier, st As PagingState) As String
         If st.Total.HasValue AndAlso HasMore(s) Then Return $"{st.RowCount} / {st.Total}"
         Return st.RowCount.ToString()
+    End Function
+
+    ''' <summary>
+    ''' The supplier row's tooltip: what its Hits numbers mean - how many match, how many have been fetched,
+    ''' how many are shown and why the rest aren't, and whether Load more has more to get.
+    ''' </summary>
+    Private Function HitsToolTip(s As Supplier, st As PagingState) As String
+        Dim lines As New List(Of String) From {$"{s.Name} - Hits {HitsText(s, st)}"}
+        If st.Total.HasValue Then lines.Add($"{st.Total.Value:N0} part{If(st.Total.Value = 1, "", "s")} match ""{st.Query}"" at {s.Name}.")
+        If HasMore(s) Then
+            lines.Add($"Fetched so far: {st.Fetched:N0}" &
+                      If(st.Batches > 1, $" ({st.Batches} batches of {st.PageSize}).", "."))
+        Else
+            lines.Add(If(st.Fetched = 0, "Nothing found.", $"All {st.Fetched:N0} have been fetched."))
+        End If
+        If st.Fetched > 0 Then
+            Dim shown = $"Shown: {st.RowCount:N0}"
+            If st.Filtered > 0 Then
+                Dim filters = If(_active?.Describe(), "")
+                shown &= $" - {st.Filtered:N0} left out by the Advanced search filters" & If(filters.Length > 0, $" ({filters}).", ".")
+            Else
+                shown &= "."
+            End If
+            lines.Add(shown)
+        End If
+        If st.Duplicates > 0 Then lines.Add($"{st.Duplicates:N0} sent twice by {s.Name} and skipped.")
+        If st.LastAddedNothing Then lines.Add("The last Load more found nothing new that passed the filters.")
+        If HasMore(s) Then
+            Dim left = If(st.Total.HasValue, $"{Math.Max(0, st.Total.Value - st.Fetched):N0} more to fetch: ", "There may be more: ")
+            lines.Add(left & $"click Load more for the next {st.PageSize}.")
+        End If
+        Return String.Join(vbCrLf, lines)
     End Function
 
     Private Function HasMore(s As Supplier) As Boolean
@@ -1826,6 +1862,45 @@ Public Class MainForm
 
     Private Sub lvSuppliers_DoubleClick(sender As Object, e As EventArgs) Handles lvSuppliers.DoubleClick
         mnuOpenSupplierSearch.PerformClick()
+    End Sub
+
+    ' Windows only shows a row's tooltip over its first column (the supplier name). Over Mode, Status, Hits and
+    ' Time the same text is shown with this one instead, after the usual pause.
+    Private ReadOnly _rowTip As New ToolTip With {.ShowAlways = True} ' also while e.g. the BOM window has the focus
+    Private WithEvents _rowTipTimer As New Windows.Forms.Timer With {.Interval = 500}
+    Private _rowTipItem As ListViewItem
+
+    Private Sub lvSuppliers_MouseMove(sender As Object, e As MouseEventArgs) Handles lvSuppliers.MouseMove
+        Dim hit = lvSuppliers.HitTest(e.Location)
+        Dim target = If(hit.Item IsNot Nothing AndAlso hit.SubItem IsNot Nothing AndAlso
+                        hit.Item.SubItems.IndexOf(hit.SubItem) > 0 AndAlso hit.Item.ToolTipText.Length > 0, hit.Item, Nothing)
+        If target Is _rowTipItem Then Return
+        HideRowTip()
+        _rowTipItem = target
+        If target IsNot Nothing Then _rowTipTimer.Start()
+    End Sub
+
+    ' The dark themes' hover code (DarkListHover) sends the list a "mouse left" after every move, so only hide when
+    ' the pointer really is outside the list.
+    Private Sub lvSuppliers_MouseLeave(sender As Object, e As EventArgs) Handles lvSuppliers.MouseLeave
+        If lvSuppliers.ClientRectangle.Contains(lvSuppliers.PointToClient(Cursor.Position)) Then Return
+        HideRowTip()
+        _rowTipItem = Nothing
+    End Sub
+
+    Private Sub _rowTipTimer_Tick(sender As Object, e As EventArgs) Handles _rowTipTimer.Tick
+        _rowTipTimer.Stop()
+        If _rowTipItem Is Nothing OrElse _rowTipItem.ListView Is Nothing Then Return
+        Dim p = lvSuppliers.PointToClient(Cursor.Position)
+        Dim y = p.Y + SystemInformation.CursorSize.Height \ 2 + 4
+        ' A ToolTip's first Show - and the first after each Hide - displays nothing (a WinForms quirk), so it's always shown twice.
+        _rowTip.Show(_rowTipItem.ToolTipText, lvSuppliers, p.X, y, 15000)
+        _rowTip.Show(_rowTipItem.ToolTipText, lvSuppliers, p.X, y, 15000)
+    End Sub
+
+    Private Sub HideRowTip()
+        _rowTipTimer.Stop()
+        _rowTip.Hide(lvSuppliers)
     End Sub
 
     ' Owner drawing is only used for the header (so it can go dark); rows draw normally.
