@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.021"
+    Public Const AppVersion As String = "V1.022"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -41,6 +41,7 @@ Public Class MainForm
     Private _defaultSplitter As Integer
     Private _defaultLeftSplitter As Integer
     Private _defaultColumns As Dictionary(Of String, ColumnLayout)
+    Private _defaultSupplierColumns As Integer()   ' supplier list column widths
 
     ' Supplier list sub-item indexes
     Private Const SubMode As Integer = 1
@@ -62,6 +63,7 @@ Public Class MainForm
         _defaultSize = Size
         _defaultSplitter = splitMain.SplitterDistance
         _defaultLeftSplitter = splitLeft.SplitterDistance
+        _defaultSupplierColumns = lvSuppliers.Columns.Cast(Of ColumnHeader)().Select(Function(c) c.Width).ToArray()
         ' Can't be made smaller than the default (reset) size - unless the screen itself is smaller.
         Dim area = Screen.FromControl(Me).WorkingArea
         MinimumSize = New Size(Math.Min(_defaultSize.Width, area.Width), Math.Min(_defaultSize.Height, area.Height))
@@ -204,6 +206,10 @@ Public Class MainForm
         Location = New Point(area.Left + (area.Width - Width) \ 2, area.Top + (area.Height - Height) \ 2)
         splitMain.SplitterDistance = _defaultSplitter
         splitLeft.SplitterDistance = _defaultLeftSplitter
+        For i = 0 To lvSuppliers.Columns.Count - 2 ' the last one stretches to fill (lvSuppliers_Resize)
+            lvSuppliers.Columns(i).Width = _defaultSupplierColumns(i)
+        Next
+        lvSuppliers_Resize(lvSuppliers, EventArgs.Empty)
         ApplyColumnLayout(_defaultColumns)
     End Sub
 
@@ -274,6 +280,7 @@ Public Class MainForm
         Next
         lvSuppliers.EndUpdate()
         _loading = False
+        FitSupplierNames()
         UpdateLoadMoreButton()
     End Sub
 
@@ -810,7 +817,7 @@ Public Class MainForm
             start.ContainsIsQuery = False
         End If
         start.MaxResults = CInt(nudMax.Value)
-        start.Suppliers = lvSuppliers.Items.Cast(Of ListViewItem)().Where(Function(i) i.Checked).Select(Function(i) i.Text).ToList()
+        start.Suppliers = lvSuppliers.Items.Cast(Of ListViewItem)().Where(Function(i) i.Checked).Select(AddressOf SupplierName).ToList()
 
         Dim o As AdvancedSearchOptions
         Using f As New AdvancedSearchForm(start, _suppliers.Select(Function(s) s.Name).ToList())
@@ -824,8 +831,8 @@ Public Class MainForm
         ' Make the supplier list match the window (without the "ticked after a search" auto-search).
         _loading = True
         For Each item As ListViewItem In lvSuppliers.Items
-            item.Checked = o.Suppliers.Contains(item.Text)
-            _settings.EnabledSuppliers(item.Text) = item.Checked
+            item.Checked = o.Suppliers.Contains(SupplierName(item))
+            _settings.EnabledSuppliers(SupplierName(item)) = item.Checked
         Next
         _loading = False
 
@@ -908,7 +915,7 @@ Public Class MainForm
         NumberNewRows()
 
         Dim apiHits = _table.Rows.Cast(Of DataRow)().Count(Function(r) Not CBool(r("LinkOnly")))
-        Dim more = LoadMoreCandidates().Select(Function(i) i.Text).ToList()
+        Dim more = LoadMoreCandidates().Select(AddressOf SupplierName).ToList()
         SetStatus(If(codeNote.Length > 0, codeNote & " ", "") &
                   $"""{query}"": {apiHits} part(s) found in {sw.Elapsed.TotalSeconds:0.0}s. " &
                   If(advanced.Length > 0, $"Advanced: {advanced.TrimEnd("."c)}" & If(_advancedHidden > 0, $" ({_advancedHidden} left out)", "") & ". ", "") &
@@ -1188,7 +1195,7 @@ Public Class MainForm
         _searched.Add(s.Name)
         If Not s.IsConfigured Then
             added.Add(AddResult(s.MakeLinkResult(query), SeqFor(s, 0)))
-            item.SubItems(SubStatus).Text = "Link added"
+            item.SubItems(SubStatus).Text = "Link"
             Return
         End If
         Dim st As New PagingState With {.Query = query, .Mode = mode, .Filters = filters}
@@ -1352,7 +1359,7 @@ Public Class MainForm
         Dim added As New List(Of DataRow)
         _batch += 1 ' this batch goes at the end
         SetBusy(True)
-        SetStatus($"Loading more from {String.Join(", ", items.Select(Function(i) i.Text))}…")
+        SetStatus($"Loading more from {String.Join(", ", items.Select(AddressOf SupplierName))}…")
         Try
             Await Task.WhenAll(items.Select(Function(i) FetchPageAsync(i, _paging(DirectCast(i.Tag, Supplier)), pageSize, ct, added)))
         Finally
@@ -1363,7 +1370,7 @@ Public Class MainForm
         SelectRows(added)
         Dim summary = String.Join(", ", items.Select(Function(i)
                                                          Dim st = _paging(DirectCast(i.Tag, Supplier))
-                                                         Return $"{i.Text} {st.RowCount}" & If(st.Total.HasValue, $" of {st.Total}", "")
+                                                         Return $"{SupplierName(i)} {st.RowCount}" & If(st.Total.HasValue, $" of {st.Total}", "")
                                                      End Function))
         SetStatus($"Loaded {added.Count} more ({summary}). The new rows are selected.")
     End Function
@@ -2060,11 +2067,52 @@ Public Class MainForm
         End Class
     End Class
 
+    ''' <summary>The supplier's name for a supplier-list row (its text may be shortened to fit the column).</summary>
+    Private Shared Function SupplierName(item As ListViewItem) As String
+        Return DirectCast(item.Tag, Supplier).Name
+    End Function
+
+    ''' <summary>
+    ''' Shortens supplier names that don't fit the Supplier column, e.g. "RS Comp…", so a two-word name stays on one
+    ''' line instead of wrapping onto two. The full name comes back once the column is wide enough.
+    ''' </summary>
+    Private Sub FitSupplierNames(Optional columnWidth As Integer = -1)
+        If lvSuppliers.Items.Count = 0 Then Return
+        If columnWidth < 0 Then columnWidth = colSupplier.Width
+        ' Room for the text: the column less the tick box in front of it, and a little space either side.
+        Dim label = lvSuppliers.Items(0).GetBounds(ItemBoundsPortion.Label)
+        Dim room = columnWidth - (colSupplier.Width - label.Width) - CInt(6 * DeviceDpi / 96.0)
+        For Each item As ListViewItem In lvSuppliers.Items
+            Dim shown = FitText(SupplierName(item), room)
+            If item.Text <> shown Then item.Text = shown
+        Next
+    End Sub
+
+    Private Function FitText(text As String, room As Integer) As String
+        Dim font = lvSuppliers.Font
+        Dim fits = Function(s As String) TextRenderer.MeasureText(s, font, Size.Empty, TextFormatFlags.NoPadding).Width <= room
+        If fits(text) Then Return text
+        For n = text.Length - 1 To 1 Step -1
+            Dim shorter = text.Substring(0, n).TrimEnd() & "…"
+            If fits(shorter) Then Return shorter
+        Next
+        Return text.Substring(0, 1) & "…"
+    End Function
+
+    ' Re-fit the names while the Supplier column is dragged, and when the drag ends.
+    Private Sub lvSuppliers_ColumnWidthChanging(sender As Object, e As ColumnWidthChangingEventArgs) Handles lvSuppliers.ColumnWidthChanging
+        If e.ColumnIndex = 0 Then FitSupplierNames(e.NewWidth)
+    End Sub
+
+    Private Sub lvSuppliers_ColumnWidthChanged(sender As Object, e As ColumnWidthChangedEventArgs) Handles lvSuppliers.ColumnWidthChanged
+        If e.ColumnIndex = 0 Then FitSupplierNames()
+    End Sub
+
     ' Stretch the last column to the edge, so no light-coloured header strip is left over.
     Private Sub lvSuppliers_Resize(sender As Object, e As EventArgs) Handles lvSuppliers.Resize
         If lvSuppliers.Columns.Count = 0 Then Return
         Dim others = lvSuppliers.Columns.Cast(Of ColumnHeader)().Take(lvSuppliers.Columns.Count - 1).Sum(Function(c) c.Width)
-        colTime.Width = Math.Max(50, lvSuppliers.ClientSize.Width - others)
+        colTime.Width = Math.Max(CInt(40 * DeviceDpi / 96.0), lvSuppliers.ClientSize.Width - others) ' still fits e.g. 3.9s
     End Sub
 
 #End Region

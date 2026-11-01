@@ -347,7 +347,7 @@ Partial Class MainForm
         '
         splitMain.Panel2.Controls.Add(dgvResults)
         splitMain.Size = New Size(1264, 616)
-        splitMain.SplitterDistance = 440
+        splitMain.SplitterDistance = 352
         splitMain.TabIndex = 1
         '
         'splitLeft - supplier list on top, the show/hide filters below
@@ -454,17 +454,17 @@ Partial Class MainForm
         'colSupplier
         '
         colSupplier.Text = "Supplier"
-        colSupplier.Width = 110
+        colSupplier.Width = 83
         '
         'colMode
         '
         colMode.Text = "Mode"
-        colMode.Width = 80
+        colMode.Width = 68
         '
         'colStatus
         '
         colStatus.Text = "Status"
-        colStatus.Width = 90
+        colStatus.Width = 58
         '
         'colHits
         '
