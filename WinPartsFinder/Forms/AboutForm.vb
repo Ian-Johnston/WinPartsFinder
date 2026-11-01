@@ -57,17 +57,20 @@ Public Class AboutForm
         Return Rectangle.FromLTRB(left, top, right + 1, bottom + 1)
     End Function
 
-    ''' <summary>Lines up the bottom of "© 2026 Ian Johnston" with the bottom of the big title.</summary>
-    Private Sub AlignVersionBaseline()
-        ' Where the small label really draws its letters, padding and all.
-        lblVersion.Margin = New Padding(lblVersion.Margin.Left, 0, 0, 0)
-        Dim versionInk As Rectangle
-        Using bmp As New Bitmap(Math.Max(1, lblVersion.PreferredWidth), Math.Max(1, lblVersion.PreferredHeight))
-            lblVersion.DrawToBitmap(bmp, New Rectangle(Point.Empty, bmp.Size))
-            versionInk = InkBounds(bmp, lblVersion.BackColor)
+    ''' <summary>
+    ''' Lines up the bottom of a label beside the title ("© 2026 Ian Johnston", the version number) with the
+    ''' bottom of the big title.
+    ''' </summary>
+    Private Sub AlignToTitleBaseline(lbl As Label)
+        ' Where the label really draws its letters, padding and all.
+        lbl.Margin = New Padding(lbl.Margin.Left, 0, 0, 0)
+        Dim ink As Rectangle
+        Using bmp As New Bitmap(Math.Max(1, lbl.PreferredWidth), Math.Max(1, lbl.PreferredHeight))
+            lbl.DrawToBitmap(bmp, New Rectangle(Point.Empty, bmp.Size))
+            ink = InkBounds(bmp, lbl.BackColor)
         End Using
-        If versionInk.IsEmpty OrElse _titleInk.IsEmpty Then Return
-        lblVersion.Margin = New Padding(lblVersion.Margin.Left, lblTitle.Margin.Top + _titleInk.Bottom - versionInk.Bottom, 0, 0)
+        If ink.IsEmpty OrElse _titleInk.IsEmpty Then Return
+        lbl.Margin = New Padding(lbl.Margin.Left, lblTitle.Margin.Top + _titleInk.Bottom - ink.Bottom, 0, 0)
     End Sub
 
     Private Sub lblTitle_Paint(sender As Object, e As PaintEventArgs) Handles lblTitle.Paint
@@ -80,7 +83,9 @@ Public Class AboutForm
 
     Private Sub AboutForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         SetUpTitle()
-        AlignVersionBaseline()
+        lblAppVersion.Text = MainForm.AppVersion
+        AlignToTitleBaseline(lblVersion)
+        AlignToTitleBaseline(lblAppVersion)
 
         Using s = GetType(AboutForm).Assembly.GetManifestResourceStream("WinPartsFinder.AboutCartoon.png")
             If s IsNot Nothing Then

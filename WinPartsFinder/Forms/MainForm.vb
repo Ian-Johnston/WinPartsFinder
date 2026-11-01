@@ -14,7 +14,7 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.022"
+    Public Const AppVersion As String = "V1.023"
     Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
 
     Private _settings As AppSettings
@@ -96,6 +96,7 @@ Public Class MainForm
         MatchFiltersToSupplierList()
         CreateBomForm()
         AlignToolbar()
+        CreateCollapseArrow()
 
         If Not _suppliers.Any(Function(s) s.IsConfigured) Then
             SetStatus("No API keys set yet - open Settings to add Mouser / DigiKey / element14 keys. Until then you get website links.")
@@ -194,7 +195,7 @@ Public Class MainForm
         Return New WindowPlacement With {
             .X = b.X, .Y = b.Y, .Width = b.Width, .Height = b.Height,
             .Maximized = WindowState = FormWindowState.Maximized,
-            .SplitterDistance = splitMain.SplitterDistance,
+            .SplitterDistance = If(_leftCollapsed, _expandedSplitter, splitMain.SplitterDistance), ' always starts open
             .LeftSplitterDistance = splitLeft.SplitterDistance
         }
     End Function
@@ -204,6 +205,7 @@ Public Class MainForm
         Size = _defaultSize
         Dim area = Screen.FromControl(Me).WorkingArea
         Location = New Point(area.Left + (area.Width - Width) \ 2, area.Top + (area.Height - Height) \ 2)
+        SetLeftCollapsed(False)
         splitMain.SplitterDistance = _defaultSplitter
         splitLeft.SplitterDistance = _defaultLeftSplitter
         For i = 0 To lvSuppliers.Columns.Count - 2 ' the last one stretches to fill (lvSuppliers_Resize)
@@ -298,6 +300,120 @@ Public Class MainForm
         cboSearch.Items.AddRange(_settings.RecentSearches.Take(RecentShown).Cast(Of Object)().ToArray())
         cboSearch.EndUpdate()
         cboSearch.Text = typed
+    End Sub
+
+#End Region
+
+#Region "Hiding the left side"
+
+    ' A small arrow in the middle of the main divider hides the supplier list and filters (the results then fill the
+    ' window) and brings them back. The divider stays on screen while they're hidden, so there's always an arrow to click.
+    Private _arrow As Label
+    Private ReadOnly _arrowTip As New ToolTip
+    Private _leftCollapsed As Boolean
+    Private _expandedSplitter As Integer   ' where the divider goes back to
+    Private _leftMinSize As Integer
+    Private _overArrow As Boolean
+
+    Private Sub CreateCollapseArrow()
+        splitMain.SplitterWidth = CInt(8 * DeviceDpi / 96.0) ' wide enough to click the arrow
+        _leftMinSize = splitMain.Panel1MinSize
+        _arrow = New Label With {.AutoSize = False, .Cursor = Cursors.Hand, .Text = ""}
+        Controls.Add(_arrow)
+        _arrow.BringToFront()
+        AddHandler _arrow.Paint, AddressOf Arrow_Paint
+        AddHandler _arrow.Click, Sub() SetLeftCollapsed(Not _leftCollapsed)
+        AddHandler _arrow.MouseEnter, Sub() SetOverArrow(True)
+        AddHandler _arrow.MouseLeave, Sub() SetOverArrow(False)
+        UpdateArrowTip()
+        PlaceArrow()
+    End Sub
+
+    Private Sub PlaceArrow()
+        If _arrow Is Nothing Then Return
+        ' A pull-tab: starts at the divider's left edge and sticks out over the edge of the results.
+        Dim r = splitMain.SplitterRectangle
+        Dim w = CInt(18 * DeviceDpi / 96.0), h = CInt(50 * DeviceDpi / 96.0)
+        Dim topLeft = PointToClient(splitMain.PointToScreen(New Point(r.X, r.Y + (r.Height - h) \ 2)))
+        Dim size As New Size(w, h)
+        If _arrow.Size <> size Then
+            _arrow.Size = size
+            ' Rounded on the right, square against the divider.
+            Dim rad = CInt(6 * DeviceDpi / 96.0)
+            Using path As New Drawing2D.GraphicsPath()
+                path.AddLine(0, 0, w - rad, 0)
+                path.AddArc(w - 2 * rad, 0, 2 * rad, 2 * rad, 270, 90)
+                path.AddArc(w - 2 * rad, h - 2 * rad, 2 * rad, 2 * rad, 0, 90)
+                path.AddLine(w - rad, h, 0, h)
+                path.CloseFigure()
+                _arrow.Region = New Region(path)
+            End Using
+        End If
+        _arrow.Location = topLeft
+    End Sub
+
+    Private Sub splitMain_SplitterMoved(sender As Object, e As SplitterEventArgs) Handles splitMain.SplitterMoved
+        PlaceArrow()
+    End Sub
+
+    Private Sub splitMain_Resize(sender As Object, e As EventArgs) Handles splitMain.Resize
+        PlaceArrow()
+    End Sub
+
+    Private Sub SetLeftCollapsed(collapse As Boolean)
+        If collapse = _leftCollapsed OrElse _arrow Is Nothing Then Return
+        _leftCollapsed = collapse
+        If collapse Then
+            _expandedSplitter = splitMain.SplitterDistance
+            splitLeft.Visible = False ' so the supplier list isn't squeezed down to nothing
+            splitMain.Panel1MinSize = 0
+            splitMain.SplitterDistance = 0
+        Else
+            splitMain.SplitterDistance = Math.Max(_leftMinSize, Math.Min(_expandedSplitter, splitMain.Width - 200))
+            splitMain.Panel1MinSize = _leftMinSize
+            splitLeft.Visible = True
+        End If
+        splitMain.IsSplitterFixed = collapse ' while hidden, the arrow brings it back
+        PlaceArrow()
+        UpdateArrowTip()
+        _arrow.Invalidate()
+    End Sub
+
+    Private Sub UpdateArrowTip()
+        _arrowTip.SetToolTip(_arrow, If(_leftCollapsed, "Show suppliers", "Hide suppliers"))
+    End Sub
+
+    Private Sub SetOverArrow(over As Boolean)
+        _overArrow = over
+        _arrow.Invalidate()
+    End Sub
+
+    Private Sub Arrow_Paint(sender As Object, e As PaintEventArgs)
+        Dim r = _arrow.ClientRectangle
+        Using back As New SolidBrush(If(_overArrow, Theme.RowHoverBack, Theme.HeaderBack))
+            e.Graphics.FillRectangle(back, r)
+        End Using
+        Dim g = e.Graphics
+        g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+        ' Thin border round the rounded side (the region clips the square corners).
+        Dim rad = CInt(6 * DeviceDpi / 96.0)
+        Using pen As New Pen(Theme.BorderColor), path As New Drawing2D.GraphicsPath()
+            Dim w = r.Width - 1, h = r.Height - 1
+            path.AddLine(0, 0, w - rad, 0)
+            path.AddArc(w - 2 * rad, 0, 2 * rad, 2 * rad, 270, 90)
+            path.AddArc(w - 2 * rad, h - 2 * rad, 2 * rad, 2 * rad, 0, 90)
+            path.AddLine(w - rad, h, 0, h)
+            g.DrawPath(pen, path)
+        End Using
+        ' The arrow: pointing left to hide, right to show.
+        Dim aw = CInt(6 * DeviceDpi / 96.0), ah = CInt(5 * DeviceDpi / 96.0) ' width, half height
+        Dim cx = r.Width \ 2, cy = r.Height \ 2
+        Dim pts = If(_leftCollapsed,
+                     {New Point(cx - aw \ 2, cy - ah), New Point(cx - aw \ 2, cy + ah), New Point(cx + aw - aw \ 2, cy)},
+                     {New Point(cx + aw - aw \ 2, cy - ah), New Point(cx + aw - aw \ 2, cy + ah), New Point(cx - aw \ 2, cy)})
+        Using fore As New SolidBrush(Theme.TextColor)
+            g.FillPolygon(fore, pts)
+        End Using
     End Sub
 
 #End Region

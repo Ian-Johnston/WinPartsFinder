@@ -28,6 +28,7 @@ Partial Class AboutForm
         flpTitle = New FlowLayoutPanel()
         lblTitle = New Label()
         lblVersion = New Label()
+        lblAppVersion = New Label()
         lblCreditsHead = New Label()
         lblCredits = New Label()
         lblDevHead = New Label()
@@ -81,6 +82,7 @@ Partial Class AboutForm
         flpTitle.AutoSize = True
         flpTitle.Controls.Add(lblTitle)
         flpTitle.Controls.Add(lblVersion)
+        flpTitle.Controls.Add(lblAppVersion)
         flpTitle.Margin = New Padding(0, 0, 0, 6)
         flpTitle.Name = "flpTitle"
         flpTitle.TabIndex = 0
@@ -100,6 +102,14 @@ Partial Class AboutForm
         lblVersion.Margin = New Padding(10, 22, 0, 0)
         lblVersion.Name = "lblVersion"
         lblVersion.Text = "© 2026 Ian Johnston"
+        '
+        'lblAppVersion - the version number (set from MainForm.AppVersion)
+        '
+        lblAppVersion.AutoSize = True
+        lblAppVersion.Font = New Font("Segoe UI", 11.25F, FontStyle.Bold)
+        lblAppVersion.Margin = New Padding(40, 18, 0, 0)
+        lblAppVersion.Name = "lblAppVersion"
+        lblAppVersion.Text = "V1.000"
         '
         'lblCreditsHead
         '
@@ -335,6 +345,7 @@ Partial Class AboutForm
     Friend WithEvents flpTitle As FlowLayoutPanel
     Friend WithEvents lblTitle As Label
     Friend WithEvents lblVersion As Label
+    Friend WithEvents lblAppVersion As Label
     Friend WithEvents lblCreditsHead As Label
     Friend WithEvents lblCredits As Label
     Friend WithEvents lblDevHead As Label
