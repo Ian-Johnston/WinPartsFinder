@@ -343,7 +343,7 @@ Partial Class SettingsForm
         lnkMouser.Margin = New Padding(10, 3, 3, 1)
         lnkMouser.Name = "lnkMouser"
         lnkMouser.TabStop = True
-        lnkMouser.Tag = "https://www.mouser.co.uk/api-hub/"
+        lnkMouser.Tag = "https://www.mouser.com/api-hub/"
         lnkMouser.Text = "Get a key"
         '
         'lblDkId
@@ -556,7 +556,7 @@ Partial Class SettingsForm
         lblUrls.Anchor = AnchorStyles.Left Or AnchorStyles.Bottom ' just above the table, not level with the API Help button
         lblUrls.Margin = New Padding(3, 16, 3, 1)
         lblUrls.Name = "lblUrls"
-        lblUrls.Text = "Suppliers and website search URLs - {0} is replaced by the search text. Add your own suppliers here:"
+        lblUrls.Text = "Suppliers and website search URLs - {0} is replaced by the search text. Add your own suppliers here - check/change your locale url accordingly:"
         '
         'btnApiHelp - beside the key boxes: how to get each key
         '

@@ -47,7 +47,18 @@ Public Class SettingsForm
         cboTheme.Items.AddRange(Theme.Names)
         cboTheme.SelectedIndex = CInt(_settings.AppTheme)
         LoadUrls(Function(name) _settings.GetSearchUrl(name), _settings.CustomSuppliers)
+        AddLocalSiteNotes()
         Theme.Apply(Me)
+    End Sub
+
+    ' The Get a key links go to each supplier's international site, so a reminder sits just after each one.
+    Private Sub AddLocalSiteNotes()
+        For Each link In {lnkMouser, lnkDigiKey, lnkE14, lnkTme}
+            Dim note As New Label With {
+                .AutoSize = True, .Anchor = link.Anchor, .Margin = New Padding(2, 3, 3, 1),
+                .Text = "(international site - check for your local site)"}
+            link.Parent.Controls.Add(note)
+        Next
     End Sub
 
     Private Sub LoadUrls(getUrl As Func(Of String, String), customs As IEnumerable(Of CustomSupplier))
