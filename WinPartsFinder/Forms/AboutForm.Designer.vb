@@ -73,7 +73,7 @@ Partial Class AboutForm
         flpLeft.Location = New Point(0, 0)
         flpLeft.Name = "flpLeft"
         flpLeft.Padding = New Padding(10, 8, 10, 8)
-        flpLeft.Size = New Size(604, 670)
+        flpLeft.Size = New Size(694, 670)
         flpLeft.TabIndex = 0
         flpLeft.WrapContents = False
         '
@@ -86,6 +86,7 @@ Partial Class AboutForm
         flpTitle.Margin = New Padding(0, 0, 0, 6)
         flpTitle.Name = "flpTitle"
         flpTitle.TabIndex = 0
+        flpTitle.WrapContents = False ' title, copyright and version number all on one line
         '
         'lblTitle
         '
@@ -103,11 +104,11 @@ Partial Class AboutForm
         lblVersion.Name = "lblVersion"
         lblVersion.Text = "© 2026 Ian Johnston"
         '
-        'lblAppVersion - the version number (set from MainForm.AppVersion)
+        'lblAppVersion - the version number (set from MainForm.AppVersion, e.g. Version Number: 1.023)
         '
         lblAppVersion.AutoSize = True
         lblAppVersion.Font = New Font("Segoe UI", 11.25F, FontStyle.Bold)
-        lblAppVersion.Margin = New Padding(40, 18, 0, 0)
+        lblAppVersion.Margin = New Padding(24, 18, 0, 0)
         lblAppVersion.Name = "lblAppVersion"
         lblAppVersion.Text = "V1.000"
         '
@@ -220,7 +221,7 @@ Partial Class AboutForm
         pnlRight.Controls.Add(btnDonate)
         pnlRight.Controls.Add(btnClose)
         pnlRight.Dock = DockStyle.Right
-        pnlRight.Location = New Point(604, 0)
+        pnlRight.Location = New Point(694, 0)
         pnlRight.Name = "pnlRight"
         pnlRight.Size = New Size(476, 670)
         pnlRight.TabIndex = 1
@@ -319,7 +320,7 @@ Partial Class AboutForm
         AutoScaleDimensions = New SizeF(7.0F, 15.0F)
         AutoScaleMode = AutoScaleMode.Font
         CancelButton = btnClose
-        ClientSize = New Size(1080, 670)
+        ClientSize = New Size(1170, 670)
         Controls.Add(flpLeft)
         Controls.Add(pnlRight)
         FormBorderStyle = FormBorderStyle.FixedDialog

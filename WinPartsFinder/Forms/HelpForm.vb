@@ -160,6 +160,7 @@ Build up a shopping list across as many searches as you like, then work down it 
 # API KEYS - OVERVIEW
 Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search APIs. Each person using WinPartsFinder needs their own keys - they're free, and take a few minutes to get.
 - Keep this window open beside Settings and paste each key into its box as you get it. **Get a key** next to each box opens that supplier's sign-up page.
+- **Check you're on the right site for your location.** The **Get a key** links go to each supplier's international site, which may not be the one for your country. If the supplier has a local site (look for its country or region selector), sign up there - the country of your account can decide the prices, currency and stock you see.
 - Tick **Show keys** to see what you've pasted instead of dots, and check there are no spaces at either end.
 - Click **OK** in Settings to save. You can do one supplier now and the rest later - suppliers without keys still appear as website links.
 - Keys are saved encrypted for your Windows user only, in %AppData%\WinPartsFinder\settings.json. They are never stored in the program or its source code, and never sent anywhere except to that supplier.

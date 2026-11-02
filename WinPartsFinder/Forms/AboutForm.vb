@@ -83,9 +83,12 @@ Public Class AboutForm
 
     Private Sub AboutForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         SetUpTitle()
-        lblAppVersion.Text = MainForm.AppVersion
+        lblAppVersion.Text = "Version Number: " & MainForm.AppVersion.TrimStart("V"c, "v"c) ' "V1.023" shows as 1.023
         AlignToTitleBaseline(lblVersion)
         AlignToTitleBaseline(lblAppVersion)
+        ' Wide enough for "SUPPORT WinPartsFinder" at any Windows scaling, and centred over the Donate button.
+        lblSupportBig.Width = Math.Max(lblSupportBig.Width, lblSupportBig.PreferredWidth)
+        lblSupportBig.Left = btnDonate.Left + (btnDonate.Width - lblSupportBig.Width) \ 2
 
         Using s = GetType(AboutForm).Assembly.GetManifestResourceStream("WinPartsFinder.AboutCartoon.png")
             If s IsNot Nothing Then
