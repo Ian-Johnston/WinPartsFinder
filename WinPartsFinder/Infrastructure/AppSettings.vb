@@ -180,7 +180,7 @@ Public Class AppSettings
             End If
         Catch ex As Exception
             MessageBox.Show("Could not read settings, defaults will be used." & vbCrLf & ex.Message,
-                            "WinPartsFinder", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                            "Win-PartsFinder", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
         If s Is Nothing Then s = New AppSettings()
         If s.StatusFilters Is Nothing Then s.StatusFilters = DefaultStatusFilters()

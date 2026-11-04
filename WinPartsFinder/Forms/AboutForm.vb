@@ -1,7 +1,7 @@
 Public Class AboutForm
 
     Private Const DonateUrl As String =
-        "https://www.paypal.com/donate/?business=ian%40ianj.net&no_recurring=0&item_name=Support+WinPartsFinder&currency_code=GBP"
+        "https://www.paypal.com/donate/?business=ian%40ianj.net&no_recurring=0&item_name=Support+Win-PartsFinder&currency_code=GBP"
 
     ' Windows pads big text more than small text, which pushed "WinPartsFinder" right of the text below it.
     ' So the title is drawn here without that padding, offset to match the small labels' padding.
@@ -83,7 +83,7 @@ Public Class AboutForm
 
     Private Sub AboutForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         SetUpTitle()
-        lblAppVersion.Text = "Version Number: " & MainForm.AppVersion.TrimStart("V"c, "v"c) ' "V1.023" shows as 1.023
+        lblAppVersion.Text = "Version: " & MainForm.AppVersion.TrimStart("V"c, "v"c) ' "V1.023" shows as 1.023
         AlignToTitleBaseline(lblVersion)
         AlignToTitleBaseline(lblAppVersion)
         ' Wide enough for "SUPPORT WinPartsFinder" at any Windows scaling, and centred over the Donate button.

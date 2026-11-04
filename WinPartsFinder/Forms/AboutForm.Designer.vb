@@ -94,7 +94,7 @@ Partial Class AboutForm
         lblTitle.Font = New Font("Segoe UI", 24.0F, FontStyle.Bold)
         lblTitle.Margin = New Padding(0)
         lblTitle.Name = "lblTitle"
-        lblTitle.Text = "WinPartsFinder"
+        lblTitle.Text = "Win-PartsFinder"
         '
         'lblVersion
         '
@@ -104,7 +104,7 @@ Partial Class AboutForm
         lblVersion.Name = "lblVersion"
         lblVersion.Text = "© 2026 Ian Johnston"
         '
-        'lblAppVersion - the version number (set from MainForm.AppVersion, e.g. Version Number: 1.023)
+        'lblAppVersion - the version number (set from MainForm.AppVersion, e.g. Version: 1.023)
         '
         lblAppVersion.AutoSize = True
         lblAppVersion.Font = New Font("Segoe UI", 11.25F, FontStyle.Bold)
@@ -126,7 +126,7 @@ Partial Class AboutForm
         lblCredits.MaximumSize = New Size(584, 0)
         lblCredits.Margin = New Padding(0)
         lblCredits.Name = "lblCredits"
-        lblCredits.Text = "WinPartsFinder app by Ian Johnston." & vbCrLf &
+        lblCredits.Text = "Win-PartsFinder app by Ian Johnston." & vbCrLf &
             "Part data from Mouser, DigiKey, element14 (Farnell / CPC / Newark) and TME web APIs." & vbCrLf &
             "Supplier names and trademarks belong to their respective owners."
         '
@@ -152,7 +152,7 @@ Partial Class AboutForm
         lblSupportHead.Font = New Font("Segoe UI", 9.75F, FontStyle.Bold)
         lblSupportHead.Margin = New Padding(0, 12, 0, 0)
         lblSupportHead.Name = "lblSupportHead"
-        lblSupportHead.Text = "Supporting WinPartsFinder:"
+        lblSupportHead.Text = "Supporting Win-PartsFinder:"
         '
         'lblSupport
         '
@@ -161,7 +161,7 @@ Partial Class AboutForm
         lblSupport.Margin = New Padding(0)
         lblSupport.Name = "lblSupport"
         lblSupport.Text = "If you find the program useful, please consider donating using the button provided." & vbCrLf &
-            "Your support helps me spend more time developing and extending WinPartsFinder, and also helps fund " &
+            "Your support helps me spend more time developing and extending Win-PartsFinder, and also helps fund " &
             "the purchase of faulty test equipment for repair on my YouTube channel."
         '
         'lblLicenceHead
@@ -178,14 +178,14 @@ Partial Class AboutForm
         lblLicence.MaximumSize = New Size(584, 0)
         lblLicence.Margin = New Padding(0)
         lblLicence.Name = "lblLicence"
-        lblLicence.Text = "WinPartsFinder is provided free of charge for personal, non-commercial use only." & vbCrLf &
-            "The WinPartsFinder source code is made publicly available and may be used, modified and redistributed " &
+        lblLicence.Text = "Win-PartsFinder is provided free of charge for personal, non-commercial use only." & vbCrLf &
+            "The Win-PartsFinder source code is made publicly available and may be used, modified and redistributed " &
             "for non-commercial purposes only." & vbCrLf &
-            "Neither WinPartsFinder nor its source code, in whole or in part, may be used for commercial purposes " &
+            "Neither Win-PartsFinder nor its source code, in whole or in part, may be used for commercial purposes " &
             "without a separate commercial licence from the author. This includes use within businesses and organisations." & vbCrLf &
             "Please contact the author (www.ianjohnston.com) to discuss commercial licensing arrangements." & vbCrLf &
-            "The WinPartsFinder name and icon belong to the author. Modified or derived versions must not be called " &
-            "WinPartsFinder, or use a name or icon likely to be confused with it, without the author's written permission." & vbCrLf &
+            "The Win-PartsFinder name and icon belong to the author. Modified or derived versions must not be called " &
+            "Win-PartsFinder, or use a name or icon likely to be confused with it, without the author's written permission." & vbCrLf &
             "Each user must obtain their own supplier API keys and follow each supplier's API terms of use."
         '
         'lblDisclaimerHead
@@ -202,7 +202,7 @@ Partial Class AboutForm
         lblDisclaimer.MaximumSize = New Size(584, 0)
         lblDisclaimer.Margin = New Padding(0)
         lblDisclaimer.Name = "lblDisclaimer"
-        lblDisclaimer.Text = "WinPartsFinder and its source code are provided ""as is"", without warranty of any kind, express or implied. " &
+        lblDisclaimer.Text = "Win-PartsFinder and its source code are provided ""as is"", without warranty of any kind, express or implied. " &
             "Use of this software and source code is entirely at the user's own risk." & vbCrLf &
             "Prices, stock levels and other part data come from third parties and may be out of date or wrong - " &
             "always check with the supplier before ordering." & vbCrLf &
@@ -281,7 +281,7 @@ Partial Class AboutForm
         lblSupportBig.Location = New Point(246, 202)
         lblSupportBig.Name = "lblSupportBig"
         lblSupportBig.Size = New Size(210, 26)
-        lblSupportBig.Text = "SUPPORT WinPartsFinder"
+        lblSupportBig.Text = "SUPPORT Win-PartsFinder"
         lblSupportBig.TextAlign = ContentAlignment.MiddleCenter
         '
         'btnDonate
@@ -311,7 +311,7 @@ Partial Class AboutForm
         tipAbout.SetToolTip(lnkWebsite, "Ian Johnston's website.")
         tipAbout.SetToolTip(lnkYouTube, "Ian's YouTube channel - test equipment repairs and more.")
         tipAbout.SetToolTip(lnkTwitter, "Ian on Twitter / X.")
-        tipAbout.SetToolTip(btnDonate, "Opens PayPal in your browser to make a donation towards WinPartsFinder.")
+        tipAbout.SetToolTip(btnDonate, "Opens PayPal in your browser to make a donation towards Win-PartsFinder.")
         tipAbout.SetToolTip(btnClose, "Close this window (Esc).")
         '
         'AboutForm
@@ -330,7 +330,7 @@ Partial Class AboutForm
         ShowIcon = False
         ShowInTaskbar = False
         StartPosition = FormStartPosition.CenterParent
-        Text = "About WinPartsFinder"
+        Text = "About Win-PartsFinder"
         flpLeft.ResumeLayout(False)
         flpLeft.PerformLayout()
         flpTitle.ResumeLayout(False)

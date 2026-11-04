@@ -9,7 +9,7 @@ Public Class HelpForm
     '   (blank line)    - paragraph gap
     Private Const HelpContent As String = "
 # GETTING STARTED
-WinPartsFinder searches several component suppliers at once and puts stock, prices, minimum order and lifecycle status side by side in one grid.
+Win-PartsFinder searches several component suppliers at once and puts stock, prices, minimum order and lifecycle status side by side in one grid.
 
 - Click **Settings…** and enter your API keys - click **API Help** in Settings for step-by-step instructions. Without keys, suppliers still appear as website links.
 - Type a part number or some keywords in the **Search** box, e.g. LM358 or 100nF 50V 0603, and press **Enter**.
@@ -27,8 +27,8 @@ Mouser, DigiKey, element14 (Farnell, CPC + Newark) and TME have free APIs, and e
 - As you type, matching previous searches are also suggested.
 
 # ADVANCED SEARCH
-Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder is open, the window remembers your choices from last time; each time you start the app it begins fresh. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
-- **Search type:** **Keyword**; **Manufacturer part no. (starts with)**; **Exact manufacturer part no.** (only parts whose number matches exactly, ignoring spaces); or **Supplier order code**, e.g. a Farnell 3117070 or Mouser 595-LM358DR. A code belongs to one supplier: WinPartsFinder finds it there, reads the manufacturer part number, then searches every other ticked supplier for that exact part.
+Click **Advanced…** next to Search, or press **Ctrl+F**. While Win-PartsFinder is open, the window remembers your choices from last time; each time you start the app it begins fresh. Results go into the same grid, and the bottom status line lists the Advanced options used. A plain **Search** afterwards goes back to normal.
+- **Search type:** **Keyword**; **Manufacturer part no. (starts with)**; **Exact manufacturer part no.** (only parts whose number matches exactly, ignoring spaces); or **Supplier order code**, e.g. a Farnell 3117070 or Mouser 595-LM358DR. A code belongs to one supplier: Win-PartsFinder finds it there, reads the manufacturer part number, then searches every other ticked supplier for that exact part.
 - **In stock only** and **RoHS compliant only** are passed to each supplier's own search, so you get a full batch of matching parts. TME has no RoHS option, so it ignores that box. (**In stock only** on the main window is different: it only hides out-of-stock rows already found.)
 - **Active parts only** is under the supplier list on the main window (see **The filters under the supplier list**).
 - **Manufacturer name contains**, e.g. Texas, keeps only that maker's parts. It's the maker's name, not the part number.
@@ -37,7 +37,7 @@ Click **Advanced…** next to Search, or press **Ctrl+F**. While WinPartsFinder 
 - **Quantity needed** shows the price each at that quantity (the column header changes to e.g. **Price (100)**) and hides parts whose minimum order is more than that.
 - **Max price each** hides parts dearer than that at your quantity (or at 1). Parts with no price listed are hidden too. Prices are compared in each supplier's own currency - or in your chosen currency when **Prices in** is ticked.
 - **Suppliers** sets which suppliers are searched; the supplier list on the left changes to match.
-- The options from **Manufacturer name contains** down are applied by WinPartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
+- The options from **Manufacturer name contains** down are applied by Win-PartsFinder after each batch arrives, so a supplier's **Hits** can be lower than the batch size. Hover over the supplier to see how many were left out. Load more and newly ticked suppliers use the same options.
 - **Clear** resets everything except the search text. **Cancel** closes the window without searching.
 
 # THE SUPPLIER LIST
@@ -118,7 +118,7 @@ Build up a shopping list across as many searches as you like, then work down it 
 - **BOM name** and **Notes** are saved with the BOM. The title bar shows the name, with a ***** when there are unsaved changes.
 - **New** starts an empty BOM, **Load…** opens a saved one in its place (asking first if there are unsaved changes), **Save** saves to the same file and **Save As…** to a new one. An unnamed BOM takes the name of the file you save it as. **Open Folder** opens the folder the BOM is saved in. **Export TXT…** saves an easy-to-read text copy: the parts in lined-up columns, grouped by supplier with subtotals and the grand total.
 - BOM files are CSV and open in Excel. The BOM name and notes are at the bottom of the file. Unticked lines are saved as **DNP**.
-- WinPartsFinder always starts with an empty BOM - use **Load…** to carry on with a saved one. If the BOM has unsaved changes when you close WinPartsFinder, it asks whether to save them first.
+- Win-PartsFinder always starts with an empty BOM - use **Load…** to carry on with a saved one. If the BOM has unsaved changes when you close Win-PartsFinder, it asks whether to save them first.
 
 # SETTINGS
 - Paste your API keys in the boxes at the top. **Get a key** opens each supplier's sign-up page, **API Help** explains how to get each key, and **Show keys** shows them as text instead of dots.
@@ -151,14 +151,14 @@ Build up a shopping list across as many searches as you like, then work down it 
 
 # GETTING HELP
 - Hover over any button, box or column header for a tip about what it does.
-- This Help window can stay open while you use WinPartsFinder. **Esc** closes it, and the About window too.
+- This Help window can stay open while you use Win-PartsFinder. **Esc** closes it, and the About window too.
 - **About…** shows the version, licence and credits, and has the **Donate via PayPal** button. The version number is also in the title bar.
 "
 
     ' API Help (opened from Settings): how to get each supplier's keys. Same markup as above.
     Private Const ApiHelpContent As String = "
 # API KEYS - OVERVIEW
-Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search APIs. Each person using WinPartsFinder needs their own keys - they're free, and take a few minutes to get.
+Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search APIs. Each person using Win-PartsFinder needs their own keys - they're free, and take a few minutes to get.
 - Keep this window open beside Settings and paste each key into its box as you get it. **Get a key** next to each box opens that supplier's sign-up page.
 - **Check you're on the right site for your location.** The **Get a key** links go to each supplier's international site, which may not be the one for your country. If the supplier has a local site (look for its country or region selector), sign up there - the country of your account can decide the prices, currency and stock you see.
 - Tick **Show keys** to see what you've pasted instead of dots, and check there are no spaces at either end.
@@ -184,7 +184,7 @@ Mouser, DigiKey, element14 (Farnell, CPC and Newark) and TME have free search AP
 - Register an application. The free **Basic** tier is plenty. The key is shown in your account and emailed to you.
 - Paste it into **element14 API key**. One key covers **Farnell**, **CPC** and **Newark**.
 - **Farnell store** (below the key) chooses which country's Farnell / element14 store the Farnell supplier uses, e.g. **New Zealand - nz.element14.com (NZD)**. The same key works for every store.
-- element14 allows 2 searches a second, so WinPartsFinder searches Farnell, CPC and Newark one after the other.
+- element14 allows 2 searches a second, so Win-PartsFinder searches Farnell, CPC and Newark one after the other.
 
 # TME
 TME takes two websites, so allow 10 minutes.
@@ -214,7 +214,7 @@ TME takes two websites, so allow 10 minutes.
         InitializeComponent()
         _apiHelp = apiHelp
         If apiHelp Then
-            Text = "WinPartsFinder    API Help"
+            Text = "Win-PartsFinder    API Help"
             tipHelp.SetToolTip(btnOK, "Close API Help (Esc). You can keep it open while you type your keys into Settings.")
         End If
     End Sub

@@ -757,7 +757,7 @@ Partial Class SettingsForm
         ShowIcon = False
         ShowInTaskbar = False
         StartPosition = FormStartPosition.CenterParent
-        Text = "WinPartsFinder settings"
+        Text = "Win-PartsFinder settings"
         tlpMain.ResumeLayout(False)
         tlpMain.PerformLayout()
         flpDkLocale.ResumeLayout(False)

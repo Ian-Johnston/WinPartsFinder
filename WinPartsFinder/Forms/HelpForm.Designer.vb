@@ -76,7 +76,7 @@ Partial Class HelpForm
         '
         'tipHelp
         '
-        tipHelp.SetToolTip(btnOK, "Close Help (Esc). You can keep Help open while you use WinPartsFinder.")
+        tipHelp.SetToolTip(btnOK, "Close Help (Esc). You can keep Help open while you use Win-PartsFinder.")
         '
         'HelpForm
         '
@@ -92,7 +92,7 @@ Partial Class HelpForm
         Name = "HelpForm"
         ShowIcon = False
         StartPosition = FormStartPosition.CenterParent
-        Text = "WinPartsFinder    Help"
+        Text = "Win-PartsFinder    Help"
         pnlText.ResumeLayout(False)
         flpButtons.ResumeLayout(False)
         ResumeLayout(False)

@@ -663,7 +663,7 @@ Partial Class MainForm
         tipMain.SetToolTip(btnAddToBom, "Add the selected parts to the BOM (or right-click them > Add to BOM).")
         tipMain.SetToolTip(btnBom, "Show the BOM: the parts you've added, with quantities, totals and links for buying.")
         tipMain.SetToolTip(btnSettings, "API keys, supplier search URLs, your own suppliers, photos, dark mode and window layout.")
-        tipMain.SetToolTip(btnHelp, "How to use WinPartsFinder.")
+        tipMain.SetToolTip(btnHelp, "How to use Win-PartsFinder.")
         tipMain.SetToolTip(btnAbout, "Version, credits, licence and donate.")        '
         'MainForm
         '
@@ -677,7 +677,7 @@ Partial Class MainForm
         MinimumSize = New Size(800, 400)
         Name = "MainForm"
         StartPosition = FormStartPosition.CenterScreen
-        Text = "WinPartsFinder - component supplier search"
+        Text = "Win-PartsFinder - component supplier search"
         flpFilter.ResumeLayout(False)
         flpFilter.PerformLayout()
         tlpTop.ResumeLayout(False)

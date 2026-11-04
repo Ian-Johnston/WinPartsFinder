@@ -14,8 +14,8 @@ Imports System.Text
 Public Class MainForm
 
     ' ==== THE version number - change it here for each release ====
-    Public Const AppVersion As String = "V1.025"
-    Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support WinPartsFinder - see About)"
+    Public Const AppVersion As String = "V1.026"
+    Private Const TitleSuffix As String = "(Free for Non-Commercial Use • Support Win-PartsFinder - see About)"
 
     Private _settings As AppSettings
     Private _suppliers As New List(Of Supplier)
@@ -55,7 +55,7 @@ Public Class MainForm
 
     Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         _settings = AppSettings.Load()
-        Text = $"WinPartsFinder - {AppVersion}      {TitleSuffix}"
+        Text = $"Win-PartsFinder - {AppVersion}      {TitleSuffix}"
         Icon = Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath) ' WinPartsFinder.ico, via <ApplicationIcon>
         Theme.Current = _settings.AppTheme
         lvSuppliers.OwnerDraw = True ' only so the column headers can be drawn dark
@@ -2406,7 +2406,7 @@ Public Class MainForm
         Dim safeName = String.Concat(cboSearch.Text.Trim().Split(Path.GetInvalidFileNameChars()))
         Using dlg As New SaveFileDialog With {
             .Filter = "CSV file (*.csv)|*.csv",
-            .FileName = $"WinPartsFinder {safeName} {DateTime.Now:yyyy-MM-dd HHmm}.csv"
+            .FileName = $"Win-PartsFinder {safeName} {DateTime.Now:yyyy-MM-dd HHmm}.csv"
         }
             If dlg.ShowDialog(Me) <> DialogResult.OK Then Return
             ' The Datasheet column is the URL itself; it goes at the end as "Datasheet URL" instead.
